@@ -19,9 +19,6 @@ CXXFLAGS += -Wfatal-errors
 EXTRA_INCLUDES=-include core/types.h
 EXTRA_INCLUDES+=-I/usr/local/include/boost-numeric-bindings
 
-#Graph size limits
-CXXFLAGS += -DCOMPACT_GRAPH
-
 #ZLIB SPEEDS
 #CXXFLAGS += -DZLIB_COMPRESSION_LEVEL=Z_DEFAULT_COMPRESSION
 CXXFLAGS += -DZLIB_COMPRESSION_LEVEL=Z_BEST_SPEED
