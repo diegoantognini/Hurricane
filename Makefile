@@ -46,15 +46,6 @@ SYSLIBS += -llapack
 #Uncomment if you want periodic flushes
 #CXXFLAGS += -DFLUSH_PERIODIC
 
-#Python support (uncomment following lines)
-#CXXFLAGS += -DPYTHON_SUPPORT
-#SYSLIBS += -lpython3.2mu
-#EXTRA_INCLUDES+=-L/usr/lib/python3.2/config
-#EXTRA_INCLUDES+=-I/usr/include/python3.2
-
-
-
-
 -include $(LIBS:.o=.d) $(PROGS:.o=.d) 
 
 $(OBJECT_DIR)/core.o:core/core.cpp 
@@ -128,8 +119,5 @@ bin/fanout_test:$(OBJECT_DIR)/fanout_test.o
 bin/block_mem:$(OBJECT_DIR)/block_mem.o $(LIBS)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
 
-
 clean:
 	rm -f $(TARGETS) $(LIBS) $(OBJECT_DIR)/*
-	$(MAKE) -C generators clean
-	
