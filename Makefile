@@ -3,12 +3,9 @@ UTILS_SRC= utils.o
 LIBS_SRC= core.o $(UTILS_SRC)
 LIBS= $(addprefix $(OBJECT_DIR)/, $(LIBS_SRC))
 UTILS= $(addprefix $(OBJECT_DIR)/, $(UTILS_SRC))
-PROGS_SRC= driver.o file_splitter.o mem_speed_sequential.o sort_edges.o\
-mem_speed_random.o block_mem.o feeder.o
+PROGS_SRC= driver.o 
 PROGS= $(addprefix $(OBJECT_DIR)/, $(PROGS_SRC))
-TARGETS= bin/benchmark_driver bin/mem_speed_sequential bin/sort_edges\
-bin/mem_speed_random bin/block_mem bin/zpipe bin/feeder bin/slipbench\
-bin/fanout_test
+TARGETS= bin/benchmark_driver bin/slipbench
 
 
 all: $(LIBS) $(TARGETS) generators
@@ -60,63 +57,14 @@ $(OBJECT_DIR)/driver.o:benchmarks/driver.cpp
 	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
 	$(CXX) -MM -MT '$(OBJECT_DIR)/driver.o' $< > $(@:.o=.d)
 
-$(OBJECT_DIR)/sort_edges.o:utils/sort_edges.cpp 
-	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
-	$(CXX) -MM -MT '$(OBJECT_DIR)/sort_edges.o' $< > $(@:.o=.d)
-
-$(OBJECT_DIR)/feeder.o:utils/feeder.cpp 
-	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
-	$(CXX) -MM -MT '$(OBJECT_DIR)/feeder.o' $< > $(@:.o=.d)
-
 $(OBJECT_DIR)/slipbench.o:utils/slipbench.cpp 
 	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
 	$(CXX) -MM -MT '$(OBJECT_DIR)/slipbench.o' $< > $(@:.o=.d)
 
-$(OBJECT_DIR)/fanout_test.o:utils/fanout_test.cpp 
-	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
-	$(CXX) -MM -MT '$(OBJECT_DIR)/fanout_test.o' $< > $(@:.o=.d)
-
-$(OBJECT_DIR)/block_mem.o:utils/block_mem.cpp 
-	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
-	$(CXX) -MM -MT '$(OBJECT_DIR)/block_mem.o' $< > $(@:.o=.d)
-
-$(OBJECT_DIR)/mem_speed_sequential.o:utils/mem_speed_sequential.cpp 
-	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
-	$(CXX) -MM -MT '$(OBJECT_DIR)/mem_speed_sequential.o' $< > $(@:.o=.d)
-
-$(OBJECT_DIR)/mem_speed_random.o:utils/mem_speed_random.cpp 
-	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
-	$(CXX) -MM -MT '$(OBJECT_DIR)/mem_speed_random.o' $< > $(@:.o=.d)
-
-$(OBJECT_DIR)/zpipe.o:utils/zpipe.c 
-	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
-	$(CXX) -MM -MT '$(OBJECT_DIR)/zpipe.o' $< > $(@:.o=.d)
-
 bin/benchmark_driver:$(OBJECT_DIR)/driver.o $(LIBS)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
 
-bin/mem_speed_sequential:$(OBJECT_DIR)/mem_speed_sequential.o $(LIBS)
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
-
-bin/mem_speed_random:$(OBJECT_DIR)/mem_speed_random.o $(LIBS)
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
-
-bin/zpipe:$(OBJECT_DIR)/zpipe.o $(LIBS)
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
-
-bin/sort_edges:$(OBJECT_DIR)/sort_edges.o $(LIBS)
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
-
-bin/feeder:$(OBJECT_DIR)/feeder.o $(LIBS)
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
-
 bin/slipbench:$(OBJECT_DIR)/slipbench.o 
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
-
-bin/fanout_test:$(OBJECT_DIR)/fanout_test.o 
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
-
-bin/block_mem:$(OBJECT_DIR)/block_mem.o $(LIBS)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
 
 clean:
