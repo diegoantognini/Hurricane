@@ -128,23 +128,8 @@ bin/fanout_test:$(OBJECT_DIR)/fanout_test.o
 bin/block_mem:$(OBJECT_DIR)/block_mem.o $(LIBS)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
 
-.PHONY: generators
-generators:
-	$(MAKE) -C generators
 
 clean:
 	rm -f $(TARGETS) $(LIBS) $(OBJECT_DIR)/*
 	$(MAKE) -C generators clean
-
-prefix = ~
-bindir = $(prefix)/bin
-.PHONY: install uninstall
-install: all
-	cp bin/benchmark_driver $(bindir)
-	cp generators/rmat $(bindir)
-	cp generators/erdos-renyi $(bindir)
-
-uninstall: 
-	rm -f $(bindir)/benchmark_driver
-	rm -f $(bindir)/rmat
-	rm -f $(bindir)/erdos-renyi
+	
