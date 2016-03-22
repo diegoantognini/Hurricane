@@ -43,13 +43,7 @@ namespace x_lib {
       unsigned char *bufout;   // callee can change
       unsigned long bytes_out; // callee must set
       unsigned long bytes_out_max;
-#ifdef PYTHON_SUPPORT
-      PyObject *pbufin;
-      unsigned long pbufin_offset;
-      PyObject *pbufout;
-      PyObject *pstate;
-      unsigned long pstate_offset;
-#endif
+
       algorithm::per_processor_data *cpu_state;
   };
 
@@ -213,14 +207,7 @@ namespace x_lib {
                             unsigned char *outbuf) {
         callback->bufout = outbuf;
         callback->bytes_out = 0;
-#ifdef PYTHON_SUPPORT
-        callback->pbufin        = stream_in->pBuffer;
-        callback->pbufin_offset = callback->bufin - stream_in->buffer;
-        npy_intp dim[1]={OUTBUF_SIZE};
-        callback->pbufout       = PyArray_SimpleNewFromData(1, dim, NPY_UINT8, (void *)outbuf);
-        callback->pstate        = state->pBuffer;
-        callback->pstate_offset = callback->state - state->buffer;
-#endif
+
         while (callback->bytes_in) {
           A::partition_callback(callback);
           if (stream_out != NULL && callback->bytes_out > 0) {
@@ -231,9 +218,7 @@ namespace x_lib {
             callback->bytes_out = 0;
           }
         }
-#ifdef PYTHON_SUPPORT
-        Py_DECREF(callback->pbufout);
-#endif
+
       }
 
       void operator()(unsigned long processor_id,
@@ -630,19 +615,7 @@ namespace x_lib {
       rtc_clock merge_wait_time;
 
 
-#ifdef PYTHON_SUPPORT
-      //M: has to be called before creating python arrays! It is a macro, it has to be inside an int-returning function
-     int import_numpy_array(){
-       import_array();
-       return 0;
-     }
-#endif
-
       void make_config() {
-#ifdef PYTHON_SUPPORT
-        Py_Initialize();
-        import_numpy_array();
-#endif
         config->memory_buffer_object_size = sizeof(memory_buffer);
         config->vertex_size = A::vertex_state_bytes();
         config->vertex_footprint = config->vertex_size +

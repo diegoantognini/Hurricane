@@ -27,11 +27,6 @@
 #include "../utils/barrier.h"
 #include<zlib.h>
 
-#ifdef PYTHON_SUPPORT
-#include</usr/include/python3.2/Python.h>
-#include</usr/lib/python3/dist-packages/numpy/core/include/numpy/arrayobject.h>
-#endif
-
 namespace x_lib {
   class buffer_manager;
 
@@ -42,9 +37,7 @@ namespace x_lib {
       static bool gather_io_drain;
       static unsigned long **aux_index;
       static unsigned char *aux_buffer;
-#ifdef PYTHON_SUPPORT
-      static PyObject *auxpBuffer;
-#endif
+
       volatile unsigned long index_entries; // How many partitions ?
       unsigned long max_partitions;
       // Buffer free list stuff
@@ -76,12 +69,6 @@ namespace x_lib {
         tmp_buffer = aux_buffer;
         aux_buffer = buffer;
         buffer = tmp_buffer;
-#ifdef PYTHON_SUPPORT
-        PyObject * tmp_pbuffer;
-        tmp_pbuffer = auxpBuffer;
-        auxpBuffer = pBuffer;
-        pBuffer = tmp_pbuffer;
-#endif
       }
 
   public:
@@ -98,9 +85,6 @@ namespace x_lib {
       bool dirty; // Debug aid
       volatile unsigned long skip_superp;
       configuration *config;
-#ifdef PYTHON_SUPPORT
-      PyObject *pBuffer;
-#endif
 
       memory_buffer(configuration *details,
                     unsigned long bufbytes_in)
@@ -141,16 +125,9 @@ namespace x_lib {
         }
         buffer = (unsigned char *)
             map_anon_memory(bufbytes, true, "memory buffer");
-#ifdef PYTHON_SUPPORT
-        npy_intp dim[1]={bufbytes};
-        pBuffer = PyArray_SimpleNewFromData(1, dim, NPY_UINT8, (void *)buffer);
-#endif
         if (aux_buffer == NULL && !use_qsort) {
           aux_buffer = (unsigned char *)
               map_anon_memory(bufbytes, true, "memory buffer");
-#ifdef PYTHON_SUPPORT
-          auxpBuffer = PyArray_SimpleNewFromData(1, dim, NPY_UINT8, (void *)aux_buffer);
-#endif
         }
       }
 

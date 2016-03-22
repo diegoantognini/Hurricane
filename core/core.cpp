@@ -37,9 +37,7 @@
   unsigned char *memory_buffer::aux_buffer = NULL;
   memory_buffer *volatile memory_buffer::freelist = NULL;
   volatile unsigned long memory_buffer::freelist_lock = 0;
-#ifdef PYTHON_SUPPORT
-  PyObject * memory_buffer::auxpBuffer = NULL;
-#endif
+
   bool memory_buffer::use_qsort = false;
   bool memory_buffer::do_batch_io = false;
   bool memory_buffer::gather_io_drain = false;
