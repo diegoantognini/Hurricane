@@ -16,7 +16,7 @@ CXXFLAGS?= -O3 -DNDEBUG -Wall -Wno-unused-function -L/usr/local/lib
 #CXXFLAGS?= -O3 -g -Wall -Wno-unused-function
 #CXXFLAGS?= -g
 CXXFLAGS += -Wfatal-errors
-EXTRA_INCLUDES=-include core/types.h
+#EXTRA_INCLUDES=-include core/types.h
 EXTRA_INCLUDES+=-I/usr/local/include/boost-numeric-bindings
 
 #ZLIB SPEEDS
