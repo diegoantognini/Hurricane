@@ -18,9 +18,8 @@
 
 #include<iostream>
 #include "x-lib.hpp"
-#include "sg_driver.hpp"
-//#include "sg_driver_async.hpp"
-namespace x_lib {
+
+ namespace x_lib {
   unsigned long configuration::cached_partitions = 0;
   unsigned long configuration::partition_shift = 0;
   unsigned long configuration::tiles = 0;
@@ -45,22 +44,6 @@ namespace x_lib {
   bool memory_buffer::do_batch_io = false;
   bool memory_buffer::gather_io_drain = false;
   unsigned long qsort_keys = 0;
-}
-
-namespace algorithm {
-  unsigned long sg_pcpu::bsp_phase;
-  unsigned long sg_pcpu::current_step;
-  sg_pcpu **sg_pcpu::per_cpu_array;
-  x_barrier *sg_pcpu::sync;
-  x_lib::filter *sg_pcpu::scatter_filter;
-  per_processor_data **sg_pcpu::algo_pcpu_array;
-  bool sg_pcpu::do_algo_reduce;
-  //unsigned long sg_async_pcpu::bsp_phase;
-  //unsigned long sg_async_pcpu::current_step;
-  //sg_async_pcpu ** sg_async_pcpu::per_cpu_array;
-  //x_barrier *sg_async_pcpu::sync;
-  //per_processor_data ** sg_async_pcpu::algo_pcpu_array;
-  //bool sg_async_pcpu::do_algo_reduce;
 }
 
 namespace slipstore {
