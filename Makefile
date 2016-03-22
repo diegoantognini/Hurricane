@@ -5,10 +5,10 @@ LIBS= $(addprefix $(OBJECT_DIR)/, $(LIBS_SRC))
 UTILS= $(addprefix $(OBJECT_DIR)/, $(UTILS_SRC))
 PROGS_SRC= driver.o 
 PROGS= $(addprefix $(OBJECT_DIR)/, $(PROGS_SRC))
-TARGETS= bin/benchmark_driver bin/slipbench
+TARGETS= bin/slipbench
 
 
-all: $(LIBS) $(TARGETS) generators
+all: $(LIBS) $(TARGETS)
 
 CXX?= g++
 
@@ -53,16 +53,9 @@ $(OBJECT_DIR)/utils.o:utils/utils.cpp
 	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
 	$(CXX) -MM -MT '$(OBJECT_DIR)/utils.o' $< > $(@:.o=.d)
 
-$(OBJECT_DIR)/driver.o:benchmarks/driver.cpp 
-	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
-	$(CXX) -MM -MT '$(OBJECT_DIR)/driver.o' $< > $(@:.o=.d)
-
 $(OBJECT_DIR)/slipbench.o:utils/slipbench.cpp 
 	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
 	$(CXX) -MM -MT '$(OBJECT_DIR)/slipbench.o' $< > $(@:.o=.d)
-
-bin/benchmark_driver:$(OBJECT_DIR)/driver.o $(LIBS)
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
 
 bin/slipbench:$(OBJECT_DIR)/slipbench.o 
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
