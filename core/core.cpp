@@ -21,14 +21,8 @@
 
  namespace x_lib {
   unsigned long configuration::cached_partitions = 0;
-  unsigned long configuration::partition_shift = 0;
   unsigned long configuration::tiles = 0;
-  unsigned long configuration::tile_shift = 0;
   unsigned long configuration::super_partitions = 0;
-  unsigned long configuration::super_partition_shift = 0;
-  unsigned long configuration::ext_mem_bits = 0;
-  unsigned long configuration::ext_fanout_bits = 0;
-  unsigned long map_spshift_wrap::map_spshift = 100;
 
   unsigned long **memory_buffer::aux_index = NULL;
   unsigned char *memory_buffer::aux_buffer = NULL;
