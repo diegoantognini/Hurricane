@@ -19,11 +19,9 @@
 #ifndef _DESC_UTILS_
 #define _DESC_UTILS_
 
-#include<string>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include "boost_log_wrapper.h"
-#include <zmq.h>
 
 extern boost::property_tree::ptree pt;
 extern boost::property_tree::ptree pt_slipstore;

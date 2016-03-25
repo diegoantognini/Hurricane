@@ -20,9 +20,7 @@
 #define _CLOCK_UTILS_
 
 #include "clock.hpp"
-#include<sys/time.h>
-#include "boost_log_wrapper.h"
-
+ 
 //! Real time clock
 class rtc_clock : public clock {
     unsigned long start_time;

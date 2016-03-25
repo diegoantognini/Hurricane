@@ -19,10 +19,8 @@
 #ifndef _CLOCK_GENERIC_
 #define _CLOCK_GENERIC_
 
-#include<sstream>
-#include<string>
-#include<iostream>
-#include<sys/time.h>
+#include <string>
+#include <sys/time.h>
 
 class clock {
 public:

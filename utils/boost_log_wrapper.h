@@ -20,10 +20,9 @@
 #ifndef _BOOST_LOG_WRAPPER_
 #define _BOOST_LOG_WRAPPER_
 
-#include<iostream>
-#include<string>
-#include<sstream>
-#include<boost/thread.hpp>
+#include <iostream>
+#include <sstream>
+#include <boost/thread.hpp>
 
 enum log_state {
     fatal = 0,
