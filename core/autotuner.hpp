@@ -42,7 +42,6 @@ namespace x_lib {
       unsigned long max_streams;
       unsigned long max_buffers;
       unsigned long memory_buffer_object_size;
-      unsigned long disk_stream_object_size;
 
       /* Dependent variables */
       static unsigned long cached_partitions;
@@ -90,15 +89,6 @@ namespace x_lib {
         while (temp) {
           ext_fanout_bits++;
           temp = temp >> 1;
-        }
-      }
-
-      unsigned long state_bufsize(unsigned long superp) {
-        if (superp == (super_partitions - 1)) {
-          return vertices * vertex_size - (superp * vertex_state_buffer_size);
-        }
-        else {
-          return vertex_state_buffer_size;
         }
       }
 
@@ -172,26 +162,6 @@ namespace x_lib {
         else {
           BOOST_LOG_TRIVIAL(info) << "SLIPSTREAM::EXT_MEM_SHUFFLE OFF";
         }
-      }
-
-      static unsigned long map_offset(unsigned long key) {
-        return key >> (super_partition_shift + partition_shift);
-      }
-
-      static unsigned long map_cached_partition(unsigned long key) {
-        return (key >> super_partition_shift) & (cached_partitions - 1);
-      }
-
-      static unsigned long map_super_partition(unsigned long key) {
-        return key & (super_partitions - 1);
-      }
-
-      static unsigned long map_inverse(unsigned long super_partition,
-                                       unsigned long partition,
-                                       unsigned long offset) {
-        return
-            (((offset << partition_shift) | partition) << super_partition_shift)
-            | super_partition;
       }
 
       void set_cache(unsigned long partitions) {
