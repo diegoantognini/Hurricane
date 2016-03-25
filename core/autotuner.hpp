@@ -19,15 +19,6 @@
 #ifndef _AUTOTUNER_
 #define _AUTOTUNER_
 
-#include "../utils/boost_log_wrapper.h"
-#include "../utils/memory_utils.h"
-#include "../utils/options_utils.h"
-#include "../utils/desc_utils.h"
-
-#define RAM_ADJUST (0.9)
-#define MIN(a, b) ((b) < (a) ? (b):(a))
-#define MAX(a, b) ((a) < (b) ? (b):(a))
-
 namespace x_lib {
   struct configuration {
       /* Independent variables */

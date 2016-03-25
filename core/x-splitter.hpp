@@ -19,11 +19,6 @@
 #ifndef _X_SPLITTER_
 #define _X_SPLITTER_
 
-#include "../slipstore/memory_buffer.hpp"
-#include<boost/assert.hpp>
-#include<boost/thread/mutex.hpp>
-#include<stdlib.h>
-
 namespace x_lib {
 
   struct __attribute__((__packed__)) filter_entry {
