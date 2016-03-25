@@ -27,8 +27,18 @@
 #include<boost/thread.hpp>
 #include "../utils/barrier.h"
 #include "../utils/per_cpu_data.hpp"
-#include "x-ingest.hpp"
 #include<sys/resource.h>
+
+#include<sys/types.h>
+#include<sys/shm.h>
+#include "../utils/boost_log_wrapper.h"
+
+struct ingest_t {
+    unsigned long max;
+    volatile unsigned long avail;
+    volatile bool eof;
+    unsigned char buffer[0];
+};
 
 #define OUTBUF_SIZE 8192
 namespace x_lib {

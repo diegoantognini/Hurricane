@@ -283,7 +283,7 @@ static void prealloc_file(int fd, unsigned long size) {
   if (size == 0) {
     return;
   }
-  int ret = posix_fallocate(fd, 0, size);
+  int ret = 0; // JUST TO COMPILE ON MAC TO TEST posix_fallocate(fd, 0, size);
   if (ret != 0) {
     BOOST_LOG_TRIVIAL(fatal) << " posix_fallocate failed:" <<
     strerror(ret);
