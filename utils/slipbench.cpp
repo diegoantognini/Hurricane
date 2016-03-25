@@ -19,9 +19,10 @@
 #include "../slipstore/interface.hpp"
 
 class null_barrier_work : public slipstore::barrier_work {
-public:
-    virtual void operator()() { }
-};
+  public:
+      virtual void operator()() {
+      }
+  };
 
 void control_barrier() {
   null_barrier_work null_obj;

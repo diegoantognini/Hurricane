@@ -70,28 +70,6 @@ namespace x_lib {
         }
       }
 
-      void prep_dq(unsigned long qid) {
-        work_q_visible[qid] = work_q[qid];
-      }
-
-      unsigned long dq(unsigned long qid) {
-        struct filter_entry *avail;
-        unsigned long to_steal_from = qid;
-        do {
-          while ((avail = work_q_visible[to_steal_from].work_q) != NULL) {
-            if (__sync_bool_compare_and_swap(&work_q_visible[to_steal_from].work_q,
-                                             avail, avail->next)) {
-              return avail - &work_items[0];
-            }
-          }
-          to_steal_from++;
-          if (to_steal_from == num_queues) {
-            to_steal_from = 0;
-          }
-        } while (to_steal_from != qid);
-        return ULONG_MAX; // No work
-      }
-
       void done(unsigned long qid) {
         filter_entry *head = work_q[qid].work_q;
         while (head != NULL) {

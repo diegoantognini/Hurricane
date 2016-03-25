@@ -96,22 +96,6 @@ namespace x_lib {
         return vertex_state_buffer_size;
       }
 
-      unsigned long state_count(unsigned long superp,
-                                unsigned long partition) {
-        unsigned long base = (partition << super_partition_shift) | superp;
-        unsigned long count = (vertices - 1) &
-                              ~((1UL << (partition_shift + super_partition_shift)) - 1);
-        BOOST_ASSERT_MSG((base & count) == 0, "Error in state count calculation");
-        if ((count | base) < vertices) {
-          count = count >> (partition_shift + super_partition_shift);
-        }
-        else {
-          count = (count >> (partition_shift + super_partition_shift)) - 1;
-        }
-        count++;
-        return count;
-      }
-
       unsigned long calculate_ram_budget() {
         unsigned long ram_budget = 0;
         // Loaded vertices
@@ -254,14 +238,6 @@ namespace x_lib {
         available_ram = vm["physical_memory"].as < unsigned
         long > ();
         tiles = 1;
-      }
-  };
-
-  class map_cached_partition_wrap {
-  public:
-      static unsigned long map(unsigned long key) {
-        return (key >> configuration::super_partition_shift) &
-               (configuration::cached_partitions - 1);
       }
   };
 

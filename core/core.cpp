@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#include<iostream>
-#include "x-lib.hpp"
+#include "../slipstore/memory_buffer.hpp"
+#include "autotuner.hpp"
 
  namespace x_lib {
   unsigned long configuration::cached_partitions = 0;
@@ -30,9 +30,6 @@
   unsigned long configuration::ext_fanout_bits = 0;
   unsigned long map_spshift_wrap::map_spshift = 100;
 
-  x_barrier *x_thread::sync;
-  volatile bool x_thread::terminate = false;
-  struct work_base *volatile x_thread::work_to_do = NULL;
   unsigned long **memory_buffer::aux_index = NULL;
   unsigned char *memory_buffer::aux_buffer = NULL;
   memory_buffer *volatile memory_buffer::freelist = NULL;
