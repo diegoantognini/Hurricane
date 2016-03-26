@@ -19,9 +19,7 @@
 #ifndef _STORE_IO_
 #define _STORE_IO_
 // Handle Slipstream Disk I/O
-#include <unistd.h>
-#include <sys/types.h>
-#include "checkpoints.hpp"
+#include <fcntl.h>
 #include "boost/multi_array.hpp"
 #include "../utils/memory_utils.h"
 #include "../utils/clock_utils.h"
@@ -217,12 +215,6 @@ namespace slipstore {
         slipstore_io_time.stop();
       }
 
-      unsigned long get_size(unsigned long stream,
-                             unsigned long partition,
-                             unsigned long tile) {
-        return buffers[stream][partition][tile]->size();
-      }
-
       unsigned long get_bytes_left(unsigned long stream,
                                    unsigned long partition,
                                    unsigned long tile) {
@@ -235,55 +227,6 @@ namespace slipstore {
         slipstore_io_time.start();
         buffers[stream][partition][tile]->trunc();
         slipstore_io_time.stop();
-      }
-
-      unsigned long snap_metadata_size() {
-        return streams * partitions * tiles * sizeof(fsnap);
-      }
-
-      void restore_snapshot(unsigned long snapshot_no,
-                            unsigned char *metadata) {
-        slipstore_snap_time.start();
-        if (fsnaps == NULL) {
-          fsnaps = new fsnap[streams * partitions * tiles];
-        }
-        memcpy(fsnaps, metadata, snap_metadata_size());
-        FOR_EACH_TILE
-              if (i == (index) STREAM_INPUT) {
-                continue;
-              }
-              buffers[i][j][k]->restore_snap
-                  (snapshot_no, &fsnaps[fsnap_index(i, j, k)]);
-        END_FOR_EACH_TILE
-        slipstore_snap_time.stop();
-      }
-
-      void delete_snapshot(unsigned long snapshot_no) {
-        slipstore_snap_time.start();
-        FOR_EACH_TILE
-              if (i == (index) STREAM_INPUT) {
-                continue;
-              }
-              buffers[i][j][k]->delete_snap(snapshot_no);
-        END_FOR_EACH_TILE
-        slipstore_snap_time.stop();
-      }
-
-      unsigned char *take_snapshot(unsigned long snapshot_no) {
-        slipstore_snap_time.start();
-        if (fsnaps == NULL) {
-          fsnaps = new fsnap[streams * partitions * tiles];
-        }
-        FOR_EACH_TILE
-              if (i == (index) STREAM_INPUT) {
-                continue;
-              }
-              buffers[i][j][k]->take_snap(snapshot_no,
-                                          &fsnaps[fsnap_index(i, j, k)]);
-        END_FOR_EACH_TILE
-        sync(); // Ensure hard links hit disk
-        slipstore_snap_time.stop();
-        return (unsigned char *) fsnaps;
       }
 
       // For running fill speed test
