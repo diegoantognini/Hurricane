@@ -20,14 +20,29 @@
 #define _SPLIT_STREAM_
 
 #include "interface.hpp"
-#include "../core/autotuner.hpp"
-#include "../core/x-splitter.hpp"
+#include "config.hpp"
+#include "x-splitter.hpp"
 #include "../utils/options_utils.h"
 #include "../utils/memory_utils.h"
 #include "../utils/barrier.h"
 #include <zlib.h>
 
 namespace x_lib {
+      struct configuration {
+      /* Independent variables */
+      unsigned long processors;
+
+      /* Dependent variables */
+      static unsigned long cached_partitions;
+      static unsigned long tiles;
+      unsigned long fanout;
+      static unsigned long super_partitions;
+  };
+  
+  unsigned long configuration::cached_partitions = 0;
+  unsigned long configuration::tiles = 0;
+  unsigned long configuration::super_partitions = 0;
+
   class buffer_manager;
 
   class memory_buffer {
@@ -522,6 +537,16 @@ namespace x_lib {
       }
   };
 
+  unsigned long **memory_buffer::aux_index = NULL;
+  unsigned char *memory_buffer::aux_buffer = NULL;
+  memory_buffer *volatile memory_buffer::freelist = NULL;
+  volatile unsigned long memory_buffer::freelist_lock = 0;
+
+  bool memory_buffer::use_qsort = false;
+  bool memory_buffer::do_batch_io = false;
+  bool memory_buffer::gather_io_drain = false;
+  unsigned long qsort_keys = 0;
+  
   template<typename T, typename M>
   static void make_index(memory_buffer *stream,
                          unsigned long processor_id,

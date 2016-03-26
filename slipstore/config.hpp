@@ -16,24 +16,10 @@
  * limitations under the License.
  */
 
+#ifndef _CONFIG_SLIPSTORE_
+#define _CONFIG_SLIPSTORE_
+
 #include "../slipstore/memory_buffer.hpp"
-#include "autotuner.hpp"
-
- namespace x_lib {
-  unsigned long configuration::cached_partitions = 0;
-  unsigned long configuration::tiles = 0;
-  unsigned long configuration::super_partitions = 0;
-
-  unsigned long **memory_buffer::aux_index = NULL;
-  unsigned char *memory_buffer::aux_buffer = NULL;
-  memory_buffer *volatile memory_buffer::freelist = NULL;
-  volatile unsigned long memory_buffer::freelist_lock = 0;
-
-  bool memory_buffer::use_qsort = false;
-  bool memory_buffer::do_batch_io = false;
-  bool memory_buffer::gather_io_drain = false;
-  unsigned long qsort_keys = 0;
-}
 
 namespace slipstore {
   slipstore::client_fill *slipstore_client_fill = NULL;
@@ -56,3 +42,5 @@ namespace slipstore {
   boost::asio::io_service::work dio_work(dioService);
   boost::thread_group diopool;
 };
+
+#endif

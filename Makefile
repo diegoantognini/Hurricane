@@ -1,6 +1,6 @@
 OBJECT_DIR= object_files
 UTILS_SRC= utils.o
-LIBS_SRC= core.o $(UTILS_SRC)
+LIBS_SRC= $(UTILS_SRC)
 LIBS= $(addprefix $(OBJECT_DIR)/, $(LIBS_SRC))
 UTILS= $(addprefix $(OBJECT_DIR)/, $(UTILS_SRC))
 PROGS_SRC= driver.o 
@@ -41,10 +41,6 @@ SYSLIBS += -llapack
 #CXXFLAGS += -DFLUSH_PERIODIC
 
 -include $(LIBS:.o=.d) $(PROGS:.o=.d) 
-
-$(OBJECT_DIR)/core.o:core/core.cpp 
-	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
-	$(CXX) -MM -MT '$(OBJECT_DIR)/core.o' $< > $(@:.o=.d)
 
 $(OBJECT_DIR)/utils.o:utils/utils.cpp 
 	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<

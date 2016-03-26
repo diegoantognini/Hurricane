@@ -17,7 +17,8 @@
  */
 
 #include "../slipstore/interface.hpp"
-
+#include "../slipstore/config.hpp"
+ 
 class null_barrier_work : public slipstore::barrier_work {
   public:
       virtual void operator()() {
