@@ -19,8 +19,6 @@
 #ifndef _CONFIG_SLIPSTORE_
 #define _CONFIG_SLIPSTORE_
 
-#include "memory_buffer.hpp"
-
 namespace slipstore {
   slipstore::client_fill *slipstore_client_fill = NULL;
   slipstore::client_drain *slipstore_client_drain = NULL;
