@@ -20,6 +20,7 @@
 #define _ASYNC_DIRECT_IO_
 
 #include <boost/asio/io_service.hpp>
+#include "generic_io.hpp"
 #include "dio_buffer.hpp"
 
 namespace slipstore {
@@ -166,6 +167,51 @@ namespace slipstore {
         usage -= data_bytes;
         seen_bytes = 0;
         data_bytes = 0;
+      }
+
+      virtual void take_snap(unsigned long no, fsnap *meta) {
+        char new_name[200];
+        while (iobuf->get_busy());
+        iobuf->flush();
+        sprintf(new_name, "snap_%lu_", no);
+        strcat(new_name, name);
+        int ret = link(name, new_name);
+        if (ret < 0) {
+          BOOST_LOG_TRIVIAL(fatal) << "Unable to create snap link"
+          << strerror(errno);
+          exit(-1);
+        }
+        snapped = true;
+        meta->pos = seen_bytes;
+        meta->size = data_bytes;
+      }
+
+      virtual void restore_snap(unsigned long no,
+                                fsnap *meta) {
+        char snap_name[200];
+        close(fd);
+        unlink_file(name);
+        sprintf(snap_name, "snap_%lu_", no);
+        strcat(snap_name, name);
+        int ret = link(snap_name, name);
+        if (ret < 0) {
+          BOOST_LOG_TRIVIAL(fatal) << "Unable to create snap link"
+          << strerror(errno);
+          exit(-1);
+        }
+        fd = open(name, O_RDWR | O_LARGEFILE | O_DIRECT);
+        truncate_file_to_size(fd, meta->size);
+        data_bytes = meta->size;
+        set_filepos(fd, meta->pos);
+        seen_bytes = meta->pos;
+        snapped = true;
+      }
+
+      virtual void delete_snap(unsigned long no) {
+        char snap_name[200];
+        sprintf(snap_name, "snap_%lu_", no);
+        strcat(snap_name, name);
+        unlink_file(snap_name);
       }
 
       virtual ~async_direct_io() {
