@@ -3,7 +3,7 @@ UTILS_SRC= utils.o
 LIBS_SRC= $(UTILS_SRC)
 LIBS= $(addprefix $(OBJECT_DIR)/, $(LIBS_SRC))
 UTILS= $(addprefix $(OBJECT_DIR)/, $(UTILS_SRC))
-PROGS_SRC= driver.o 
+PROGS_SRC= 
 PROGS= $(addprefix $(OBJECT_DIR)/, $(PROGS_SRC))
 TARGETS= bin/slipbench
 

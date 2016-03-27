@@ -20,7 +20,8 @@
 #define _MEMORY_UTILS_
 
 #include <sys/mman.h>
-
+#include "boost_log_wrapper.h"
+ 
 extern unsigned long stat_bytes_read;
 extern unsigned long stat_bytes_written;
 
