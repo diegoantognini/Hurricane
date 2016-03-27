@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef _GENERIC_IO_
-#define _GENERIC_IO_
+#ifndef _SLIPSTORE_IO_
+#define _SLIPSTORE_IO_
 namespace slipstore {
 
   struct fsnap {

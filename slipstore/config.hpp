@@ -19,7 +19,7 @@
 #ifndef _CONFIG_SLIPSTORE_
 #define _CONFIG_SLIPSTORE_
 
-#include "../slipstore/memory_buffer.hpp"
+#include "memory_buffer.hpp"
 
 namespace slipstore {
   slipstore::client_fill *slipstore_client_fill = NULL;

@@ -21,10 +21,9 @@
 // Handle Slipstream Disk I/O
 #include <unistd.h>
 #include <sys/types.h>
-#include "checkpoints.hpp"
 #include "boost/multi_array.hpp"
-#include "../utils/memory_utils.h"
-#include "../utils/clock_utils.h"
+#include "../../utils/memory_utils.h"
+#include "../../utils/clock_utils.h"
 #include "sync_pagecache_io.hpp"
 #include "async_direct_io.hpp"
 #include "dummy_io.hpp"

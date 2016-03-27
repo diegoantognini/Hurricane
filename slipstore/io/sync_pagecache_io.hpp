@@ -16,13 +16,14 @@
  * limitations under the License.
  */
 
-#ifndef _DUMMY_IO_
-#define _DUMMY_IO_
+#ifndef _SYNC_PAGECACHE_IO_
+#define _SYNC_PAGECACHE_IO_
 
-#include "generic_io.hpp"
+#include "slipstore_io.hpp"
+#include <fcntl.h> 
 
 namespace slipstore {
-  class dummy_io : public slipstore_io {
+  class sync_pagecache_io : public slipstore_io {
       unsigned long stream;
       unsigned long partition;
       unsigned long tile;
@@ -32,10 +33,10 @@ namespace slipstore {
       int fd;
       bool snapped;
   public:
-      dummy_io(unsigned long stream_in,
-               unsigned long partition_in,
-               unsigned long tile_in,
-               const char *name_in = NULL)
+      sync_pagecache_io(unsigned long stream_in,
+                        unsigned long partition_in,
+                        unsigned long tile_in,
+                        const char *name_in = NULL)
           : stream(stream_in),
             partition(partition_in),
             tile(tile_in),
@@ -58,10 +59,6 @@ namespace slipstore {
         posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
       }
 
-      void force_file_size(unsigned long size) {
-        data_bytes = size;
-      }
-
       virtual unsigned long fill(unsigned char *buffer,
                                  unsigned long size) {
         unsigned long remaining_bytes = data_bytes - seen_bytes;
@@ -69,8 +66,7 @@ namespace slipstore {
           size = remaining_bytes;
         }
         seen_bytes += size;
-        // Dont actually do the I/O
-        //read_from_file(fd, buffer, size);
+        read_from_file(fd, buffer, size);
         return size;
       }
 
@@ -85,16 +81,14 @@ namespace slipstore {
           size = remaining_bytes;
         }
         seen_bytes += size;
-        // Dont actually do the I/O
-        //read_from_file(fd, buffer, size);
+        read_from_file(fd, buffer, size);
         return size;
       }
 
       virtual void drain(unsigned char *buffer,
                          unsigned long size) {
         seen_bytes += size;
-        // Don't actually do the IO
-        //write_to_file(fd, buffer, size);
+        write_to_file(fd, buffer, size);
 #ifdef FLUSH_PERIODIC
         if(((data_bytes + size)/(4*1024*1024)) !=
      (data_bytes/(4*1024*1024))) {
@@ -189,7 +183,7 @@ namespace slipstore {
         unlink_file(snap_name);
       }
 
-      virtual ~dummy_io() {
+      virtual ~sync_pagecache_io() {
         close(fd);
       }
   };

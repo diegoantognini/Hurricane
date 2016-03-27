@@ -19,7 +19,7 @@
 #ifndef _DIO_BUFFER_
 #define _DIO_BUFFER_
 
-#include "../utils/memory_utils.h"
+#include "../../utils/memory_utils.h"
 
 // Direct I/O buffer
 class dio_buffer {

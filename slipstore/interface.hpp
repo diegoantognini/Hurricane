@@ -21,7 +21,7 @@
 
 #include "../utils/desc_utils.h"
 #include "../utils/options_utils.h"
-#include "io.hpp"
+#include "io/io.hpp"
 #include <boost/random.hpp>
 #include <boost/thread.hpp>
 #include <zmq.h>

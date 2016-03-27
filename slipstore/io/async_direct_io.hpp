@@ -16,13 +16,18 @@
  * limitations under the License.
  */
 
-#ifndef _SYNC_PAGECACHE_IO_
-#define _SYNC_PAGECACHE_IO_
+#ifndef _ASYNC_DIRECT_IO_
+#define _ASYNC_DIRECT_IO_
 
-#include "generic_io.hpp"
+#include <boost/asio/io_service.hpp>
+#include "slipstore_io.hpp"
+#include "dio_buffer.hpp"
 
 namespace slipstore {
-  class sync_pagecache_io : public slipstore_io {
+  extern boost::asio::io_service dioService;
+  extern boost::thread_group diopool;
+
+  class async_direct_io : public slipstore_io {
       unsigned long stream;
       unsigned long partition;
       unsigned long tile;
@@ -31,11 +36,13 @@ namespace slipstore {
       char name[100];
       int fd;
       bool snapped;
+      dio_buffer *iobuf;
   public:
-      sync_pagecache_io(unsigned long stream_in,
-                        unsigned long partition_in,
-                        unsigned long tile_in,
-                        const char *name_in = NULL)
+      async_direct_io(unsigned long stream_in,
+                      unsigned long partition_in,
+                      unsigned long tile_in,
+                      unsigned long dio_unit,
+                      const char *name_in = NULL)
           : stream(stream_in),
             partition(partition_in),
             tile(tile_in),
@@ -43,7 +50,7 @@ namespace slipstore {
             snapped(false) {
         if (name_in != NULL) {
           strcpy(name, name_in);
-          fd = open(name, O_RDWR | O_LARGEFILE, S_IRWXU);
+          fd = open(name, O_RDWR | O_LARGEFILE | O_DIRECT, S_IRWXU);
           data_bytes = get_file_size(fd);
         }
         else {
@@ -51,11 +58,11 @@ namespace slipstore {
           // This prevents us from over writing any snapshots
           unlink_file(name);
           fd = open(name,
-                    O_RDWR | O_LARGEFILE | O_CREAT | O_TRUNC,
+                    O_RDWR | O_LARGEFILE | O_CREAT | O_TRUNC | O_DIRECT,
                     S_IRWXU);
           data_bytes = 0;
         }
-        posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+        iobuf = new dio_buffer(fd, dio_unit);
       }
 
       virtual unsigned long fill(unsigned char *buffer,
@@ -65,7 +72,13 @@ namespace slipstore {
           size = remaining_bytes;
         }
         seen_bytes += size;
-        read_from_file(fd, buffer, size);
+        while (iobuf->get_busy());
+        iobuf->set_busy();
+        slipstore::dioService.post(boost::bind(&dio_buffer::read,
+                                               iobuf,
+                                               buffer,
+                                               size));
+        while (iobuf->get_busy());
         return size;
       }
 
@@ -73,27 +86,37 @@ namespace slipstore {
                                           unsigned long offset,
                                           unsigned long size) {
         unsigned long remaining_bytes;
-        set_filepos(fd, offset);
+        while (iobuf->get_busy());
+        iobuf->set_busy();
+        slipstore::dioService.post(boost::bind(&dio_buffer::seek,
+                                               iobuf,
+                                               offset));
+        while (iobuf->get_busy());
         seen_bytes = offset;
         remaining_bytes = data_bytes - seen_bytes;
         if (size > remaining_bytes) {
           size = remaining_bytes;
         }
         seen_bytes += size;
-        read_from_file(fd, buffer, size);
+        iobuf->set_busy();
+        slipstore::dioService.post(boost::bind(&dio_buffer::read,
+                                               iobuf,
+                                               buffer,
+                                               size));
+        while (iobuf->get_busy());
         return size;
       }
 
       virtual void drain(unsigned char *buffer,
                          unsigned long size) {
         seen_bytes += size;
-        write_to_file(fd, buffer, size);
-#ifdef FLUSH_PERIODIC
-        if(((data_bytes + size)/(4*1024*1024)) !=
-     (data_bytes/(4*1024*1024))) {
-    fdatasync(fd);
-        }
-#endif
+        while (iobuf->get_busy());
+        iobuf->set_busy();
+        slipstore::dioService.post(boost::bind(&dio_buffer::write,
+                                               iobuf,
+                                               buffer,
+                                               size));
+        while (iobuf->get_busy());
         data_bytes += size;
         usage += size;
         if (usage > max_quota_usage) {
@@ -114,11 +137,21 @@ namespace slipstore {
       }
 
       virtual void rewind() {
+        while (iobuf->get_busy());
+        iobuf->set_busy();
+        slipstore::dioService.post(boost::bind(&dio_buffer::flush,
+                                               iobuf));
+        while (iobuf->get_busy());
         rewind_file(fd);
         seen_bytes = 0;
       }
 
       virtual void trunc() {
+        while (iobuf->get_busy());
+        iobuf->set_busy();
+        slipstore::dioService.post(boost::bind(&dio_buffer::flush,
+                                               iobuf));
+        while (iobuf->get_busy());
         if (!snapped) {
           rewind_file(fd);
           truncate_file(fd);
@@ -127,9 +160,8 @@ namespace slipstore {
           close(fd);
           unlink_file(name);
           fd = open(name,
-                    O_RDWR | O_LARGEFILE | O_CREAT | O_TRUNC,
+                    O_RDWR | O_LARGEFILE | O_CREAT | O_TRUNC | O_DIRECT,
                     S_IRWXU);
-          posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
           snapped = false;
         }
         usage -= data_bytes;
@@ -139,7 +171,8 @@ namespace slipstore {
 
       virtual void take_snap(unsigned long no, fsnap *meta) {
         char new_name[200];
-        fsync(fd);
+        while (iobuf->get_busy());
+        iobuf->flush();
         sprintf(new_name, "snap_%lu_", no);
         strcat(new_name, name);
         int ret = link(name, new_name);
@@ -166,8 +199,7 @@ namespace slipstore {
           << strerror(errno);
           exit(-1);
         }
-        fd = open(name, O_RDWR | O_LARGEFILE);
-        posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+        fd = open(name, O_RDWR | O_LARGEFILE | O_DIRECT);
         truncate_file_to_size(fd, meta->size);
         data_bytes = meta->size;
         set_filepos(fd, meta->pos);
@@ -182,7 +214,8 @@ namespace slipstore {
         unlink_file(snap_name);
       }
 
-      virtual ~sync_pagecache_io() {
+      virtual ~async_direct_io() {
+        delete iobuf;
         close(fd);
       }
   };
