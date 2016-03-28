@@ -42,20 +42,19 @@ namespace slipstore {
       }
 
       void flush_local_store() {
-      	// TODO
-        //slipstore_req_t req;
-        //req.cmd = CMD_NOP;
-        //// Issue request
-        //(void) do_zmq_send(socket_local_store,
-        //                   (unsigned char *) &req,
-        //                   sizeof(slipstore_req_t),
-        //                   "client barrier cmd out");
-        //// Get reply
-        //unsigned long rep;
-        //(void) do_zmq_recv(socket_local_store,
-        //                   (unsigned char *) &rep,
-        //                   sizeof(unsigned long),
-        //                   "client barrier rep in");
+      	slipstore_req_t req;
+        req.cmd = CMD_NOP;
+        // Issue request
+        (void) do_zmq_send(socket_local_store,
+                           (unsigned char *) &req,
+                           sizeof(slipstore_req_t),
+                           "client barrier cmd out");
+        // Get reply
+        unsigned long rep;
+        (void) do_zmq_recv(socket_local_store,
+                           (unsigned char *) &rep,
+                           sizeof(unsigned long),
+                           "client barrier rep in");
       }
 
   public:
