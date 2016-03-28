@@ -24,19 +24,15 @@
 #include "io/io.hpp"
 #include <boost/random.hpp>
 #include <boost/thread.hpp>
-#include <zmq.h>
-#include <netinet/ip.h>
 #include <boost/asio/io_service.hpp>
 #include <boost/bind.hpp>
 #include "helper/help_base.hpp"
 #include "helper/help_skip.hpp"
-#include "server/server.hpp"
-#include "server/server_async.hpp"
-#include "server/server_sync.hpp"
 #include "client/client_fill.hpp"
 #include "client/client_drain.hpp"
 #include "client/client_barrier.hpp"
-#include "busy_counter.hpp"
+#include "server/server_async.hpp"
+#include "server/server_sync.hpp"
 
 // Interface for the slipstorage service
 
@@ -44,268 +40,22 @@ namespace slipstore {
   extern void *zmq_context;
   extern void *zmq_context_data_out;
   extern void *zmq_context_data_in;
-  extern unsigned long baseport;
   extern boost::asio::io_service ioService;
   extern boost::thread_group threadpool;
   extern boost::asio::io_service dioService;
   extern boost::thread_group diopool;
 
-  const std::string protocol = "tcp";
-  const std::string separator = ":";
-
-  // Number of endpoints
-  static unsigned long endpoint_count(unsigned long machines) {
-    return machines + //server data in
-           machines + //client data in
-           1 + // server control
-           1;  // barrier
-  }
-
-  // Utility functions to generate endpoints for connections
-  static
-  std::string conn_server_data_endpoint(unsigned long mc_target,
-                                        unsigned long mc_source) {
-    std::stringstream name;
-    std::stringstream addr;
-    name << "machines.name" << mc_target;
-    if (mc_target == mc_source) {
-      addr << "ipc://server";
-    } else {
-      addr << protocol << "://";
-      addr << pt_slipstore.get<std::string>(name.str().c_str());
-      unsigned long machines = pt_slipstore.get < unsigned
-      long > ("machines.count");
-      unsigned long port = baseport + endpoint_count(machines) * mc_target +
-                           mc_source;
-      addr << separator << port;
-    }
-    return addr.str();
-  }
-
-  static
-  std::string conn_server_data_bindpoint(unsigned long mc_target,
-                                         unsigned long mc_source) {
-    std::stringstream name;
-    std::stringstream addr;
-    name << "machines.iface" << mc_target;
-    if (mc_target == mc_source) {
-      addr << "ipc://server";
-    } else {
-      addr << protocol << "://";
-      addr << pt_slipstore.get<std::string>(name.str().c_str());
-      unsigned long machines = pt_slipstore.get < unsigned
-      long > ("machines.count");
-      unsigned long port = baseport + endpoint_count(machines) * mc_target +
-                           mc_source;
-      addr << separator << port;
-    }
-    return addr.str();
-  }
-
-  static
-  std::string conn_client_data_endpoint(unsigned long mc_target,
-                                        unsigned long mc_source) {
-    std::stringstream name;
-    std::stringstream addr;
-    name << "machines.name" << mc_target;
-    if (mc_target == mc_source) {
-      addr << "ipc://client";
-    } else {
-      addr << protocol << "://";
-      addr << pt_slipstore.get<std::string>(name.str().c_str());
-      unsigned long machines = pt_slipstore.get < unsigned
-      long > ("machines.count");
-      unsigned long port = baseport + endpoint_count(machines) * mc_target +
-                           machines + mc_source;
-      addr << separator << port;
-    }
-    return addr.str();
-  }
-
-  static
-  std::string conn_client_data_bindpoint(unsigned long mc_target,
-                                         unsigned long mc_source) {
-    std::stringstream name;
-    std::stringstream addr;
-    name << "machines.iface" << mc_target;
-    if (mc_target == mc_source) {
-      addr << "ipc://client";
-    } else {
-      addr << protocol << "://";
-      addr << pt_slipstore.get<std::string>(name.str().c_str());
-      unsigned long machines = pt_slipstore.get < unsigned
-      long > ("machines.count");
-      unsigned long port = baseport + endpoint_count(machines) * mc_target +
-                           machines + mc_source;
-      addr << separator << port;
-    }
-    return addr.str();
-  }
-
-  static
-  std::string conn_server_control_endpoint(unsigned long mc_target) {
-    std::stringstream name;
-    std::stringstream addr;
-    name << "machines.name" << mc_target;
-    addr << protocol << "://";
-    addr << pt_slipstore.get<std::string>(name.str().c_str());
-    unsigned long machines = pt_slipstore.get < unsigned
-    long > ("machines.count");
-    unsigned long port = baseport + endpoint_count(machines) * mc_target +
-                         2 * machines;
-    addr << separator << port;
-    return addr.str();
-  }
-
-  static
-  std::string conn_server_control_bindpoint(unsigned long mc_target) {
-    std::stringstream name;
-    std::stringstream addr;
-    name << "machines.iface" << mc_target;
-    addr << protocol << "://";
-    addr << pt_slipstore.get<std::string>(name.str().c_str());
-    unsigned long machines = pt_slipstore.get < unsigned
-    long > ("machines.count");
-    unsigned long port = baseport + endpoint_count(machines) * mc_target +
-                         2 * machines;
-    addr << separator << port;
-    return addr.str();
-  }
-
-  static
-  std::string conn_client_barrier_endpoint(unsigned long mc_target) {
-    std::stringstream name;
-    std::stringstream addr;
-    name << "machines.name" << mc_target;
-    addr << protocol << "://";
-    addr << pt_slipstore.get<std::string>(name.str().c_str());
-    unsigned long machines = pt_slipstore.get < unsigned
-    long > ("machines.count");
-    unsigned long port = baseport + endpoint_count(machines) * mc_target +
-                         2 * machines + 1;
-    addr << separator << port;
-    return addr.str();
-  }
-
-  static
-  std::string conn_client_barrier_bindpoint(unsigned long mc_target) {
-    std::stringstream name;
-    std::stringstream addr;
-    name << "machines.iface" << mc_target;
-    addr << protocol << "://";
-    addr << pt_slipstore.get<std::string>(name.str().c_str());
-    unsigned long machines = pt_slipstore.get < unsigned
-    long > ("machines.count");
-    unsigned long port = baseport + endpoint_count(machines) * mc_target +
-                         2 * machines + 1;
-    addr << separator << port;
-    return addr.str();
-  }
-
-  static
-  void slipstore_bind_endpoint(void *socket, const char *endpoint) {
-    int rc = zmq_bind(socket, endpoint);
-    if (rc != 0) {
-      BOOST_LOG_TRIVIAL(fatal) <<
-      "SLIPSTORE::COMM Unable to setup listening socket at "
-      << endpoint;
-      perror("zmq_bind:");
-      exit(-1);
-    }
-    else {
-      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::COMM Listening at "
-      << endpoint;
-    }
-  }
-
-  static
-  void slipstore_connect_endpoint(void *socket, const char *endpoint) {
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::COMM Connecting to " <<
-    endpoint;
-    zmq_connect(socket, endpoint);
-  }
-
-  static
-  void slipstore_mark_low_latency(void *socket) {
-#ifdef LOW_LATENCY_CONTROL
-    int tos_value = IPTOS_LOWDELAY;
-    int ret = zmq_setsockopt(socket, ZMQ_TOS, &tos_value, sizeof(tos_value));
-    if(ret == -1) {
-      BOOST_LOG_TRIVIAL(warn) 
-  << "SLIPSTORE: Unable to make socket low latency: "
-  << strerror(errno);
-    }
-#endif
-  }
-
-  static
-  unsigned long do_zmq_send(void *socket,
-                            unsigned char *data,
-                            unsigned long size,
-                            const char *context) {
-    while (true) {
-      int rc = zmq_send(socket, data, size, 0);
-      if (rc == -1) {
-        if (errno != EAGAIN) {
-          BOOST_LOG_TRIVIAL(fatal) << "SLIPSTORE: Unable to transmit";
-          perror(context);
-          exit(-1);
-        }
-        // Retry
-      }
-      else {
-        break;
-      }
-    }
-    return size;
-  }
-
-  static
-  unsigned long do_zmq_recv(void *socket,
-                            unsigned char *data,
-                            unsigned long size,
-                            const char *context) {
-    int rc;
-    while (true) {
-      rc = zmq_recv(socket, data, size, 0);
-      if (rc == -1) {
-        if (errno != EAGAIN) {
-          BOOST_LOG_TRIVIAL(fatal) << "SLIPSTORE: Unable to receive";
-          perror(context);
-          exit(-1);
-        }
-        // Retry
-      }
-      else {
-        break;
-      }
-    }
-    return (unsigned long) rc;
-  }
-
-  static
-  unsigned long do_zmq_recv_noblock(void *socket,
-                                    unsigned char *data,
-                                    unsigned long size,
-                                    const char *context) {
-    int rc;
-    rc = zmq_recv(socket, data, size, ZMQ_NOBLOCK);
-
-    if (rc == -1 && errno != EAGAIN) {
-      BOOST_LOG_TRIVIAL(fatal) << "SLIPSTORE: Unable to receive";
-      perror(context);
-      exit(-1);
-    }
-    return (unsigned long) rc;
-  }
-
   extern busy_counter *have_outstanding_request;
+
+  class client_fill;
+  class client_drain;
+  class client_barrier;
 
   extern client_fill *slipstore_client_fill;
   extern client_drain *slipstore_client_drain;
-
   extern client_barrier *slipstore_client_barrier;
 
+  class server;
   extern server *slipstore_server;
   extern boost::thread *server_thread;
 
@@ -324,7 +74,6 @@ namespace slipstore {
     slipstore_client_drain = new client_drain();
     slipstore_client_barrier = new client_barrier();
     have_outstanding_request = new busy_counter();
-
     if (vm.count("use_async_server") > 0) {
       slipstore_server = new server_async(disks, tile_size, partitions);
       BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER ASYNC";
@@ -332,8 +81,7 @@ namespace slipstore {
       slipstore_server = new server_sync(disks, tile_size, partitions);
       BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER SYNC";
     }
-
-    // Launch server thread
+   // Launch server thread
     server_thread = new boost::thread(boost::ref(*slipstore_server));
     BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::MACHINES " <<
     slipstore_client_fill->get_machines();

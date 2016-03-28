@@ -1,8 +1,14 @@
 #ifndef _CLIENT_BARRIER_
 #define _CLIENT_BARRIER_
 
+#include "../../utils/conn_utils.h"
+#include "../../utils/slipstore_utils.h"
+#include "../../utils/zmq_utils.h"
+#include "../../utils/cyclic.hpp"
+
 namespace slipstore {
 	extern boost::asio::io_service ioService;
+  extern void *zmq_context;
 
 	class barrier_work {
   public:
@@ -20,20 +26,19 @@ namespace slipstore {
       unsigned long me;
 
       void setup_conn() {
-      	// TODO
-        //////////////////////////////////// Barrier sockets
-        //socket_barrier_out = zmq_socket(zmq_context, ZMQ_PUSH);
-        //unsigned long barrier_ring_next = (me + 1) % machines;
-        //slipstore_connect_endpoint(socket_barrier_out,
-        //                           conn_client_barrier_endpoint(barrier_ring_next).c_str());
-        //socket_barrier_in = zmq_socket(zmq_context, ZMQ_PULL);
-        //slipstore_bind_endpoint(socket_barrier_in,
-        //                        conn_client_barrier_bindpoint(me).c_str());
-        /////////////////////////////////// Connection to local store
-        //socket_local_store = zmq_socket(zmq_context, ZMQ_REQ);
-        //slipstore_mark_low_latency(socket_local_store);
-        //slipstore_connect_endpoint(socket_local_store,
-        //                           conn_server_control_endpoint(me).c_str());
+      	////////////////////////////////// Barrier sockets
+        socket_barrier_out = zmq_socket(zmq_context, ZMQ_PUSH);
+        unsigned long barrier_ring_next = (me + 1) % machines;
+        slipstore_connect_endpoint(socket_barrier_out,
+                                   conn_client_barrier_endpoint(barrier_ring_next).c_str());
+        socket_barrier_in = zmq_socket(zmq_context, ZMQ_PULL);
+        slipstore_bind_endpoint(socket_barrier_in,
+                                conn_client_barrier_bindpoint(me).c_str());
+        ///////////////////////////////// Connection to local store
+        socket_local_store = zmq_socket(zmq_context, ZMQ_REQ);
+        slipstore_mark_low_latency(socket_local_store);
+        slipstore_connect_endpoint(socket_local_store,
+                                   conn_server_control_endpoint(me).c_str());
       }
 
       void flush_local_store() {
@@ -97,75 +102,75 @@ namespace slipstore {
       void sync_barrier(client_barrier *sl_client, A *sync_obj);
 
       void work_barrier(barrier_work *work_object) {
-        //unsigned long token = 0xf141516182235UL;
-        //// Twice around the ring
-        //if (get_me() == 0) {
-        //  (void) do_zmq_send(socket_barrier_out,
-        //                     (unsigned char *) &token,
-        //                     sizeof(unsigned long),
-        //                     "barrier out");
-        //  (void) do_zmq_recv(socket_barrier_in,
-        //                     (unsigned char *) &token,
-        //                     sizeof(unsigned long),
-        //                     "barrier in");
-        //  // Everyone is here
-        //  // Flush the local store
-        //  flush_local_store();
-        //  // Do the work
-        //  (*work_object)();
-        //  (void) do_zmq_send(socket_barrier_out,
-        //                     (unsigned char *) &token,
-        //                     sizeof(unsigned long),
-        //                     "barrier out");
-        //  (void) do_zmq_recv(socket_barrier_in,
-        //                     (unsigned char *) &token,
-        //                     sizeof(unsigned long),
-        //                     "barrier in");
-        //  // Extra round to ensure that everyone has done the work
-        //  (void) do_zmq_send(socket_barrier_out,
-        //                     (unsigned char *) &token,
-        //                     sizeof(unsigned long),
-        //                     "barrier out");
-        //  (void) do_zmq_recv(socket_barrier_in,
-        //                     (unsigned char *) &token,
-        //                     sizeof(unsigned long),
-        //                     "barrier in");
-        //}
-        //else {
-        //  (void) do_zmq_recv(socket_barrier_in,
-        //                     (unsigned char *) &token,
-        //                     sizeof(unsigned long),
-        //                     "barrier in");
-        //  (void) do_zmq_send(socket_barrier_out,
-        //                     (unsigned char *) &token,
-        //                     sizeof(unsigned long),
-        //                     "barrier out");
-        //  (void) do_zmq_recv(socket_barrier_in,
-        //                     (unsigned char *) &token,
-        //                     sizeof(unsigned long),
-        //                     "barrier in");
-        //  // Everyone is here
-        //  // Flush the local store
-        //  flush_local_store();
-        //  // Do the work
-        //  (*work_object)();
-        //  (void) do_zmq_send(socket_barrier_out,
-        //                     (unsigned char *) &token,
-        //                     sizeof(unsigned long),
-        //                     "barrier out");
-        //  // Extra round to ensure that everyone has done the work
-        //  (void) do_zmq_recv(socket_barrier_in,
-        //                     (unsigned char *) &token,
-        //                     sizeof(unsigned long),
-        //                     "barrier in");
-        //  (void) do_zmq_send(socket_barrier_out,
-        //                     (unsigned char *) &token,
-        //                     sizeof(unsigned long),
-        //                     "barrier out");
-        //}
-        //// Everyone has done the work
-        //__sync_synchronize();
-        //in_progress = false;
+        unsigned long token = 0xf141516182235UL;
+        // Twice around the ring
+        if (get_me() == 0) {
+          (void) do_zmq_send(socket_barrier_out,
+                             (unsigned char *) &token,
+                             sizeof(unsigned long),
+                             "barrier out");
+          (void) do_zmq_recv(socket_barrier_in,
+                             (unsigned char *) &token,
+                             sizeof(unsigned long),
+                             "barrier in");
+          // Everyone is here
+          // Flush the local store
+          flush_local_store();
+          // Do the work
+          (*work_object)();
+          (void) do_zmq_send(socket_barrier_out,
+                             (unsigned char *) &token,
+                             sizeof(unsigned long),
+                             "barrier out");
+          (void) do_zmq_recv(socket_barrier_in,
+                             (unsigned char *) &token,
+                             sizeof(unsigned long),
+                             "barrier in");
+          // Extra round to ensure that everyone has done the work
+          (void) do_zmq_send(socket_barrier_out,
+                             (unsigned char *) &token,
+                             sizeof(unsigned long),
+                             "barrier out");
+          (void) do_zmq_recv(socket_barrier_in,
+                             (unsigned char *) &token,
+                             sizeof(unsigned long),
+                             "barrier in");
+        }
+        else {
+          (void) do_zmq_recv(socket_barrier_in,
+                             (unsigned char *) &token,
+                             sizeof(unsigned long),
+                             "barrier in");
+          (void) do_zmq_send(socket_barrier_out,
+                             (unsigned char *) &token,
+                             sizeof(unsigned long),
+                             "barrier out");
+          (void) do_zmq_recv(socket_barrier_in,
+                             (unsigned char *) &token,
+                             sizeof(unsigned long),
+                             "barrier in");
+          // Everyone is here
+          // Flush the local store
+          flush_local_store();
+          // Do the work
+          (*work_object)();
+          (void) do_zmq_send(socket_barrier_out,
+                             (unsigned char *) &token,
+                             sizeof(unsigned long),
+                             "barrier out");
+          // Extra round to ensure that everyone has done the work
+          (void) do_zmq_recv(socket_barrier_in,
+                             (unsigned char *) &token,
+                             sizeof(unsigned long),
+                             "barrier in");
+          (void) do_zmq_send(socket_barrier_out,
+                             (unsigned char *) &token,
+                             sizeof(unsigned long),
+                             "barrier out");
+        }
+        // Everyone has done the work
+        __sync_synchronize();
+        in_progress = false;
       }
   };
 

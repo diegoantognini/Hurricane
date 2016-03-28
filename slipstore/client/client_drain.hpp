@@ -1,7 +1,12 @@
 #ifndef _CLIENT_DRAIN_
 #define _CLIENT_DRAIN_
 
+#include "../../utils/zmq_utils.h"
+#include "../../utils/random_selector.hpp"
+
 namespace slipstore {
+	extern void *zmq_context_data_out;
+	
 	struct substream_tracker {
       // Buffer and index
       unsigned char *buffer;
@@ -94,22 +99,21 @@ namespace slipstore {
 	      unsigned long bytes_written;
 
 	      void setup_conn() {
-	      	// TODO
-	        ///////////////////////////////////// Command sockets
-	        //sockets_cmd_out = new void *[machines];
-	        //for (unsigned long i = 0; i < machines; i++) {
-	        //  sockets_cmd_out[i] = zmq_socket(zmq_context, ZMQ_REQ);
-	        //  slipstore_mark_low_latency(sockets_cmd_out[i]);
-	        //  slipstore_connect_endpoint(sockets_cmd_out[i],
-	        //                             conn_server_control_endpoint(i).c_str());
-	        //}
-	        //////////////////////////////////// Data sockets
-	        //sockets_data_out = new void *[machines];
-	        //for (unsigned long i = 0; i < machines; i++) {
-	        //  sockets_data_out[i] = zmq_socket(zmq_context_data_out, ZMQ_PUSH);
-	        //  slipstore_connect_endpoint(sockets_data_out[i],
-	        //                             conn_server_data_endpoint(i, me).c_str());
-	        //}
+	      	/////////////////////////////////// Command sockets
+	        sockets_cmd_out = new void *[machines];
+	        for (unsigned long i = 0; i < machines; i++) {
+	          sockets_cmd_out[i] = zmq_socket(zmq_context, ZMQ_REQ);
+	          slipstore_mark_low_latency(sockets_cmd_out[i]);
+	          slipstore_connect_endpoint(sockets_cmd_out[i],
+	                                     conn_server_control_endpoint(i).c_str());
+	        }
+	        ////////////////////////////////// Data sockets
+	        sockets_data_out = new void *[machines];
+	        for (unsigned long i = 0; i < machines; i++) {
+	          sockets_data_out[i] = zmq_socket(zmq_context_data_out, ZMQ_PUSH);
+	          slipstore_connect_endpoint(sockets_data_out[i],
+	                                     conn_server_data_endpoint(i, me).c_str());
+	        }
 	      }
 
 	  public:
@@ -174,57 +178,55 @@ namespace slipstore {
 	      bool access_store(slipstore_req_t *req,
 	                        unsigned char *buffer,
 	                        unsigned long mc = ULONG_MAX) {
-	      	// TODO
-	      	return false;
-	        //unsigned long trials;
-	        //if (mc != ULONG_MAX) {
-	        //  trials = machines - 1;
-	        //}
-	        //else {
-	        //  trials = 0; // try all machines
-	        //  mc = request_cycle->cyclic_next();
-	        //}
-	        //req->source_mc = me;
-	        //write_time.start();
-	        //have_outstanding_request->start();
-	        //do {
-	        //  // Issue request
-	        //  (void) do_zmq_send(sockets_cmd_out[mc],
-	        //                     (unsigned char *) req,
-	        //                     sizeof(slipstore_req_t),
-	        //                     "client cmd out");
-	        //  // Get reply
-	        //  unsigned long rep;
-	        //  (void) do_zmq_recv(sockets_cmd_out[mc],
-	        //                     (unsigned char *) &rep,
-	        //                     sizeof(unsigned long),
-	        //                     "client rep in");
-	        //  // If this was a terminate or nop command we are done
-	        //  if (req->cmd == CMD_TERMINATE ||
-	        //      req->cmd == CMD_NOP ||
-	        //      req->cmd == CMD_MEMREAD) {
-	        //    write_time.stop();
-	        //    have_outstanding_request->stop();
-	        //    return true;
-	        //  }
-	        //  BOOST_ASSERT_MSG(req->cmd == CMD_DRAIN,
-	        //                   "Non drain cmd to drain client");
-	        //  if (rep == RESP_ACK) {
-	        //    // Great, this machines agrees to serve
-	        //    bytes_written += req->size;
-	        //    (void) do_zmq_send(sockets_data_out[mc],
-	        //                       buffer,
-	        //                       req->size,
-	        //                       "client data out");
-	        //    write_time.stop();
-	        //    have_outstanding_request->stop();
-	        //    return true;
-	        //  }
-	        //  mc = request_cycle->cyclic_next();
-	        //} while ((++trials) < request_cycle->cycle_size());
-	        //write_time.stop();
-	        //have_outstanding_request->stop();
-	        //return false;
+	      	unsigned long trials;
+	        if (mc != ULONG_MAX) {
+	          trials = machines - 1;
+	        }
+	        else {
+	          trials = 0; // try all machines
+	          mc = request_cycle->cyclic_next();
+	        }
+	        req->source_mc = me;
+	        write_time.start();
+	        have_outstanding_request->start();
+	        do {
+	          // Issue request
+	          (void) do_zmq_send(sockets_cmd_out[mc],
+	                             (unsigned char *) req,
+	                             sizeof(slipstore_req_t),
+	                             "client cmd out");
+	          // Get reply
+	          unsigned long rep;
+	          (void) do_zmq_recv(sockets_cmd_out[mc],
+	                             (unsigned char *) &rep,
+	                             sizeof(unsigned long),
+	                             "client rep in");
+	          // If this was a terminate or nop command we are done
+	          if (req->cmd == CMD_TERMINATE ||
+	              req->cmd == CMD_NOP ||
+	              req->cmd == CMD_MEMREAD) {
+	            write_time.stop();
+	            have_outstanding_request->stop();
+	            return true;
+	          }
+	          BOOST_ASSERT_MSG(req->cmd == CMD_DRAIN,
+	                           "Non drain cmd to drain client");
+	          if (rep == RESP_ACK) {
+	            // Great, this machines agrees to serve
+	            bytes_written += req->size;
+	            (void) do_zmq_send(sockets_data_out[mc],
+	                               buffer,
+	                               req->size,
+	                               "client data out");
+	            write_time.stop();
+	            have_outstanding_request->stop();
+	            return true;
+	          }
+	          mc = request_cycle->cyclic_next();
+	        } while ((++trials) < request_cycle->cycle_size());
+	        write_time.stop();
+	        have_outstanding_request->stop();
+	        return false;
 	      }
 
 	      // Client: execute a data transfer command
@@ -232,169 +234,165 @@ namespace slipstore {
 	                                       unsigned char *buffer,
 	                                       unsigned long chunksize,
 	                                       unsigned long bufsize) {
-	      	// TODO
-	      	return 0;
-	        //unsigned long offset = 0;
-	        //unsigned long outstanding = 0;
-	        //slipstore_req_t saved_req;
-	        //req->source_mc = me;
-	        //memcpy(&saved_req, req, sizeof(slipstore_req_t));
-	        //bytes_written += bufsize;
-	        //write_time.start();
-	        //have_outstanding_request->start();
-	        //bool do_polling = (vm.count("polling_client") > 0);
-	        //do {
-	        //  if (outstanding == batch_size) {
-	        //    if (!do_polling) {
-	        //      // Poll here
-	        //      zmq_pollitem_t items[batch_size];
-	        //      for (unsigned long i = 0; i < batch_size; i++) {
-	        //        items[i].socket = sockets_cmd_out[window_mc[i]];
-	        //        items[i].events = ZMQ_POLLIN;
-	        //      }
-	        //      (void) zmq_poll(items, batch_size, -1);
-	        //    }
-	        //  }
-	        //  // Can do some work
-	        //  for (unsigned long i = 0; i < batch_size; i++) {
-	        //    //Complete request
-	        //    if (window_mc[i] != ULONG_MAX) {
-	        //      unsigned long rep;
-	        //      long rc = do_zmq_recv_noblock(sockets_cmd_out[window_mc[i]],
-	        //                                    (unsigned char *) &rep,
-	        //                                    sizeof(unsigned long),
-	        //                                    "client rep in");
-	        //      if (rc >= 0) {
-	        //        if (rep == RESP_ACK) {
-	        //          // Complete drain
-	        //          (void) do_zmq_send(sockets_data_out[window_mc[i]],
-	        //                             buffer + offset,
-	        //                             size_mc[i],
-	        //                             "client data out");
-	        //          server_selector->deselect(window_mc[i]);
-	        //          offset += size_mc[i];
-	        //        }
-	        //        else {
-	        //          bufsize += size_mc[i];
-	        //        }
-	        //        outstanding--;
-	        //        window_mc[i] = ULONG_MAX;
-	        //      }
-	        //    }
-	        //    //Make request
-	        //    if (window_mc[i] == ULONG_MAX && bufsize > 0) {
-	        //      // Issue request
-	        //      window_mc[i] = server_selector->select();
-	        //      if (window_mc[i] != ULONG_MAX) {
-	        //        memcpy(req, &saved_req, sizeof(slipstore_req_t));
-	        //        if (chunksize > bufsize) {
-	        //          req->size = bufsize;
-	        //        }
-	        //        else {
-	        //          req->size = chunksize;
-	        //        }
-	        //        size_mc[i] = req->size;
-	        //        bufsize -= size_mc[i];
-	        //        (void) do_zmq_send(sockets_cmd_out[window_mc[i]],
-	        //                           (unsigned char *) req,
-	        //                           sizeof(slipstore_req_t),
-	        //                           "client cmd out");
-	        //        outstanding++;
-	        //      }
-	        //    }
-	        //  }
-	        //} while (outstanding > 0);
-	        //server_selector->deselect_all();
-	        //write_time.stop();
-	        //have_outstanding_request->stop();
-	        //bytes_written -= bufsize;
-	        //return bufsize;
+	      	unsigned long offset = 0;
+	        unsigned long outstanding = 0;
+	        slipstore_req_t saved_req;
+	        req->source_mc = me;
+	        memcpy(&saved_req, req, sizeof(slipstore_req_t));
+	        bytes_written += bufsize;
+	        write_time.start();
+	        have_outstanding_request->start();
+	        bool do_polling = (vm.count("polling_client") > 0);
+	        do {
+	          if (outstanding == batch_size) {
+	            if (!do_polling) {
+	              // Poll here
+	              zmq_pollitem_t items[batch_size];
+	              for (unsigned long i = 0; i < batch_size; i++) {
+	                items[i].socket = sockets_cmd_out[window_mc[i]];
+	                items[i].events = ZMQ_POLLIN;
+	              }
+	              (void) zmq_poll(items, batch_size, -1);
+	            }
+	          }
+	          // Can do some work
+	          for (unsigned long i = 0; i < batch_size; i++) {
+	            //Complete request
+	            if (window_mc[i] != ULONG_MAX) {
+	              unsigned long rep;
+	              long rc = do_zmq_recv_noblock(sockets_cmd_out[window_mc[i]],
+	                                            (unsigned char *) &rep,
+	                                            sizeof(unsigned long),
+	                                            "client rep in");
+	              if (rc >= 0) {
+	                if (rep == RESP_ACK) {
+	                  // Complete drain
+	                  (void) do_zmq_send(sockets_data_out[window_mc[i]],
+	                                     buffer + offset,
+	                                     size_mc[i],
+	                                     "client data out");
+	                  server_selector->deselect(window_mc[i]);
+	                  offset += size_mc[i];
+	                }
+	                else {
+	                  bufsize += size_mc[i];
+	                }
+	                outstanding--;
+	                window_mc[i] = ULONG_MAX;
+	              }
+	            }
+	            //Make request
+	            if (window_mc[i] == ULONG_MAX && bufsize > 0) {
+	              // Issue request
+	              window_mc[i] = server_selector->select();
+	              if (window_mc[i] != ULONG_MAX) {
+	                memcpy(req, &saved_req, sizeof(slipstore_req_t));
+	                if (chunksize > bufsize) {
+	                  req->size = bufsize;
+	                }
+	                else {
+	                  req->size = chunksize;
+	                }
+	                size_mc[i] = req->size;
+	                bufsize -= size_mc[i];
+	                (void) do_zmq_send(sockets_cmd_out[window_mc[i]],
+	                                   (unsigned char *) req,
+	                                   sizeof(slipstore_req_t),
+	                                   "client cmd out");
+	                outstanding++;
+	              }
+	            }
+	          }
+	        } while (outstanding > 0);
+	        server_selector->deselect_all();
+	        write_time.stop();
+	        have_outstanding_request->stop();
+	        bytes_written -= bufsize;
+	        return bufsize;
 	      }
 
 	      // Client: execute a data transfer command
 	      bool batch_access_store_gather_io(substream_tracker *subtracker,
 	                                        unsigned long stream,
 	                                        unsigned long chunksize) {
-	      	// TODO
-	      	return false;
-	        //unsigned long outstanding = 0;
-	        //unsigned long retry_outstanding = 0;
-	        //write_time.start();
-	        //have_outstanding_request->start();
-	        //bool do_polling = (vm.count("polling_client") > 0);
-	        //do {
-	        //  if (outstanding == batch_size) {
-	        //    if (!do_polling) {
-	        //      // Poll here
-	        //      zmq_pollitem_t items[batch_size];
-	        //      for (unsigned long i = 0; i < batch_size; i++) {
-	        //        items[i].socket = sockets_cmd_out[window_mc[i]];
-	        //        items[i].events = ZMQ_POLLIN;
-	        //      }
-	        //      (void) zmq_poll(items, batch_size, -1);
-	        //    }
-	        //  }
-	        //  // Can do some work
-	        //  for (unsigned long i = 0; i < batch_size; i++) {
-	        //    //Complete request
-	        //    if (window_mc[i] != ULONG_MAX) {
-	        //      unsigned long rep;
-	        //      long rc = do_zmq_recv_noblock(sockets_cmd_out[window_mc[i]],
-	        //                                    (unsigned char *) &rep,
-	        //                                    sizeof(unsigned long),
-	        //                                    "client rep in");
-	        //      if (rc >= 0) {
-	        //        if (rep == RESP_ACK) {
-	        //          // Complete drain
-	        //          (void) do_zmq_send(sockets_data_out[window_mc[i]],
-	        //                             buf_mc[i],
-	        //                             req_mc[i].size,
-	        //                             "client data out");
-	        //          server_selector->deselect(window_mc[i]);
-	        //          window_mc[i] = ULONG_MAX;
-	        //          outstanding--;
-	        //        }
-	        //        else {
-	        //          window_mc[i] = ULONG_MAX;
-	        //          retry_mc[i] = true;
-	        //          retry_outstanding++;
-	        //        }
-	        //      }
-	        //    }
-	        //    //Make request
-	        //    if (window_mc[i] == ULONG_MAX && server_selector->have_options()) {
-	        //      // Issue request
-	        //      if (!retry_mc[i]) {
-	        //        subtracker->next_io(stream, &req_mc[i], buf_mc[i], chunksize);
-	        //      }
-	        //      if (req_mc[i].size != 0) {
-	        //        window_mc[i] = server_selector->select();
-	        //        req_mc[i].source_mc = me;
-	        //        (void) do_zmq_send(sockets_cmd_out[window_mc[i]],
-	        //                           (unsigned char *) &req_mc[i],
-	        //                           sizeof(slipstore_req_t),
-	        //                           "client cmd out");
-	        //        if (!retry_mc[i]) {
-	        //          outstanding++;
-	        //        }
-	        //        else {
-	        //          retry_mc[i] = false;
-	        //          retry_outstanding--;
-	        //        }
-	        //      }
-	        //    }
-	        //    if (retry_outstanding == outstanding &&
-	        //        retry_outstanding != 0 &&
-	        //        !server_selector->have_options()) {
-	        //      // Out of space !!!
-	        //      return false;
-	        //    }
-	        //  }
-	        //} while (outstanding > 0);
-	        //server_selector->deselect_all();
-	        //write_time.stop();
-	        //have_outstanding_request->stop();
-	        //return true;
+	      	unsigned long outstanding = 0;
+	        unsigned long retry_outstanding = 0;
+	        write_time.start();
+	        have_outstanding_request->start();
+	        bool do_polling = (vm.count("polling_client") > 0);
+	        do {
+	          if (outstanding == batch_size) {
+	            if (!do_polling) {
+	              // Poll here
+	              zmq_pollitem_t items[batch_size];
+	              for (unsigned long i = 0; i < batch_size; i++) {
+	                items[i].socket = sockets_cmd_out[window_mc[i]];
+	                items[i].events = ZMQ_POLLIN;
+	              }
+	              (void) zmq_poll(items, batch_size, -1);
+	            }
+	          }
+	          // Can do some work
+	          for (unsigned long i = 0; i < batch_size; i++) {
+	            //Complete request
+	            if (window_mc[i] != ULONG_MAX) {
+	              unsigned long rep;
+	              long rc = do_zmq_recv_noblock(sockets_cmd_out[window_mc[i]],
+	                                            (unsigned char *) &rep,
+	                                            sizeof(unsigned long),
+	                                            "client rep in");
+	              if (rc >= 0) {
+	                if (rep == RESP_ACK) {
+	                  // Complete drain
+	                  (void) do_zmq_send(sockets_data_out[window_mc[i]],
+	                                     buf_mc[i],
+	                                     req_mc[i].size,
+	                                     "client data out");
+	                  server_selector->deselect(window_mc[i]);
+	                  window_mc[i] = ULONG_MAX;
+	                  outstanding--;
+	                }
+	                else {
+	                  window_mc[i] = ULONG_MAX;
+	                  retry_mc[i] = true;
+	                  retry_outstanding++;
+	                }
+	              }
+	            }
+	            //Make request
+	            if (window_mc[i] == ULONG_MAX && server_selector->have_options()) {
+	              // Issue request
+	              if (!retry_mc[i]) {
+	                subtracker->next_io(stream, &req_mc[i], buf_mc[i], chunksize);
+	              }
+	              if (req_mc[i].size != 0) {
+	                window_mc[i] = server_selector->select();
+	                req_mc[i].source_mc = me;
+	                (void) do_zmq_send(sockets_cmd_out[window_mc[i]],
+	                                   (unsigned char *) &req_mc[i],
+	                                   sizeof(slipstore_req_t),
+	                                   "client cmd out");
+	                if (!retry_mc[i]) {
+	                  outstanding++;
+	                }
+	                else {
+	                  retry_mc[i] = false;
+	                  retry_outstanding--;
+	                }
+	              }
+	            }
+	            if (retry_outstanding == outstanding &&
+	                retry_outstanding != 0 &&
+	                !server_selector->have_options()) {
+	              // Out of space !!!
+	              return false;
+	            }
+	          }
+	        } while (outstanding > 0);
+	        server_selector->deselect_all();
+	        write_time.stop();
+	        have_outstanding_request->stop();
+	        return true;
 	      }
 
 

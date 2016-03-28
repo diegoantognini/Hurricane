@@ -3,7 +3,7 @@
 
 #include "help_base.hpp"
 #include "help_heuristic.hpp"
-#include "../cyclic.hpp"
+#include "../../utils/cyclic.hpp"
 
 namespace slipstore {
 	class help_skip : public help_base {

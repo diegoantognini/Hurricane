@@ -20,7 +20,10 @@
 #define _CONFIG_SLIPSTORE_
 
 #include "interface.hpp"
-
+#include "client/client_fill.hpp"
+#include "client/client_drain.hpp"
+#include "client/client_barrier.hpp"
+ 
 namespace slipstore {
   client_fill *slipstore_client_fill = NULL;
   client_drain *slipstore_client_drain = NULL;

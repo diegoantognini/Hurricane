@@ -1,7 +1,6 @@
 #ifndef _SERVER_
 #define _SERVER_
 
-#include <zmq.h>
 #include "../interface.hpp"
 #include "../io/io.hpp"
 #include "../helper/help_base.hpp"
