@@ -51,13 +51,6 @@ namespace slipstore {
 
       virtual void trunc() = 0;
 
-      virtual void take_snap(unsigned long no, fsnap *meta) = 0;
-
-      virtual void restore_snap(unsigned long no,
-                                fsnap *meta) = 0;
-
-      virtual void delete_snap(unsigned long no) = 0;
-
       virtual ~slipstore_io() { }
   };
 }

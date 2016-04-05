@@ -32,29 +32,16 @@ namespace slipstore {
       int fd;
       bool snapped;
   public:
-      dummy_io(unsigned long stream_in,
-               unsigned long partition_in,
-               unsigned long tile_in,
-               const char *name_in = NULL)
-          : stream(stream_in),
-            partition(partition_in),
-            tile(tile_in),
-            seen_bytes(0),
+      dummy_io(const char *name_in = NULL)
+          : seen_bytes(0),
             snapped(false) {
-        if (name_in != NULL) {
-          strcpy(name, name_in);
-          fd = open(name, O_RDWR | O_LARGEFILE, S_IRWXU);
-          data_bytes = get_file_size(fd);
-        }
-        else {
-          sprintf(name, "stream.%lu.%lu.%lu", stream, partition, tile);
-          // This prevents us from over writing any snapshots
-          unlink_file(name);
-          fd = open(name,
-                    O_RDWR | O_LARGEFILE | O_CREAT | O_TRUNC,
-                    S_IRWXU);
-          data_bytes = 0;
-        }
+        strcpy(name, name_in);
+        // This prevents us from over writing any snapshots
+        unlink_file(name);
+        fd = open(name,
+                  O_RDWR | O_LARGEFILE | O_CREAT | O_TRUNC,
+                  S_IRWXU);
+        data_bytes = 0;
         posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
       }
 
@@ -142,51 +129,6 @@ namespace slipstore {
         usage -= data_bytes;
         seen_bytes = 0;
         data_bytes = 0;
-      }
-
-      virtual void take_snap(unsigned long no, fsnap *meta) {
-        char new_name[200];
-        fsync(fd);
-        sprintf(new_name, "snap_%lu_", no);
-        strcat(new_name, name);
-        int ret = link(name, new_name);
-        if (ret < 0) {
-          BOOST_LOG_TRIVIAL(fatal) << "Unable to create snap link"
-          << strerror(errno);
-          exit(-1);
-        }
-        snapped = true;
-        meta->pos = seen_bytes;
-        meta->size = data_bytes;
-      }
-
-      virtual void restore_snap(unsigned long no,
-                                fsnap *meta) {
-        char snap_name[200];
-        close(fd);
-        unlink_file(name);
-        sprintf(snap_name, "snap_%lu_", no);
-        strcat(snap_name, name);
-        int ret = link(snap_name, name);
-        if (ret < 0) {
-          BOOST_LOG_TRIVIAL(fatal) << "Unable to create snap link"
-          << strerror(errno);
-          exit(-1);
-        }
-        fd = open(name, O_RDWR | O_LARGEFILE);
-        posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
-        truncate_file_to_size(fd, meta->size);
-        data_bytes = meta->size;
-        set_filepos(fd, meta->pos);
-        seen_bytes = meta->pos;
-        snapped = true;
-      }
-
-      virtual void delete_snap(unsigned long no) {
-        char snap_name[200];
-        sprintf(snap_name, "snap_%lu_", no);
-        strcat(snap_name, name);
-        unlink_file(snap_name);
       }
 
       virtual ~dummy_io() {

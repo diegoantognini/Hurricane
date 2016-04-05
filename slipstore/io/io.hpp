@@ -64,18 +64,16 @@ namespace slipstore {
   const unsigned long STREAM_MEMBUFFER = ULONG_MAX - 2; // arbitrary
 
   class io {
-      std::map<string, slipstore_io*> buffers;
+      std::map<const char*, slipstore_io*> buffers;
       fsnap *fsnaps;
       unsigned char *membuffer;
       rtc_clock slipstore_io_time;
       rtc_clock slipstore_snap_time;
 
   public:
-      io(const char* filename, unsigned char *membuffer_in)
+      io(const char* filename, unsigned char *membuffer_in):
             fsnaps(NULL),
             membuffer(membuffer_in) {
-        unsigned long me = pt_slipstore.get < unsigned long > ("machines.me");
-
         if (vm.count("use_direct_io") > 0)
           buffers[filename] = new async_direct_io(vm["dio_unit"].as < unsigned long > (), filename);
         else if (vm.count("use_dummy_io") > 0)
