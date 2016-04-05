@@ -126,15 +126,11 @@ namespace slipstore {
 	      }
 
 	      client_drain() {
-	        slipchunk = vm["slipchunk"].as < unsigned
-	        long > ();
-	        machines = pt_slipstore.get < unsigned
-	        long > ("machines.count");
-	        me = pt_slipstore.get < unsigned
-	        long > ("machines.me");
+	        slipchunk = vm["slipchunk"].as < unsigned long > ();
+	        machines = pt_slipstore.get < unsigned long > ("machines.count");
+	        me = pt_slipstore.get < unsigned long > ("machines.me");
 	        setup_conn();
-	        if (vm["slipstore_servers"].as < unsigned
-	        long > () == ULONG_MAX) {
+	        if (vm["slipstore_servers"].as < unsigned long > () == ULONG_MAX) {
 	          request_cycle = new cyclic(machines, me);
 	        }
 	        else {
@@ -143,8 +139,7 @@ namespace slipstore {
 	          long > (), me);
 	        }
 	        server_selector = new random_selector(machines, me + 256);
-	        batch_size = vm["batch_size"].as < unsigned
-	        long > ();
+	        batch_size = vm["batch_size"].as < unsigned long > ();
 	        window_mc = new unsigned long[batch_size];
 	        if (vm.count("gather_io_drain") > 0) {
 	          buf_mc = new unsigned char *[batch_size];
