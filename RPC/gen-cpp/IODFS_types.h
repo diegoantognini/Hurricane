@@ -19,16 +19,6 @@
 
 
 
-struct IOType {
-  enum type {
-    Async = 1,
-    Sync = 2,
-    Dummy = 3
-  };
-};
-
-extern const std::map<int, const char*> _IOType_VALUES_TO_NAMES;
-
 
 
 #endif

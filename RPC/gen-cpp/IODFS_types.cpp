@@ -13,16 +13,4 @@
 
 
 
-int _kIOTypeValues[] = {
-  IOType::Async,
-  IOType::Sync,
-  IOType::Dummy
-};
-const char* _kIOTypeNames[] = {
-  "Async",
-  "Sync",
-  "Dummy"
-};
-const std::map<int, const char*> _IOType_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(3, _kIOTypeValues, _kIOTypeNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
-
 

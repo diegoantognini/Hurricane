@@ -21,9 +21,9 @@
 class IODFSIf {
  public:
   virtual ~IODFSIf() {}
-  virtual bool local_create(const std::string& filename, const IOType::type type) = 0;
+  virtual void local_create(const std::string& filename) = 0;
   virtual bool local_exists(const std::string& filename) = 0;
-  virtual bool local_delete(const std::string& filename) = 0;
+  virtual void local_delete(const std::string& filename) = 0;
   virtual int64_t local_fill(const std::string& filename, const std::string& buffer, const int64_t size) = 0;
   virtual int64_t local_seek_and_fill(const std::string& filename, const std::string& buffer, const int64_t offset, const int64_t size) = 0;
   virtual int64_t local_drain(const std::string& filename, const std::string& buffer, const int64_t size) = 0;
@@ -32,7 +32,7 @@ class IODFSIf {
   virtual bool local_eof(const std::string& filename) = 0;
   virtual int64_t local_size(const std::string& filename) = 0;
   virtual int64_t local_left(const std::string& filename) = 0;
-  virtual bool global_create(const std::string& filename, const IOType::type type) = 0;
+  virtual bool global_create(const std::string& filename) = 0;
   virtual bool global_exists(const std::string& filename) = 0;
   virtual bool global_delete(const std::string& filename) = 0;
   virtual int64_t global_fill(const std::string& filename, const std::string& buffer, const int64_t size) = 0;
@@ -71,17 +71,15 @@ class IODFSIfSingletonFactory : virtual public IODFSIfFactory {
 class IODFSNull : virtual public IODFSIf {
  public:
   virtual ~IODFSNull() {}
-  bool local_create(const std::string& /* filename */, const IOType::type /* type */) {
-    bool _return = false;
-    return _return;
+  void local_create(const std::string& /* filename */) {
+    return;
   }
   bool local_exists(const std::string& /* filename */) {
     bool _return = false;
     return _return;
   }
-  bool local_delete(const std::string& /* filename */) {
-    bool _return = false;
-    return _return;
+  void local_delete(const std::string& /* filename */) {
+    return;
   }
   int64_t local_fill(const std::string& /* filename */, const std::string& /* buffer */, const int64_t /* size */) {
     int64_t _return = 0;
@@ -115,7 +113,7 @@ class IODFSNull : virtual public IODFSIf {
     int64_t _return = 0;
     return _return;
   }
-  bool global_create(const std::string& /* filename */, const IOType::type /* type */) {
+  bool global_create(const std::string& /* filename */) {
     bool _return = false;
     return _return;
   }
@@ -158,9 +156,8 @@ class IODFSNull : virtual public IODFSIf {
 };
 
 typedef struct _IODFS_local_create_args__isset {
-  _IODFS_local_create_args__isset() : filename(false), type(false) {}
+  _IODFS_local_create_args__isset() : filename(false) {}
   bool filename :1;
-  bool type :1;
 } _IODFS_local_create_args__isset;
 
 class IODFS_local_create_args {
@@ -168,24 +165,19 @@ class IODFS_local_create_args {
 
   IODFS_local_create_args(const IODFS_local_create_args&);
   IODFS_local_create_args& operator=(const IODFS_local_create_args&);
-  IODFS_local_create_args() : filename(), type((IOType::type)0) {
+  IODFS_local_create_args() : filename() {
   }
 
   virtual ~IODFS_local_create_args() throw();
   std::string filename;
-  IOType::type type;
 
   _IODFS_local_create_args__isset __isset;
 
   void __set_filename(const std::string& val);
 
-  void __set_type(const IOType::type val);
-
   bool operator == (const IODFS_local_create_args & rhs) const
   {
     if (!(filename == rhs.filename))
-      return false;
-    if (!(type == rhs.type))
       return false;
     return true;
   }
@@ -207,36 +199,24 @@ class IODFS_local_create_pargs {
 
   virtual ~IODFS_local_create_pargs() throw();
   const std::string* filename;
-  const IOType::type* type;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
-typedef struct _IODFS_local_create_result__isset {
-  _IODFS_local_create_result__isset() : success(false) {}
-  bool success :1;
-} _IODFS_local_create_result__isset;
 
 class IODFS_local_create_result {
  public:
 
   IODFS_local_create_result(const IODFS_local_create_result&);
   IODFS_local_create_result& operator=(const IODFS_local_create_result&);
-  IODFS_local_create_result() : success(0) {
+  IODFS_local_create_result() {
   }
 
   virtual ~IODFS_local_create_result() throw();
-  bool success;
 
-  _IODFS_local_create_result__isset __isset;
-
-  void __set_success(const bool val);
-
-  bool operator == (const IODFS_local_create_result & rhs) const
+  bool operator == (const IODFS_local_create_result & /* rhs */) const
   {
-    if (!(success == rhs.success))
-      return false;
     return true;
   }
   bool operator != (const IODFS_local_create_result &rhs) const {
@@ -250,19 +230,12 @@ class IODFS_local_create_result {
 
 };
 
-typedef struct _IODFS_local_create_presult__isset {
-  _IODFS_local_create_presult__isset() : success(false) {}
-  bool success :1;
-} _IODFS_local_create_presult__isset;
 
 class IODFS_local_create_presult {
  public:
 
 
   virtual ~IODFS_local_create_presult() throw();
-  bool* success;
-
-  _IODFS_local_create_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -421,30 +394,19 @@ class IODFS_local_delete_pargs {
 
 };
 
-typedef struct _IODFS_local_delete_result__isset {
-  _IODFS_local_delete_result__isset() : success(false) {}
-  bool success :1;
-} _IODFS_local_delete_result__isset;
 
 class IODFS_local_delete_result {
  public:
 
   IODFS_local_delete_result(const IODFS_local_delete_result&);
   IODFS_local_delete_result& operator=(const IODFS_local_delete_result&);
-  IODFS_local_delete_result() : success(0) {
+  IODFS_local_delete_result() {
   }
 
   virtual ~IODFS_local_delete_result() throw();
-  bool success;
 
-  _IODFS_local_delete_result__isset __isset;
-
-  void __set_success(const bool val);
-
-  bool operator == (const IODFS_local_delete_result & rhs) const
+  bool operator == (const IODFS_local_delete_result & /* rhs */) const
   {
-    if (!(success == rhs.success))
-      return false;
     return true;
   }
   bool operator != (const IODFS_local_delete_result &rhs) const {
@@ -458,19 +420,12 @@ class IODFS_local_delete_result {
 
 };
 
-typedef struct _IODFS_local_delete_presult__isset {
-  _IODFS_local_delete_presult__isset() : success(false) {}
-  bool success :1;
-} _IODFS_local_delete_presult__isset;
 
 class IODFS_local_delete_presult {
  public:
 
 
   virtual ~IODFS_local_delete_presult() throw();
-  bool* success;
-
-  _IODFS_local_delete_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -1358,9 +1313,8 @@ class IODFS_local_left_presult {
 };
 
 typedef struct _IODFS_global_create_args__isset {
-  _IODFS_global_create_args__isset() : filename(false), type(false) {}
+  _IODFS_global_create_args__isset() : filename(false) {}
   bool filename :1;
-  bool type :1;
 } _IODFS_global_create_args__isset;
 
 class IODFS_global_create_args {
@@ -1368,24 +1322,19 @@ class IODFS_global_create_args {
 
   IODFS_global_create_args(const IODFS_global_create_args&);
   IODFS_global_create_args& operator=(const IODFS_global_create_args&);
-  IODFS_global_create_args() : filename(), type((IOType::type)0) {
+  IODFS_global_create_args() : filename() {
   }
 
   virtual ~IODFS_global_create_args() throw();
   std::string filename;
-  IOType::type type;
 
   _IODFS_global_create_args__isset __isset;
 
   void __set_filename(const std::string& val);
 
-  void __set_type(const IOType::type val);
-
   bool operator == (const IODFS_global_create_args & rhs) const
   {
     if (!(filename == rhs.filename))
-      return false;
-    if (!(type == rhs.type))
       return false;
     return true;
   }
@@ -1407,7 +1356,6 @@ class IODFS_global_create_pargs {
 
   virtual ~IODFS_global_create_pargs() throw();
   const std::string* filename;
-  const IOType::type* type;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2478,15 +2426,15 @@ class IODFSClient : virtual public IODFSIf {
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> getOutputProtocol() {
     return poprot_;
   }
-  bool local_create(const std::string& filename, const IOType::type type);
-  void send_local_create(const std::string& filename, const IOType::type type);
-  bool recv_local_create();
+  void local_create(const std::string& filename);
+  void send_local_create(const std::string& filename);
+  void recv_local_create();
   bool local_exists(const std::string& filename);
   void send_local_exists(const std::string& filename);
   bool recv_local_exists();
-  bool local_delete(const std::string& filename);
+  void local_delete(const std::string& filename);
   void send_local_delete(const std::string& filename);
-  bool recv_local_delete();
+  void recv_local_delete();
   int64_t local_fill(const std::string& filename, const std::string& buffer, const int64_t size);
   void send_local_fill(const std::string& filename, const std::string& buffer, const int64_t size);
   int64_t recv_local_fill();
@@ -2511,8 +2459,8 @@ class IODFSClient : virtual public IODFSIf {
   int64_t local_left(const std::string& filename);
   void send_local_left(const std::string& filename);
   int64_t recv_local_left();
-  bool global_create(const std::string& filename, const IOType::type type);
-  void send_global_create(const std::string& filename, const IOType::type type);
+  bool global_create(const std::string& filename);
+  void send_global_create(const std::string& filename);
   bool recv_global_create();
   bool global_exists(const std::string& filename);
   void send_global_exists(const std::string& filename);
@@ -2629,13 +2577,13 @@ class IODFSMultiface : virtual public IODFSIf {
     ifaces_.push_back(iface);
   }
  public:
-  bool local_create(const std::string& filename, const IOType::type type) {
+  void local_create(const std::string& filename) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->local_create(filename, type);
+      ifaces_[i]->local_create(filename);
     }
-    return ifaces_[i]->local_create(filename, type);
+    ifaces_[i]->local_create(filename);
   }
 
   bool local_exists(const std::string& filename) {
@@ -2647,13 +2595,13 @@ class IODFSMultiface : virtual public IODFSIf {
     return ifaces_[i]->local_exists(filename);
   }
 
-  bool local_delete(const std::string& filename) {
+  void local_delete(const std::string& filename) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
       ifaces_[i]->local_delete(filename);
     }
-    return ifaces_[i]->local_delete(filename);
+    ifaces_[i]->local_delete(filename);
   }
 
   int64_t local_fill(const std::string& filename, const std::string& buffer, const int64_t size) {
@@ -2728,13 +2676,13 @@ class IODFSMultiface : virtual public IODFSIf {
     return ifaces_[i]->local_left(filename);
   }
 
-  bool global_create(const std::string& filename, const IOType::type type) {
+  bool global_create(const std::string& filename) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->global_create(filename, type);
+      ifaces_[i]->global_create(filename);
     }
-    return ifaces_[i]->global_create(filename, type);
+    return ifaces_[i]->global_create(filename);
   }
 
   bool global_exists(const std::string& filename) {
@@ -2848,15 +2796,15 @@ class IODFSConcurrentClient : virtual public IODFSIf {
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> getOutputProtocol() {
     return poprot_;
   }
-  bool local_create(const std::string& filename, const IOType::type type);
-  int32_t send_local_create(const std::string& filename, const IOType::type type);
-  bool recv_local_create(const int32_t seqid);
+  void local_create(const std::string& filename);
+  int32_t send_local_create(const std::string& filename);
+  void recv_local_create(const int32_t seqid);
   bool local_exists(const std::string& filename);
   int32_t send_local_exists(const std::string& filename);
   bool recv_local_exists(const int32_t seqid);
-  bool local_delete(const std::string& filename);
+  void local_delete(const std::string& filename);
   int32_t send_local_delete(const std::string& filename);
-  bool recv_local_delete(const int32_t seqid);
+  void recv_local_delete(const int32_t seqid);
   int64_t local_fill(const std::string& filename, const std::string& buffer, const int64_t size);
   int32_t send_local_fill(const std::string& filename, const std::string& buffer, const int64_t size);
   int64_t recv_local_fill(const int32_t seqid);
@@ -2881,8 +2829,8 @@ class IODFSConcurrentClient : virtual public IODFSIf {
   int64_t local_left(const std::string& filename);
   int32_t send_local_left(const std::string& filename);
   int64_t recv_local_left(const int32_t seqid);
-  bool global_create(const std::string& filename, const IOType::type type);
-  int32_t send_global_create(const std::string& filename, const IOType::type type);
+  bool global_create(const std::string& filename);
+  int32_t send_global_create(const std::string& filename);
   bool recv_global_create(const int32_t seqid);
   bool global_exists(const std::string& filename);
   int32_t send_global_exists(const std::string& filename);

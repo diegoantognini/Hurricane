@@ -20,7 +20,7 @@ class IODFSHandler : virtual public IODFSIf {
     // Your initialization goes here
   }
 
-  bool local_create(const std::string& filename, const IOType::type type) {
+  void local_create(const std::string& filename) {
     // Your implementation goes here
     printf("local_create\n");
   }
@@ -30,7 +30,7 @@ class IODFSHandler : virtual public IODFSIf {
     printf("local_exists\n");
   }
 
-  bool local_delete(const std::string& filename) {
+  void local_delete(const std::string& filename) {
     // Your implementation goes here
     printf("local_delete\n");
   }
@@ -75,7 +75,7 @@ class IODFSHandler : virtual public IODFSIf {
     printf("local_left\n");
   }
 
-  bool global_create(const std::string& filename, const IOType::type type) {
+  bool global_create(const std::string& filename) {
     // Your implementation goes here
     printf("global_create\n");
   }

@@ -2,6 +2,7 @@
 // You should copy it to another filename to avoid overwriting it.
 
 #include "IODFS.h"
+#include "../slipstore/io.hpp"
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TServerSocket.h>
@@ -17,12 +18,23 @@ using boost::shared_ptr;
 class IODFSHandler : virtual public IODFSIf {
  public:
   IODFSHandler() {
-    // Your initialization goes here
+    slipstore::io io;
   }
 
   bool local_create(const std::string& filename, const IOType::type type) {
-    // Your implementation goes here
-    printf("local_create\n");
+    switch (type) {
+      case Async:
+          
+        break;
+
+      case Sync:
+
+        break;
+
+      case Dummy:
+
+        break;
+    }
   }
 
   bool local_exists(const std::string& filename) {
