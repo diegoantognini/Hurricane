@@ -7,6 +7,8 @@
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TBufferTransports.h>
+#include <unordered_map>
+#include <string>
 
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
@@ -16,78 +18,123 @@ using namespace ::apache::thrift::server;
 using boost::shared_ptr;
 
 class IODFSHandler : virtual public IODFSIf {
- public:
-  IODFSHandler() {
-    slipstore::io io;
+  private:
+  unordered_map<string, slipstore::io*> local_buffers;
+
+  bool local_exists(const std::string& filename, unordered_map<string, slipstore::io*>::iterator& it) {
+    it = local_buffers.find(filename);
+    return it != local_buffers.end();
   }
 
-  bool local_create(const std::string& filename, const IOType::type type) {
-    switch (type) {
-      case Async:
-          
-        break;
+ public:
+  IODFSHandler() {
+    
+  }
 
-      case Sync:
-
-        break;
-
-      case Dummy:
-
-        break;
-    }
+  bool local_create(const std::string& filename) {
+    if(!local_exists(filename))
+      return false;
+    
+    local_buffers[filename] = new slipstore::io(filename, NULL);
+    return true;
   }
 
   bool local_exists(const std::string& filename) {
-    // Your implementation goes here
-    printf("local_exists\n");
+    return local_buffers.find(filename) != local_buffers.end();
   }
 
   bool local_delete(const std::string& filename) {
-    // Your implementation goes here
-    printf("local_delete\n");
+    unordered_map<string, slipstore::io*>::iterator it;
+    if(!local_exists(filename, it))
+      return false;
+    
+    delete it->second;
+    local_buffers.erase(it);
+
+    return true;
   }
 
-  int64_t local_fill(const std::string& filename, const std::string& buffer, const int64_t size) {
-    // Your implementation goes here
-    printf("local_fill\n");
+  //We assume that _return has already the size = #bytes to read (e.g string s1(100,0)) (0 are really important) -> C++11
+  void local_fill(std::string& _return, const std::string& filename) {
+    unordered_map<string, slipstore::io*>::iterator it;
+    if(!local_exists(filename, it))
+      _return = "";
+    else {
+      unsigned long bytes_to_read = _return.size();
+      unsigned long bytes_read = it->second->fill((unsigned char*) _return.c_str(), bytes_to_read);
+
+      // EOF, should return a string smaller and so, its size is modified
+      if(bytes_read < bytes_to_read)
+        _return = _return.data();
+    }
+  }
+  //We assume that _return has already the size = #bytes to read (e.g string s1(100,0)) (0 are really important) -> C++11
+  void local_seek_and_fill(std::string& _return, const std::string& filename, const int64_t offset) {
+    unordered_map<string, slipstore::io*>::iterator it;
+    if(!local_exists(filename, it))
+      _return = "";
+    else {
+      unsigned long bytes_to_read = _return.size();
+      unsigned long bytes_read = it->second->seek_and_fill((unsigned char*) _return.c_str(), offset, bytes_to_read);
+
+      // EOF, should return a string smaller and so, its size is modified
+      if(bytes_read < bytes_to_read)
+        _return = _return.data();
+    }
   }
 
-  int64_t local_seek_and_fill(const std::string& filename, const std::string& buffer, const int64_t offset, const int64_t size) {
-    // Your implementation goes here
-    printf("local_seek_and_fill\n");
-  }
+  bool local_drain(const std::string& filename, const std::string& buffer) {
+    unordered_map<string, slipstore::io*>::iterator it;
+    if(!local_exists(filename, it))
+      return false;
 
-  int64_t local_drain(const std::string& filename, const std::string& buffer, const int64_t size) {
-    // Your implementation goes here
-    printf("local_drain\n");
+    it->second->drain((unsigned char*) buffer.c_str(), buffer.size());
+    return true;
   }
 
   bool local_rewind(const std::string& filename) {
-    // Your implementation goes here
-    printf("local_rewind\n");
+    unordered_map<string, slipstore::io*>::iterator it;
+    if(!local_exists(filename, it))
+      return false;
+
+    it->second->rewind();
+    return true;
   }
 
   bool local_trunc(const std::string& filename) {
-    // Your implementation goes here
-    printf("local_trunc\n");
+    unordered_map<string, slipstore::io*>::iterator it;
+    if(!local_exists(filename, it))
+      return false;
+
+    it->second->trunc();
+    return true;
   }
 
   bool local_eof(const std::string& filename) {
-    // Your implementation goes here
-    printf("local_eof\n");
+    unordered_map<string, slipstore::io*>::iterator it;
+    if(!local_exists(filename, it))
+      return true;
+
+    return it->second->eof();
   }
 
   int64_t local_size(const std::string& filename) {
-    // Your implementation goes here
-    printf("local_size\n");
+    unordered_map<string, slipstore::io*>::iterator it;
+    if(!local_exists(filename, it))
+      return -1;
+
+    return it->second->size();
   }
 
   int64_t local_left(const std::string& filename) {
-    // Your implementation goes here
-    printf("local_left\n");
+    unordered_map<string, slipstore::io*>::iterator it;
+    if(!local_exists(filename, it))
+      return -1;
+
+    return it->second->left();
   }
 
-  bool global_create(const std::string& filename, const IOType::type type) {
+  bool global_create(const std::string& filename) {
     // Your implementation goes here
     printf("global_create\n");
   }
@@ -102,17 +149,17 @@ class IODFSHandler : virtual public IODFSIf {
     printf("global_delete\n");
   }
 
-  int64_t global_fill(const std::string& filename, const std::string& buffer, const int64_t size) {
+  void global_fill(std::string& _return, const std::string& filename, const std::string& buffer) {
     // Your implementation goes here
     printf("global_fill\n");
   }
 
-  int64_t global_seek_and_fill(const std::string& filename, const std::string& buffer, const int64_t offset, const int64_t size) {
+  void global_seek_and_fill(std::string& _return, const std::string& filename, const std::string& buffer, const int64_t offset) {
     // Your implementation goes here
     printf("global_seek_and_fill\n");
   }
 
-  int64_t global_drain(const std::string& filename, const std::string& buffer, const int64_t size) {
+  void global_drain(const std::string& filename, const std::string& buffer) {
     // Your implementation goes here
     printf("global_drain\n");
   }

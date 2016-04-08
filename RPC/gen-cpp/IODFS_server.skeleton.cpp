@@ -20,7 +20,7 @@ class IODFSHandler : virtual public IODFSIf {
     // Your initialization goes here
   }
 
-  void local_create(const std::string& filename) {
+  bool local_create(const std::string& filename) {
     // Your implementation goes here
     printf("local_create\n");
   }
@@ -30,22 +30,22 @@ class IODFSHandler : virtual public IODFSIf {
     printf("local_exists\n");
   }
 
-  void local_delete(const std::string& filename) {
+  bool local_delete(const std::string& filename) {
     // Your implementation goes here
     printf("local_delete\n");
   }
 
-  int64_t local_fill(const std::string& filename, const std::string& buffer, const int64_t size) {
+  void local_fill(std::string& _return, const std::string& filename) {
     // Your implementation goes here
     printf("local_fill\n");
   }
 
-  int64_t local_seek_and_fill(const std::string& filename, const std::string& buffer, const int64_t offset, const int64_t size) {
+  void local_seek_and_fill(std::string& _return, const std::string& filename, const int64_t offset) {
     // Your implementation goes here
     printf("local_seek_and_fill\n");
   }
 
-  int64_t local_drain(const std::string& filename, const std::string& buffer, const int64_t size) {
+  bool local_drain(const std::string& filename, const std::string& buffer) {
     // Your implementation goes here
     printf("local_drain\n");
   }
@@ -90,17 +90,17 @@ class IODFSHandler : virtual public IODFSIf {
     printf("global_delete\n");
   }
 
-  int64_t global_fill(const std::string& filename, const std::string& buffer, const int64_t size) {
+  void global_fill(std::string& _return, const std::string& filename) {
     // Your implementation goes here
     printf("global_fill\n");
   }
 
-  int64_t global_seek_and_fill(const std::string& filename, const std::string& buffer, const int64_t offset, const int64_t size) {
+  void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t offset) {
     // Your implementation goes here
     printf("global_seek_and_fill\n");
   }
 
-  int64_t global_drain(const std::string& filename, const std::string& buffer, const int64_t size) {
+  bool global_drain(const std::string& filename, const std::string& buffer) {
     // Your implementation goes here
     printf("global_drain\n");
   }
