@@ -45,7 +45,7 @@ namespace slipstore {
 	      }
 
 	      ~random_selector() {
-	        delete permutation;
+	        delete [] permutation;
 	      }
 	  };
 }
