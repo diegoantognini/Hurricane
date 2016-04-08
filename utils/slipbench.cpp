@@ -63,22 +63,15 @@ int main(int argc, const char **argv) {
   bool silent;
   /* Get options */
   setup_options(argc, argv);
-  unsigned long slipchunk = vm["slipchunk"].as < unsigned
-  long > ();
-  BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::SLIPCHUNK "
-  << slipchunk;
-  unsigned long slipfile_size = vm["slipbench_fsize"].as < unsigned
-  long > ();
-  BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::SLIPBENCH_FIZE "
-  << slipfile_size;
+  unsigned long slipchunk = vm["slipchunk"].as < unsigned long > ();
+  BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::SLIPCHUNK " << slipchunk;
+  unsigned long slipfile_size = vm["slipbench_fsize"].as < unsigned long > ();
+  BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::SLIPBENCH_FIZE " << slipfile_size;
   unsigned long background_threads =
-  vm["slipbench_background_threads"].as < unsigned
-  long > ();
-  unsigned long align = vm["slipbench_align"].as < unsigned
-  long > ();
+  vm["slipbench_background_threads"].as < unsigned long > ();
+  unsigned long align = vm["slipbench_align"].as < unsigned long > ();
   slipchunk = (slipchunk / align) * align;
-  unsigned long blockmem = vm["blocked_memory"].as < unsigned
-  long > ();
+  unsigned long blockmem = vm["blocked_memory"].as < unsigned long > ();
   /* Read in slipstore information */
   init_slipstore_desc();
   bool run_drain_test = (vm.count("drain_test") > 0);
@@ -105,8 +98,7 @@ int main(int argc, const char **argv) {
   bool centralized = (vm.count("centralized") > 0);
   bool batching = (vm.count("request_batching") > 0);
 
-  unsigned long silenced_clients = vm["slipbench_silence"].as < unsigned
-  long > ();
+  unsigned long silenced_clients = vm["slipbench_silence"].as < unsigned long > ();
   if (silenced_clients != ULONG_MAX &&
       slipstore::slipstore_client_drain->get_me() < silenced_clients) {
     silent = true;
@@ -246,10 +238,8 @@ int main(int argc, const char **argv) {
   slipstore::shutdown();
   delete buffer;
   delete streams;
-  BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::DRAIN_BYTES "
-  << slipfile_size;
+  BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::DRAIN_BYTES " << slipfile_size;
   drain_clock.print("SLIPBENCH::DRAIN_TIME ");
-  BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::FILL_BYTES "
-  << fill_bytes;
+  BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::FILL_BYTES " << fill_bytes;
   fill_clock.print("SLIPBENCH::FILL_TIME ");
 }

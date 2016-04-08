@@ -37,13 +37,13 @@ namespace slipstore {
   static const unsigned long CMD_DRAIN = 2;
   static const unsigned long CMD_EOF = 3;
   static const unsigned long CMD_NOP = 4;
-  static const unsigned long CMD_MEMREAD = 5;
-  static const unsigned long CMD_OFFER_HELP = 6;
+  //static const unsigned long CMD_MEMREAD = 5;
+  //static const unsigned long CMD_OFFER_HELP = 6;
   static const unsigned long CMD_TERMINATE = 7;
   static const unsigned long CMD_SEMUP = 8;
   static const unsigned long CMD_RESET = 9;
-  static const unsigned long CMD_ORDER_INIT = 10;
-  static const unsigned long CMD_ORDER_NEXT = 11;
+  //static const unsigned long CMD_ORDER_INIT = 10;
+  //static const unsigned long CMD_ORDER_NEXT = 11;
 
   // Responses from slipstore service
   static const unsigned long RESP_ACK = 0;

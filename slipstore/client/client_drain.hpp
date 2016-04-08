@@ -134,9 +134,7 @@ namespace slipstore {
 	          request_cycle = new cyclic(machines, me);
 	        }
 	        else {
-	          request_cycle =
-	              new cyclic(vm["slipstore_servers"].as < unsigned
-	          long > (), me);
+	          request_cycle = new cyclic(vm["slipstore_servers"].as < unsigned long > (), me);
 	        }
 	        server_selector = new random_selector(machines, me + 256);
 	        batch_size = vm["batch_size"].as < unsigned long > ();
@@ -198,14 +196,12 @@ namespace slipstore {
 	                             "client rep in");
 	          // If this was a terminate or nop command we are done
 	          if (req->cmd == CMD_TERMINATE ||
-	              req->cmd == CMD_NOP ||
-	              req->cmd == CMD_MEMREAD) {
+	              req->cmd == CMD_NOP) {
 	            write_time.stop();
 	            have_outstanding_request->stop();
 	            return true;
 	          }
-	          BOOST_ASSERT_MSG(req->cmd == CMD_DRAIN,
-	                           "Non drain cmd to drain client");
+	          BOOST_ASSERT_MSG(req->cmd == CMD_DRAIN, "Non drain cmd to drain client");
 	          if (rep == RESP_ACK) {
 	            // Great, this machines agrees to serve
 	            bytes_written += req->size;

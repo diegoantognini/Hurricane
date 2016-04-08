@@ -72,10 +72,8 @@ namespace slipstore {
 	          reset_cycle = new cyclic(machines, me);
 	        }
 	        else {
-	          request_cycle =
-	              new cyclic(vm["slipstore_servers"].as < unsigned long > (), me);
-	          reset_cycle =
-	              new cyclic(vm["slipstore_servers"].as < unsigned long > (), me);
+	          request_cycle = new cyclic(vm["slipstore_servers"].as < unsigned long > (), me);
+	          reset_cycle = new cyclic(vm["slipstore_servers"].as < unsigned long > (), me);
 	        }
 	        server_selector = new random_selector(machines, me + 128);
 	        batch_size = vm["batch_size"].as < unsigned long > ();
@@ -155,67 +153,6 @@ namespace slipstore {
 	        have_outstanding_request->stop();
 	      }
 
-	      void init_order(unsigned long stream) {
-	        slipstore_req_t req;
-	        req.stream = stream;
-	        req.cmd = CMD_ORDER_INIT;
-	        req.source_mc = me;
-	        // Issue request
-	        (void) do_zmq_send(sockets_cmd_out[me],
-	                           (unsigned char *) &req,
-	                           sizeof(slipstore_req_t),
-	                           "client cmd out");
-	        // Get reply
-	        unsigned long rep;
-	        (void) do_zmq_recv(sockets_cmd_out[me],
-	                           (unsigned char *) &rep,
-	                           sizeof(unsigned long),
-	                           "client rep in");
-	      }
-
-	      unsigned long order_next(unsigned long master, unsigned long index) {
-	        slipstore_req_t req;
-	        unsigned long nextp;
-	        req.cmd = CMD_ORDER_NEXT;
-	        req.source_mc = me;
-	        req.partition = index;
-	        // Issue request
-	        (void) do_zmq_send(sockets_cmd_out[master],
-	                           (unsigned char *) &req,
-	                           sizeof(slipstore_req_t),
-	                           "client cmd out");
-	        // Get reply
-	        unsigned long rep;
-	        (void) do_zmq_recv(sockets_cmd_out[master],
-	                           (unsigned char *) &rep,
-	                           sizeof(unsigned long),
-	                           "client rep in");
-
-	        // Get next order on data socket
-	        (void) do_zmq_recv(sockets_data_in[master],
-	                           (unsigned char *) &nextp,
-	                           sizeof(unsigned long),
-	                           "client data in");
-	        return nextp;
-	      }
-
-	      // Send a release message
-	      void send_semup(unsigned long mc) {
-	        slipstore_req_t req;
-	        req.cmd = CMD_SEMUP;
-	        req.source_mc = me;
-	        (void) do_zmq_send(sockets_cmd_out[mc],
-	                           (unsigned char *) &req,
-	                           sizeof(slipstore_req_t),
-	                           "client cmd out");
-	        // Get reply
-	        unsigned long rep;
-	        (void) do_zmq_recv(sockets_cmd_out[mc],
-	                           (unsigned char *) &rep,
-	                           sizeof(unsigned long),
-	                           "client rep in");
-	      }
-
 	      // Client: execute a data transfer command
 	      bool access_store(slipstore_req_t *req,
 	                        unsigned char *buffer,
@@ -258,11 +195,6 @@ namespace slipstore {
 	            have_outstanding_request->stop();
 	            read_time->stop();
 	            return true;
-	          }
-	          if (req->cmd == CMD_OFFER_HELP) {
-	            have_outstanding_request->stop();
-	            read_time->stop();
-	            return (rep == RESP_ACK);
 	          }
 	          BOOST_ASSERT_MSG(req->cmd == CMD_FILL || req->cmd == CMD_SEEK_AND_FILL,
 	                           "Non fill cmd to fill client");

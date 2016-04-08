@@ -3,8 +3,6 @@
 
 #include "../interface.hpp"
 #include "../io/io.hpp"
-#include "../helper/help_base.hpp"
-#include "../helper/help_skip.hpp"
 
 namespace slipstore {
 	extern void *zmq_context;
@@ -22,8 +20,6 @@ namespace slipstore {
       unsigned long slipchunk;
       // Handle for IO code
       io *disks;
-      // Handle for help heuristics
-      help_base *help_stuff;
 
       void setup_conn() {
         /////////////////////////////////// Command sockets
@@ -54,25 +50,15 @@ namespace slipstore {
 
   public:
       server(io *disks_in, unsigned long tile_size_in, unsigned long partitions) {
-        machines = pt_slipstore.get < unsigned
-        long > ("machines.count");
-        me = pt_slipstore.get < unsigned
-        long > ("machines.me");
-        slipchunk = vm["slipchunk"].as < unsigned
-        long > ();
+        machines = pt_slipstore.get < unsigned long > ("machines.count");
+        me = pt_slipstore.get < unsigned long > ("machines.me");
+        slipchunk = vm["slipchunk"].as < unsigned long > ();
         disks = disks_in;
-        //help_stuff = new help_original(tile_size_in, machines, me, disks, partitions);
-        help_stuff = new help_skip(tile_size_in, machines, me, disks, partitions);
       }
 
-      // Trapdoor to the help
-      help_base *help_handle() {
-        return help_stuff;
-      }
 
       // Server
       virtual void operator()() {
-        delete (help_stuff);
         BOOST_LOG_TRIVIAL(fatal) << "Called operator () on base server class!";
         exit(-1);
       }

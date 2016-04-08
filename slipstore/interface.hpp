@@ -26,8 +26,6 @@
 #include <boost/thread.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/bind.hpp>
-#include "helper/help_base.hpp"
-#include "helper/help_skip.hpp"
 #include "client/client_fill.hpp"
 #include "client/client_drain.hpp"
 #include "client/client_barrier.hpp"
