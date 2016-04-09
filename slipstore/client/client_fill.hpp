@@ -63,25 +63,17 @@ namespace slipstore {
 	      }
 
 	      client_fill() {
-	        slipchunk = vm["slipchunk"].as < unsigned
-	        long > ();
-	        machines = pt_slipstore.get < unsigned
-	        long > ("machines.count");
-	        me = pt_slipstore.get < unsigned
-	        long > ("machines.me");
+	        slipchunk = vm["slipchunk"].as < unsigned long > ();
+	        machines = pt_slipstore.get < unsigned long > ("machines.count");
+	        me = pt_slipstore.get < unsigned long > ("machines.me");
 	        setup_conn();
-	        if (vm["slipstore_servers"].as < unsigned
-	        long > () == ULONG_MAX) {
+	        if (vm["slipstore_servers"].as < unsigned long > () == ULONG_MAX) {
 	          request_cycle = new cyclic(machines, me);
 	          reset_cycle = new cyclic(machines, me);
 	        }
 	        else {
-	          request_cycle =
-	              new cyclic(vm["slipstore_servers"].as < unsigned
-	          long > (), me);
-	          reset_cycle =
-	              new cyclic(vm["slipstore_servers"].as < unsigned
-	          long > (), me);
+	          request_cycle = new cyclic(vm["slipstore_servers"].as < unsigned long > (), me);
+	          reset_cycle = new cyclic(vm["slipstore_servers"].as < unsigned long > (), me);
 	        }
 	        server_selector = new random_selector(machines, me + 128);
 	        batch_size = vm["batch_size"].as < unsigned
@@ -108,10 +100,9 @@ namespace slipstore {
 	        return slipchunk;
 	      }
 
-	      bool check_empty(unsigned long stream) {
+	      bool check_empty() {
 	        bool empty = true;
 	        slipstore_req_t req;
-	        req.stream = stream;
 	        req.cmd = CMD_EOF;
 	        have_outstanding_request->start();
 	        disk_read_time.start();
@@ -134,13 +125,8 @@ namespace slipstore {
 	        return empty;
 	      }
 
-	      void reset(unsigned long stream,
-	                 unsigned long partition,
-	                 unsigned long tile) {
+	      void reset() {
 	        slipstore_req_t req;
-	        req.stream = stream;
-	        req.partition = partition;
-	        req.tile = tile;
 	        req.cmd = CMD_RESET;
 	        have_outstanding_request->start();
 	        disk_read_time.start();
@@ -160,23 +146,6 @@ namespace slipstore {
 	        }
 	        disk_read_time.stop();
 	        have_outstanding_request->stop();
-	      }
-
-	      // Send a release message
-	      void send_semup(unsigned long mc) {
-	        slipstore_req_t req;
-	        req.cmd = CMD_SEMUP;
-	        req.source_mc = me;
-	        (void) do_zmq_send(sockets_cmd_out[mc],
-	                           (unsigned char *) &req,
-	                           sizeof(slipstore_req_t),
-	                           "client cmd out");
-	        // Get reply
-	        unsigned long rep;
-	        (void) do_zmq_recv(sockets_cmd_out[mc],
-	                           (unsigned char *) &rep,
-	                           sizeof(unsigned long),
-	                           "client rep in");
 	      }
 
 	      // Client: execute a data transfer command
