@@ -84,32 +84,6 @@ namespace slipstore {
                                "server resp out:");
             continue;
           }
-          else if (req.cmd == CMD_ORDER_INIT) {
-            help_stuff->init_order(req.stream);
-            resp = RESP_ACK;
-            (void) do_zmq_send(socket_cmd_in,
-                               (unsigned char *) &resp,
-                               sizeof(unsigned long),
-                               "server resp out:");
-            continue;
-          }
-          else if (req.cmd == CMD_SEMUP) {
-            resp = RESP_ACK;
-            help_stuff->sem_up(req.source_mc);
-            (void) do_zmq_send(socket_cmd_in,
-                               (unsigned char *) &resp,
-                               sizeof(unsigned long),
-                               "server resp out:");
-            continue;
-          }
-          else if (req.cmd == CMD_OFFER_HELP) {
-            resp = help_stuff->make_decision(&req);
-            (void) do_zmq_send(socket_cmd_in,
-                               (unsigned char *) &resp,
-                               sizeof(unsigned long),
-                               "server resp out:");
-            continue;
-          }
           else if (req.cmd == CMD_EOF) {
             // Check whether stream is empty
             if (disks->eof_stream(&req)) {
@@ -134,34 +108,7 @@ namespace slipstore {
                                "server resp out:");
             continue;
           }
-          // Check size of request
-          if (req.size > slipchunk && req.cmd != CMD_ORDER_NEXT) {
-            BOOST_LOG_TRIVIAL(warn)
-            << "SLIPSTORE: Rejecting request sized = "
-            << req.size
-            << " larger than slipchunk = "
-            << slipchunk
-            << " from: " << req.source_mc;
-            resp = RESP_NACK;
-            (void) do_zmq_send(socket_cmd_in,
-                               (unsigned char *) &resp,
-                               sizeof(unsigned long),
-                               "server resp out:");
-            continue;
-          }
           switch (req.cmd) {
-            case CMD_ORDER_NEXT:
-              resp = RESP_ACK;
-              (void) do_zmq_send(socket_cmd_in,
-                                 (unsigned char *) &resp,
-                                 sizeof(unsigned long),
-                                 "server resp out:");
-              *(unsigned long *) buffer = help_stuff->order_next(req.partition);
-              (void) do_zmq_send(sockets_data_out[requestor],
-                                 buffer,
-                                 sizeof(unsigned long),
-                                 "server data out:");
-              break;
             case CMD_FILL:
               if (req.stream == STREAM_MEMBUFFER || !disks->eof(&req)) {
                 resp = RESP_ACK;

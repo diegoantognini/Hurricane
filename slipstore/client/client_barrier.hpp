@@ -69,12 +69,9 @@ namespace slipstore {
       }
 
       client_barrier() {
-        slipchunk = vm["slipchunk"].as < unsigned
-        long > ();
-        machines = pt_slipstore.get < unsigned
-        long > ("machines.count");
-        me = pt_slipstore.get < unsigned
-        long > ("machines.me");
+        slipchunk = vm["slipchunk"].as < unsigned long > ();
+        machines = pt_slipstore.get < unsigned long > ("machines.count");
+        me = pt_slipstore.get < unsigned long > ("machines.me");
         setup_conn();
         in_progress = false;
         __sync_synchronize();
