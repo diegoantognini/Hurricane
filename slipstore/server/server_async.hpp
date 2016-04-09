@@ -84,11 +84,10 @@ namespace slipstore {
           }
           else if (req.cmd == CMD_EOF) {
             // Check whether stream is empty
-            // TODO
-            /*if (disks->eof_stream(&req)) {
+            if (disks->eof()) {
               resp = RESP_ACK;
             }
-            else */{
+            else {
               resp = RESP_NACK;
             }
             (void) do_zmq_send(socket_cmd_in,
@@ -109,7 +108,6 @@ namespace slipstore {
           }
           switch (req.cmd) {
             case CMD_FILL:
-              // TODO
               if (!disks->eof()) {
                 resp = RESP_ACK;
               }
