@@ -173,7 +173,6 @@ class server_sync : public server {
         total_time.stop();
         delete buffer;
         teardown_conn();
-        help_stuff->dump_stats();
         busy_time_disk.print("SLIPSTORE::SERVER_BUSY_DISK ");
         busy_time_mem.print("SLIPSTORE::SERVER_BUSY_MEM ");
         total_time.print("SLIPSTORE::SERVER_TOTAL ");
