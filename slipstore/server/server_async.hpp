@@ -6,7 +6,7 @@
 #include "../../utils/clock_utils.h"
 
 namespace slipstore {
-	class server_async : public server {
+  class server_async : public server {
 
   public:
       server_async(io *disks_in)
