@@ -155,14 +155,10 @@ namespace slipstore {
 	        unsigned long trials;
 	        unsigned long *bytes_read;
 	        rtc_clock *read_time;
-	        if (req->cmd == CMD_FILL && req->stream == STREAM_MEMBUFFER) {
-	          bytes_read = &mem_bytes_read;
-	          read_time = &mem_read_time;
-	        }
-	        else {
-	          bytes_read = &disk_bytes_read;
-	          read_time = &disk_read_time;
-	        }
+
+	        bytes_read = &disk_bytes_read;
+	        read_time = &disk_read_time;
+
 	        if (mc != ULONG_MAX) {
 	          trials = machines - 1;
 	        }

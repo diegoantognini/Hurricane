@@ -41,14 +41,8 @@ class server_sync : public server {
                                sizeof(slipstore_req_t),
                                "server recv cmd:");
           }
-          if (req.cmd == CMD_FILL && req.stream == STREAM_MEMBUFFER) {
-            busy_time_mem.start();
-            current_busy_time = &busy_time_mem;
-          }
-          else {
-            busy_time_disk.start();
-            current_busy_time = &busy_time_disk;
-          }
+          busy_time_disk.start();
+          current_busy_time = &busy_time_disk;
           requestor = req.source_mc;
           if (req.cmd == CMD_TERMINATE) {
             resp = RESP_ACK;
