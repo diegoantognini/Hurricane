@@ -76,8 +76,8 @@ int main(int argc, const char **argv) {
   init_slipstore_desc();
   bool run_drain_test = (vm.count("drain_test") > 0);
   bool run_fill_test = (vm.count("fill_test") > 0);
-  streams = new slipstore::io(1, 1, 1, NULL);
-  slipstore::init(streams, 100, 1); // tilesize does not matter
+  streams = new slipstore::io("test.txt", NULL);
+  slipstore::init(streams); // tilesize does not matter
   unsigned char *buffer = new unsigned char[slipchunk];
   unsigned long fill_bytes = 0;
   unsigned char *big_buffer;
@@ -178,12 +178,12 @@ int main(int argc, const char **argv) {
     }
     if (run_fill_test) {
       control_barrier();
-      streams->rewind(0, 0, 0);
+      streams->rewind();
       control_barrier();
     }
   }
   if (run_fill_test) {
-    streams->fill_test_prep(slipstore::STREAM_VERTEX_STATE);
+    streams->fill_test_prep();
     control_barrier();
     if (!silent) {
       BOOST_LOG_TRIVIAL(info) << "Starting fill test";

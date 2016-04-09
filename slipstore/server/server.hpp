@@ -49,7 +49,7 @@ namespace slipstore {
       }
 
   public:
-      server(io *disks_in, unsigned long tile_size_in, unsigned long partitions) {
+      server(io *disks_in) {
         machines = pt_slipstore.get < unsigned long > ("machines.count");
         me = pt_slipstore.get < unsigned long > ("machines.me");
         slipchunk = vm["slipchunk"].as < unsigned long > ();

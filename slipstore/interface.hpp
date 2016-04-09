@@ -58,7 +58,7 @@ namespace slipstore {
   extern boost::thread *server_thread;
 
   static
-  void init(io *disks, unsigned long tile_size, unsigned long partitions) {
+  void init(io *disks) {
     unsigned long zmq_threads = vm["zmq_threads"].as < unsigned
     long > ();
     BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::ZMQ_THREADS " <<
@@ -73,10 +73,10 @@ namespace slipstore {
     slipstore_client_barrier = new client_barrier();
     have_outstanding_request = new busy_counter();
     if (vm.count("use_async_server") > 0) {
-      slipstore_server = new server_async(disks, tile_size, partitions);
+      slipstore_server = new server_async(disks);
       BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER ASYNC";
     } else {
-      slipstore_server = new server_sync(disks, tile_size, partitions);
+      slipstore_server = new server_sync(disks);
       BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER SYNC";
     }
    // Launch server thread

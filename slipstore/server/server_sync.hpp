@@ -6,10 +6,8 @@
 namespace slipstore {
 class server_sync : public server {
   public:
-      server_sync(io *disks_in,
-                  unsigned long tile_size_in,
-                  unsigned long partitions_in)
-          : server(disks_in, tile_size_in, partitions_in) { };
+      server_sync(io *disks_in)
+          : server(disks_in) { };
 
       virtual void operator()() {
         setup_conn(); // Sockets should be set up in the same thread
@@ -71,10 +69,11 @@ class server_sync : public server {
           }
           else if (req.cmd == CMD_EOF) {
             // Check whether stream is empty
-            if (disks->eof_stream(&req)) {
+            // TODO
+            /*if (disks->eof_stream(&req)) {
               resp = RESP_ACK;
             }
-            else {
+            else */{
               resp = RESP_NACK;
             }
             (void) do_zmq_send(socket_cmd_in,
@@ -86,7 +85,7 @@ class server_sync : public server {
           else if (req.cmd == CMD_RESET) {
             // Reset stream
             resp = RESP_ACK;
-            disks->trunc(req.stream, req.partition, req.tile);
+            disks->trunc();
             (void) do_zmq_send(socket_cmd_in,
                                (unsigned char *) &resp,
                                sizeof(unsigned long),
@@ -95,7 +94,8 @@ class server_sync : public server {
           }
           switch (req.cmd) {
             case CMD_FILL:
-              if (req.stream == STREAM_MEMBUFFER || !disks->eof(&req)) {
+              // TODO
+              if (!disks->eof()) {
                 resp = RESP_ACK;
               }
               else {
