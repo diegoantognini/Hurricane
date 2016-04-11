@@ -21,14 +21,12 @@
 // Handle Slipstream Disk I/O
 #include <unistd.h>
 #include <sys/types.h>
+#include "boost/multi_array.hpp"
 #include "../../utils/memory_utils.h"
 #include "../../utils/clock_utils.h"
 #include "sync_pagecache_io.hpp"
 #include "async_direct_io.hpp"
 #include "dummy_io.hpp"
-#include <map>
-
-using namespace std;
 
 namespace slipstore {
   // Requests to slipstore service
@@ -37,14 +35,8 @@ namespace slipstore {
   static const unsigned long CMD_DRAIN = 2;
   static const unsigned long CMD_EOF = 3;
   static const unsigned long CMD_NOP = 4;
-  //static const unsigned long CMD_MEMREAD = 5;
-  //static const unsigned long CMD_OFFER_HELP = 6;
   static const unsigned long CMD_TERMINATE = 7;
-  //static const unsigned long CMD_SEMUP = 8;
   static const unsigned long CMD_RESET = 9;
-  //static const unsigned long CMD_ORDER_INIT = 10;
-  //static const unsigned long CMD_ORDER_NEXT = 11;
-
   // Responses from slipstore service
   static const unsigned long RESP_ACK = 0;
   static const unsigned long RESP_NACK = 1;
@@ -59,10 +51,6 @@ namespace slipstore {
       unsigned long offset; // Used only by seek and fill
   };
 
-  const unsigned long STREAM_VERTEX_STATE = 0;
-  const unsigned long STREAM_INPUT = 1;
-  const unsigned long STREAM_MEMBUFFER = ULONG_MAX - 2; // arbitrary
-
   class io {
       slipstore_io* buffer;
       char name[100];
@@ -72,24 +60,31 @@ namespace slipstore {
       rtc_clock slipstore_snap_time;
 
   public:
-      io(const char* filename, unsigned char *membuffer_in):
-            fsnaps(NULL),
+      io(const char* filename, unsigned char *membuffer_in)
+          : fsnaps(NULL),
             membuffer(membuffer_in) {
         strcpy(name, filename);
+        //unsigned long me = pt_slipstore.get < unsigned long > ("machines.me");
+
         if (vm.count("use_direct_io") > 0)
-          buffer = new async_direct_io(vm["dio_unit"].as < unsigned long > (), filename);
+          buffer = new async_direct_io(filename, vm["dio_unit"].as < unsigned long > ());
         else if (vm.count("use_dummy_io") > 0)
           buffer = new dummy_io(filename);
-        else
+        else 
           buffer = new sync_pagecache_io(filename);
-        
-        quota = vm["quota"].as < unsigned long > ();
+
+        quota = vm["quota"].as < unsigned
+        long > ();
         usage = 0;
         max_quota_usage = 0;
       }
 
-      bool eof() {
+      bool eof(slipstore_req_t *req) {
         return buffer->eof();
+      }
+
+      bool eof_stream(slipstore_req_t *req) {
+        return eof(req);
       }
 
       unsigned long fill(unsigned char *buffer_in, slipstore_req_t *req) {
@@ -152,23 +147,23 @@ namespace slipstore {
       // For running fill speed test
       void fill_test_prep() {
         delete buffer;
+        const char* name_in = "fill_test_data";
+        strcpy(name, name_in);
         if (vm.count("use_direct_io") > 0)
-          buffer = new async_direct_io(vm["slipchunk"].as < unsigned long > (), "fill_test_data");
+          buffer = new async_direct_io(name, vm["slipchunk"].as < unsigned long > (), true);
         else if (vm.count("use_dummy_io") > 0) {
-          dummy_io *dummy = new dummy_io("fill_test_data");
+          dummy_io *dummy = new dummy_io(name, true);
           dummy->force_file_size(vm["slipbench_fsize"].as < unsigned long > ());
           buffer = dummy;
         }
         else
-          buffer = new sync_pagecache_io("fill_test_data");
+          buffer = new sync_pagecache_io(name, true);
       }
 
       ~io() {
         slipstore_io_time.print("SLIPSTORE::IO::TIME");
         slipstore_snap_time.print("SLIPSTORE::SNAP::TIME");
-        BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::MAX_DISK_USAGE_BYTES "
-        << max_quota_usage;
-
+        BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::MAX_DISK_USAGE_BYTES "<< max_quota_usage;
         delete buffer;
       }
   };

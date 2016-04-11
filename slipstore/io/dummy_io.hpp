@@ -23,25 +23,29 @@
 
 namespace slipstore {
   class dummy_io : public slipstore_io {
-      unsigned long stream;
-      unsigned long partition;
-      unsigned long tile;
       unsigned long seen_bytes;
       unsigned long data_bytes;
       char name[100];
       int fd;
       bool snapped;
   public:
-      dummy_io(const char *name_in = NULL)
+      dummy_io(const char *name_in, bool test = false)
           : seen_bytes(0),
             snapped(false) {
         strcpy(name, name_in);
-        // This prevents us from over writing any snapshots
-        unlink_file(name);
-        fd = open(name,
-                  O_RDWR | O_LARGEFILE | O_CREAT | O_TRUNC,
-                  S_IRWXU);
-        data_bytes = 0;
+        
+        if (test) {
+          fd = open(name, O_RDWR | O_LARGEFILE, S_IRWXU);
+          data_bytes = get_file_size(fd);
+        }
+        else {
+          // This prevents us from over writing any snapshots
+          unlink_file(name);
+          fd = open(name,
+                    O_RDWR | O_LARGEFILE | O_CREAT | O_TRUNC,
+                    S_IRWXU);
+          data_bytes = 0;
+        }
         posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
       }
 

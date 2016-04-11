@@ -28,6 +28,7 @@ namespace slipstore {
   extern boost::thread_group diopool;
 
   class async_direct_io : public slipstore_io {
+
       unsigned long seen_bytes;
       unsigned long data_bytes;
       char name[100];
@@ -35,16 +36,23 @@ namespace slipstore {
       bool snapped;
       dio_buffer *iobuf;
   public:
-      async_direct_io(unsigned long dio_unit, const char *name_in = NULL)
+      async_direct_io(const char *name_in, unsigned long dio_unit, bool test = false)
           : seen_bytes(0),
             snapped(false) {
         strcpy(name, name_in);
-        // This prevents us from over writing any snapshots
-        unlink_file(name);
-        fd = open(name,
-                  O_RDWR | O_LARGEFILE | O_CREAT | O_TRUNC | O_DIRECT,
-                  S_IRWXU);
-        data_bytes = 0;
+        
+        if(test) {
+          fd = open(name, O_RDWR | O_LARGEFILE | O_DIRECT, S_IRWXU);
+          data_bytes = get_file_size(fd);
+        }
+        else {
+          // This prevents us from over writing any snapshots
+          unlink_file(name);
+          fd = open(name,
+                    O_RDWR | O_LARGEFILE | O_CREAT | O_TRUNC | O_DIRECT,
+                    S_IRWXU);
+          data_bytes = 0;
+        }
         iobuf = new dio_buffer(fd, dio_unit);
       }
 
