@@ -76,7 +76,7 @@ int main(int argc, const char **argv) {
   init_slipstore_desc();
   bool run_drain_test = (vm.count("drain_test") > 0);
   bool run_fill_test = (vm.count("fill_test") > 0);
-  streams = new slipstore::io("test.txt", NULL);
+  streams = new slipstore::io("fill_data", NULL);
   slipstore::init(streams); // tilesize does not matter
   unsigned char *buffer = new unsigned char[slipchunk];
   unsigned long fill_bytes = 0;
@@ -125,9 +125,6 @@ int main(int argc, const char **argv) {
       if (batching) {
         while (drain_bytes) {
           req.cmd = slipstore::CMD_DRAIN;
-          req.stream = slipstore::STREAM_VERTEX_STATE;
-          req.partition = 0;
-          req.tile = 0;
           unsigned long bytes_to_drain = drain_bytes;
           if (bytes_to_drain > big_bufsize) {
             bytes_to_drain = big_bufsize;
@@ -149,9 +146,6 @@ int main(int argc, const char **argv) {
                   slipchunk : drain_bytes;
           if (centralized) {
             req.cmd = slipstore::CMD_NOP;
-            req.stream = slipstore::STREAM_VERTEX_STATE;
-            req.partition = 0;
-            req.tile = 0;
             req.size = 0;
             if (!slipstore::slipstore_client_drain->access_store(&req, buffer, 0)) {
               BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
@@ -159,9 +153,6 @@ int main(int argc, const char **argv) {
             }
           }
           req.cmd = slipstore::CMD_DRAIN;
-          req.stream = slipstore::STREAM_VERTEX_STATE;
-          req.partition = 0;
-          req.tile = 0;
           req.size = bytes;
           if (!slipstore::slipstore_client_drain->access_store(&req, buffer)) {
             BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
@@ -192,9 +183,6 @@ int main(int argc, const char **argv) {
         unsigned long filled_bytes;
         do {
           req.cmd = slipstore::CMD_FILL;
-          req.stream = slipstore::STREAM_VERTEX_STATE;
-          req.partition = 0;
-          req.tile = 0;
           filled_bytes =
               slipstore::slipstore_client_fill->batch_access_store(&req,
                                                                    big_buffer,
@@ -207,9 +195,6 @@ int main(int argc, const char **argv) {
         do {
           if (centralized) {
             req.cmd = slipstore::CMD_NOP;
-            req.stream = slipstore::STREAM_VERTEX_STATE;
-            req.partition = 0;
-            req.tile = 0;
             req.size = 0;
             if (!slipstore::slipstore_client_drain->access_store(&req, buffer, 0)) {
               BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
@@ -217,9 +202,6 @@ int main(int argc, const char **argv) {
             }
           }
           req.cmd = slipstore::CMD_FILL;
-          req.stream = slipstore::STREAM_VERTEX_STATE;
-          req.partition = 0;
-          req.tile = 0;
           req.size = slipchunk;
           if (!slipstore::slipstore_client_fill->access_store(&req, buffer)) {
             break;

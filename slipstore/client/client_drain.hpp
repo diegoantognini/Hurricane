@@ -63,9 +63,6 @@ namespace slipstore {
               iobuf += bytes_available;
               bufsize -= bytes_available;
               req->cmd = slipstore::CMD_DRAIN;
-              req->stream = stream;
-              req->partition = next_index / tiles;
-              req->tile = next_index % tiles;
               index[next_cpu][next_index] += bytes_available;
             }
           }

@@ -44,9 +44,6 @@ namespace slipstore {
   struct slipstore_req_t {
       unsigned long source_mc;
       unsigned long cmd;
-      unsigned long stream;
-      unsigned long partition;
-      unsigned long tile;
       unsigned long size;
       unsigned long offset; // Used only by seek and fill
   };
@@ -79,12 +76,8 @@ namespace slipstore {
         max_quota_usage = 0;
       }
 
-      bool eof(slipstore_req_t *req) {
+      bool eof() {
         return buffer->eof();
-      }
-
-      bool eof_stream(slipstore_req_t *req) {
-        return eof(req);
       }
 
       unsigned long fill(unsigned char *buffer_in, slipstore_req_t *req) {
