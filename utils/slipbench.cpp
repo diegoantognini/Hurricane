@@ -184,10 +184,10 @@ int main(int argc, const char **argv) {
       control_barrier();
     }
   }
-  const char* name_test = "fill_test_data";
-  req.filename = name_test;
+  req.filename = "fill_test_data";
+  disks[string(req.filename)] = streams;
   if (run_fill_test) {
-    streams->fill_test_prep(name_test);
+    streams->fill_test_prep(req.filename.c_str());
     control_barrier();
     if (!silent) {
       BOOST_LOG_TRIVIAL(info) << "Starting fill test";
