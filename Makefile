@@ -1,11 +1,11 @@
 OBJECT_DIR= object_files
-UTILS_SRC= utils.o
+UTILS_SRC= utils.o gIODFS.o
 LIBS_SRC= $(UTILS_SRC)
 LIBS= $(addprefix $(OBJECT_DIR)/, $(LIBS_SRC))
 UTILS= $(addprefix $(OBJECT_DIR)/, $(UTILS_SRC))
 PROGS_SRC= 
 PROGS= $(addprefix $(OBJECT_DIR)/, $(PROGS_SRC))
-TARGETS= bin/slipbench
+TARGETS= bin/slipbench bin/iodfs
 
 
 all: $(LIBS) $(TARGETS)
@@ -15,7 +15,7 @@ CXX?= g++
 CXXFLAGS?= -O3 -DNDEBUG -Wall -Wno-unused-function -L/usr/local/lib
 #CXXFLAGS?= -O3 -g -Wall -Wno-unused-function
 #CXXFLAGS?= -g
-CXXFLAGS += -Wfatal-errors
+CXXFLAGS+= -Wfatal-errors -std=c++11
 #EXTRA_INCLUDES=-include core/types.h
 EXTRA_INCLUDES+=-I/usr/local/include/boost-numeric-bindings
 
@@ -30,7 +30,7 @@ CXXFLAGS += -msse4.2
 #CXXFLAGS += -mavx2
 
 #System libraries
-SYSLIBS = -lboost_system -lboost_program_options -lboost_thread -lpthread -lz -lrt -lzmq
+SYSLIBS = -lboost_system -lboost_program_options -lboost_thread -lpthread -lz -lrt -lzmq -lthrift
 # Uncomment for ALS
 SYSLIBS += -llapack
 
@@ -44,13 +44,24 @@ SYSLIBS += -llapack
 
 $(OBJECT_DIR)/utils.o:utils/utils.cpp 
 	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
-	$(CXX) -MM -MT '$(OBJECT_DIR)/utils.o' $< > $(@:.o=.d)
+	$(CXX) -std=c++11 -MM -MT '$(OBJECT_DIR)/utils.o' $< > $(@:.o=.d)
+
+$(OBJECT_DIR)/gIODFS.o: RPC/gen-cpp/IODFS.cpp
+	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
+	$(CXX) -std=c++11 -MM -MT '$(OBJECT_DIR)/gIODFS.o' $< > $(@:.o=.d)
 
 $(OBJECT_DIR)/slipbench.o:utils/slipbench.cpp 
 	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
-	$(CXX) -MM -MT '$(OBJECT_DIR)/slipbench.o' $< > $(@:.o=.d)
+	$(CXX) -std=c++11 -MM -MT '$(OBJECT_DIR)/slipbench.o' $< > $(@:.o=.d)
+
+$(OBJECT_DIR)/iodfs.o:RPC/iodfs.cpp 
+	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
+	$(CXX) -std=c++11 -MM -MT '$(OBJECT_DIR)/iodfs.o' $< > $(@:.o=.d)
 
 bin/slipbench:$(OBJECT_DIR)/slipbench.o 
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
+
+bin/iodfs:$(OBJECT_DIR)/iodfs.o 
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
 
 clean:
