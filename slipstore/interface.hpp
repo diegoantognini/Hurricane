@@ -31,6 +31,11 @@
 #include "client/client_barrier.hpp"
 #include "server/server_async.hpp"
 #include "server/server_sync.hpp"
+#include <string>
+#include <unordered_map>
+
+using std::unordered_map;
+using std::string;
 
 // Interface for the slipstorage service
 
@@ -58,16 +63,14 @@ namespace slipstore {
   extern boost::thread *server_thread;
 
   static
-  void init(io *disks) {
-    unsigned long zmq_threads = vm["zmq_threads"].as < unsigned
-    long > ();
+  void init(unordered_map<string, slipstore::io*>* disks) {
+    unsigned long zmq_threads = vm["zmq_threads"].as < unsigned long > ();
     BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::ZMQ_THREADS " <<
     zmq_threads;
     zmq_context = zmq_init(zmq_threads);
     zmq_context_data_out = zmq_init(zmq_threads);
     zmq_context_data_in = zmq_init(zmq_threads);
-    baseport = vm["baseport"].as < unsigned
-    long > ();
+    baseport = vm["baseport"].as < unsigned long > ();
     slipstore_client_fill = new client_fill();
     slipstore_client_drain = new client_drain();
     slipstore_client_barrier = new client_barrier();

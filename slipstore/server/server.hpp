@@ -3,6 +3,11 @@
 
 #include "../interface.hpp"
 #include "../io/io.hpp"
+#include <string>
+#include <unordered_map>
+
+using std::unordered_map;
+using std::string;
 
 namespace slipstore {
 	extern void *zmq_context;
@@ -19,7 +24,7 @@ namespace slipstore {
       // Slipstore chunk size
       unsigned long slipchunk;
       // Handle for IO code
-      io *disks;
+      unordered_map<string, slipstore::io*>* disks;
 
       void setup_conn() {
         /////////////////////////////////// Command sockets
@@ -49,7 +54,7 @@ namespace slipstore {
       }
 
   public:
-      server(io *disks_in) {
+      server(unordered_map<string, slipstore::io*>* disks_in) {
         machines = pt_slipstore.get < unsigned long > ("machines.count");
         me = pt_slipstore.get < unsigned long > ("machines.me");
         slipchunk = vm["slipchunk"].as < unsigned long > ();

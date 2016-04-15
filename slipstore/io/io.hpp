@@ -21,9 +21,11 @@
 // Handle Slipstream Disk I/O
 #include <unistd.h>
 #include <sys/types.h>
+#include <string>
 #include "boost/multi_array.hpp"
 #include "../../utils/memory_utils.h"
 #include "../../utils/clock_utils.h"
+#include "../../utils/options_utils.h"
 #include "sync_pagecache_io.hpp"
 #include "async_direct_io.hpp"
 #include "dummy_io.hpp"
@@ -46,6 +48,7 @@ namespace slipstore {
       unsigned long cmd;
       unsigned long size;
       unsigned long offset; // Used only by seek and fill
+      std::string filename;
   };
 
   class io {
@@ -138,9 +141,8 @@ namespace slipstore {
       }
 
       // For running fill speed test
-      void fill_test_prep() {
+      void fill_test_prep(const char* name_in = "fill_test_data") {
         delete buffer;
-        const char* name_in = "fill_test_data";
         strcpy(name, name_in);
         if (vm.count("use_direct_io") > 0)
           buffer = new async_direct_io(name, vm["slipchunk"].as < unsigned long > (), true);

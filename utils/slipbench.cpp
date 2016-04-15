@@ -18,7 +18,12 @@
 
 #include "../slipstore/interface.hpp"
 #include "../slipstore/config.hpp"
- 
+#include <string>
+#include <unordered_map>
+
+using std::unordered_map;
+using std::string;
+
 class null_barrier_work : public slipstore::barrier_work {
   public:
       virtual void operator()() {
@@ -61,6 +66,8 @@ int main(int argc, const char **argv) {
   rtc_clock drain_clock;
   slipstore::slipstore_req_t req;
   bool silent;
+  unordered_map<string, slipstore::io*> disks;
+
   /* Get options */
   setup_options(argc, argv);
   unsigned long slipchunk = vm["slipchunk"].as < unsigned long > ();
@@ -76,8 +83,11 @@ int main(int argc, const char **argv) {
   init_slipstore_desc();
   bool run_drain_test = (vm.count("drain_test") > 0);
   bool run_fill_test = (vm.count("fill_test") > 0);
-  streams = new slipstore::io("fill_data", NULL);
-  slipstore::init(streams); // tilesize does not matter
+  const char* filename = "fill_data";
+  string sFilename(filename);
+  streams = new slipstore::io(filename, NULL);
+  disks[sFilename] = streams;
+  slipstore::init(&disks); // tilesize does not matter
   unsigned char *buffer = new unsigned char[slipchunk];
   unsigned long fill_bytes = 0;
   unsigned char *big_buffer;
@@ -116,6 +126,7 @@ int main(int argc, const char **argv) {
     BOOST_LOG_TRIVIAL(info) << "done";
   }
 
+  req.filename = filename;
   control_barrier(); // everyone started
   if (run_drain_test) {
     if (!silent) {
@@ -173,8 +184,10 @@ int main(int argc, const char **argv) {
       control_barrier();
     }
   }
+  const char* name_test = "fill_test_data";
+  req.filename = name_test;
   if (run_fill_test) {
-    streams->fill_test_prep();
+    streams->fill_test_prep(name_test);
     control_barrier();
     if (!silent) {
       BOOST_LOG_TRIVIAL(info) << "Starting fill test";
