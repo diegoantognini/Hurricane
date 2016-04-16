@@ -42,15 +42,15 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   bool local_create(const std::string& filename) {
-    if(!local_exists(filename))
+    if(local_exists(filename))
       return false;
-    
+
     local_buffers[filename] = new slipstore::io(filename.c_str(), NULL);
     return true;
   }
 
   bool local_exists(const std::string& filename) {
-    return local_buffers.find(filename) != local_buffers.end();
+  	return local_buffers.find(filename) != local_buffers.end();
   }
 
   bool local_delete(const std::string& filename) {
@@ -213,8 +213,10 @@ class IODFSHandler : virtual public IODFSIf {
 
 };
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
   int port = 9090;
+  setup_options(argc, argv);
+
   shared_ptr<IODFSHandler> handler(new IODFSHandler());
   shared_ptr<TProcessor> processor(new IODFSProcessor(handler));
   shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));

@@ -5,7 +5,6 @@
 #include <iostream>
 #include <cassert>
 #include <ctime>
-#include <cstdlib>
 #include <string>
 
 using namespace apache::thrift;
@@ -19,85 +18,94 @@ using std::string;
 
 bool test_local_create_exists_delete_one_file(IODFSClient& client) {
 	bool result = true;
-	const char* file1 = "file1.txt";
+	string file1 = "file1.txt";
 
 	// Non-existing file
-	result &= !client.local_exists(file1);
-	result &= !client.local_delete(file1);
+	result = result && !client.local_exists(file1);
+	result = result && !client.local_delete(file1);
 
 	// Creation file
-	result &= client.local_create(file1);
-	result &= !client.local_create(file1); 
+	result = result && client.local_create(file1);
+	result = result && !client.local_create(file1); 
 
 	// Existence
-	result &= client.local_exists(file1);
+	result = result && client.local_exists(file1);
 
 	// Deletion file
-	result &= client.local_delete(file1);
-	result &= !client.local_delete(file1);
-	result &= !client.local_exists(file1);
+	result = result && client.local_delete(file1);
+	result = result && !client.local_delete(file1);
+	result = result && !client.local_exists(file1);
 
 	// Recreation file
-	result &= client.local_create(file1);
-	result &= client.local_exists(file1);
+	result = result && client.local_create(file1);
+	result = result && client.local_exists(file1);
 
-	result &= client.local_delete(file1);
+	result = result && client.local_delete(file1);
+
 	return result;
 }
 
 bool test_local_create_exists_delete_two_files(IODFSClient& client) {
 	bool result = true;
-	const char* file1 = "file1.txt";
-	const char* file2 = "file2.txt";
+	string file1 = "file1.txt";
+	string file2 = "file2.txt";
 
 	// Creation file1
-	result &= client.local_create(file1);
-	result &= !client.local_create(file1); 
+	result = result && client.local_create(file1);
+	result = result && !client.local_create(file1); 
 
 	// Existence
-	result &= client.local_exists(file1);
-	result &= !client.local_exists(file2);
+	result = result && client.local_exists(file1);
+	result = result && !client.local_exists(file2);
 
 	// Creation file2
-	result &= client.local_create(file2);
-	result &= client.local_exists(file1);
-	result &= client.local_exists(file2);
+	result = result && client.local_create(file2);
+	result = result && client.local_exists(file1);
+	result = result && client.local_exists(file2);
 
 	// Deletion file1
-	result &= client.local_delete(file1);
-	result &= !client.local_delete(file1);
-	result &= !client.local_exists(file1);
-	result &= client.local_exists(file2);
+	result = result && client.local_delete(file1);
+	result = result && !client.local_delete(file1);
+	result = result && !client.local_exists(file1);
+	result = result && client.local_exists(file2);
 
 	// Deletion
 	return result;
 }
 
 bool test_local_drain_fill(IODFSClient& client) {
-	const char* filename = "testing_drain";
-	const int LENGTH = 1024; //1 Ko
-	string buffer(LENGTH, 0);
+	string filename = "testing_drain";
+	const unsigned long SLIPCHUNCK = 16;//4*1024*1024; // 4 Mo
+	const unsigned long LENGTH = 4*SLIPCHUNCK;
+	string buffer(SLIPCHUNCK, 0);
 	unsigned long results = 0;
 	bool result = true;
 
-	int var = 0;
-	for(int i = 0; i < LENGTH; ++i) {
-		var = rand()%LENGTH + 1;
-		results += var;
+	result = result && client.local_create(filename);
+	result = result && client.local_exists(filename);
 
-		buffer[i] = var;
+	unsigned long bytes_to_write = LENGTH;
+	std::cout << bytes_to_write << std::endl;
+	while(bytes_to_write > 0) {
+		std::cout << bytes_to_write << std::endl;
+		char var = 0;
+		for(unsigned long i = 0; i < SLIPCHUNCK; ++i) {
+			var = rand()%127 + 1;
+			results += var;
+
+			buffer[i] = var;
+			cout << buffer[i] << " ";
+		}
+		result = result && client.local_drain(filename, buffer);
+		bytes_to_write -= buffer.size();
 	}
-
-	result &= client.local_create(filename);
-	result &= client.local_exists(filename);
-	result &= client.local_drain(filename, buffer);
+	cout << endl;
 
 	return true;
 }
 void do_test(const char* name, bool (*fct)(IODFSClient&), IODFSClient& client) {
-	cout << name;
-	assert(fct(client));
-	cout << " -> PASSED" << endl;
+	cout << name << " : ";
+	cout << " -> " << (fct(client) ? "PASSED" : "FAILED") << endl;
 }
 
 int main(int argc, char **argv) {
@@ -113,9 +121,9 @@ int main(int argc, char **argv) {
 	try {
 	    transport->open();
 
-	    do_test("test_local_create_exists_delete_one_file", &test_local_create_exists_delete_two_files, iodfs);
-	    do_test("test_local_create_exists_delete_two_files", &test_local_create_exists_delete_two_files, iodfs);
-	    do_test("test_local_drain_fill", &test_local_drain_fill, iodfs);
+	    do_test("test_local_create_exists_delete_one_file", &test_local_create_exists_delete_one_file, iodfs);
+	    //do_test("test_local_create_exists_delete_two_files", &test_local_create_exists_delete_two_files, iodfs);
+	    //do_test("test_local_drain_fill", &test_local_drain_fill, iodfs);
 
 		transport->close();
 	} catch (TException& tx) {

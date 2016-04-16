@@ -38,7 +38,7 @@ static void setup_options(int argc, const char *argv[]) {
      spmv, sssp, sssp_forest, cc, cc_online, als, als_async, als_graphchi, checkbip, mis, \
      pagerank, pagerank_ddf, belief_propagation, belief_propagation_graphchi, \
      mcst, hyperanf, scc, triangle_counting, kcores, bc")
-      ("graph,g", boost::program_options::value<std::string>()->required(),
+      ("graph,g", boost::program_options::value<std::string>()->default_value(""),
        "Name of the graph/matrix")
       ("autotune,a", "Autotune partition count")
       ("cpu_cache_size",
