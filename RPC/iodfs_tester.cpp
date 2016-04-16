@@ -76,7 +76,7 @@ bool test_local_create_exists_delete_two_files(IODFSClient& client) {
 	return result;
 }
 
-bool test_local_drain_fill_eof(IODFSClient& client) {
+bool test_local_drain_fill_eof_size(IODFSClient& client) {
 	string filename = "testing_drain_fill";
 	const unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
 	const unsigned long LENGTH = 4*SLIPCHUNCK;
@@ -85,8 +85,20 @@ bool test_local_drain_fill_eof(IODFSClient& client) {
 	string read_results;
 	bool result = true;
 
+	result = result && !client.local_drain(filename, buffer);
+	string dummy_buffer;
+	client.local_fill(dummy_buffer, filename, SLIPCHUNCK);
+	result = result && dummy_buffer.size() == 0;
+	result = result && (client.local_size(filename) == -1);
+	result = result && (client.local_left(filename) == -1);
+	result = result && client.local_eof(filename);
+	result = result && !client.local_rewind(filename);
+
 	result = result && client.local_create(filename);
 	result = result && client.local_exists(filename);
+	
+	// Size
+	result = result && (client.local_size(filename) == 0);
 
 	// Drain
 	unsigned long bytes_to_write = LENGTH;
@@ -103,8 +115,15 @@ bool test_local_drain_fill_eof(IODFSClient& client) {
 		bytes_to_write -= buffer.size();
 	}
 
+	// Size
+	result = result && (client.local_size(filename) == LENGTH);
+
 	// Fill s.t. slipchunk % SLIPCHUNK != 0
 	result = result && client.local_rewind(filename);
+
+	// Size
+	result = result && (client.local_size(filename) == LENGTH);
+
 	std::string read_buffer;
 	unsigned long bytes_left = LENGTH;
 	unsigned long bytes_to_read = 0;
@@ -147,6 +166,8 @@ bool test_local_drain_fill_eof(IODFSClient& client) {
 
 	result = result && (read_results == write_results);
 
+	// Trunc
+	result = result && client.local_trunc(filename);
 	// Delete
 	result = result && client.local_delete(filename);
 
@@ -172,7 +193,7 @@ int main(int argc, char **argv) {
 
 	    do_test("test_local_create_exists_delete_one_file", &test_local_create_exists_delete_one_file, iodfs);
 	    do_test("test_local_create_exists_delete_two_files", &test_local_create_exists_delete_two_files, iodfs);
-	    do_test("test_local_drain_fill_eof", &test_local_drain_fill_eof, iodfs);
+	    do_test("test_local_drain_fill_eof_size", &test_local_drain_fill_eof_size, iodfs);
 
 		transport->close();
 	} catch (TException& tx) {
