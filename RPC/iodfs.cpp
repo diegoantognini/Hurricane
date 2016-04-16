@@ -58,6 +58,7 @@ class IODFSHandler : virtual public IODFSIf {
     if(!local_exists(filename, it))
       return false;
     
+    unlink_file((char *)(it->first.c_str()));
     delete it->second;
     local_buffers.erase(it);
 

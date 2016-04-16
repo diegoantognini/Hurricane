@@ -69,17 +69,20 @@ bool test_local_create_exists_delete_two_files(IODFSClient& client) {
 	result = result && !client.local_exists(file1);
 	result = result && client.local_exists(file2);
 
-	// Deletion
+	// Deletion file2
+	result = result && client.local_delete(file2);
+	result = result && !client.local_delete(file2);
+
 	return result;
 }
 
 bool test_local_drain_fill(IODFSClient& client) {
-	string filename = "testing_drain";
+	string filename = "testing_drain_fill";
 	const unsigned long SLIPCHUNCK = 16;//4*1024*1024; // 4 Mo
 	const unsigned long LENGTH = 4*SLIPCHUNCK;
 	string buffer(SLIPCHUNCK, 0);
-	unsigned long results = 0;
-	unsigned long read_results = 0;
+	string write_results;
+	string read_results;
 	bool result = true;
 
 	result = result && client.local_create(filename);
@@ -88,41 +91,60 @@ bool test_local_drain_fill(IODFSClient& client) {
 	// Drain
 	unsigned long bytes_to_write = LENGTH;
 	while(bytes_to_write > 0) {
-		std::cout << bytes_to_write << std::endl;
 		char var = 0;
 		for(unsigned long i = 0; i < SLIPCHUNCK; ++i) {
 			var = rand()%127 + 1;
-			results += var;
 
 			buffer[i] = var;
-			cout << buffer[i] << " ";
 		}
+		write_results += buffer;
 
 		result = result && client.local_drain(filename, buffer);
 		bytes_to_write -= buffer.size();
 	}
-	cout << endl;
 
-	// Fill
+	// Fill s.t. slipchunk % SLIPCHUNK != 0
+	result = result && client.local_rewind(filename);
 	std::string read_buffer;
 	unsigned long bytes_left = LENGTH;
 	unsigned long bytes_to_read = 0;
+	unsigned long slipchunck = SLIPCHUNCK/3; //We want to check if it works it 
 	while(bytes_left > 0) {
-		bytes_to_read = (bytes_left > SLIPCHUNCK ? SLIPCHUNCK : bytes_left);
+		bytes_to_read = (bytes_left > slipchunck ? slipchunck : bytes_left);
 		client.local_fill(read_buffer, filename, bytes_to_read);
 
-		if(bytes_to_read != read_buffer.size())
-			results = false;
+		result = result && (bytes_to_read == read_buffer.size());
 
 		bytes_left -= bytes_to_read;
 
-		for(unsigned int i = 0; i < bytes_to_read; ++i)
-			read_results += read_buffer[i];
+		read_results += read_buffer;
 	}
-	
-	std::cout << results << " " << read_results << std::endl;
 
-	return true;
+	result = result && (read_results == write_results);
+
+	// Fill s.t. slipchunk % SLIPCHUNK == 0
+	result = result && client.local_rewind(filename);
+	read_results ="";
+	bytes_left = LENGTH;
+	bytes_to_read = 0;
+	slipchunck = SLIPCHUNCK; 
+	while(bytes_left > 0) {
+		bytes_to_read = (bytes_left > slipchunck ? slipchunck : bytes_left);
+		client.local_fill(read_buffer, filename, bytes_to_read);
+
+		result = result && (bytes_to_read == read_buffer.size());
+
+		bytes_left -= bytes_to_read;
+
+		read_results += read_buffer;
+	}
+
+	result = result && (read_results == write_results);
+
+	// Delete
+	result = result && client.local_delete(filename);
+
+	return result;
 }
 void do_test(const char* name, bool (*fct)(IODFSClient&), IODFSClient& client) {
 	cout << name << " : ";
