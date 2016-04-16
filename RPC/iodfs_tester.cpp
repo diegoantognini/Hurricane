@@ -76,7 +76,7 @@ bool test_local_create_exists_delete_two_files(IODFSClient& client) {
 	return result;
 }
 
-bool test_local_drain_fill(IODFSClient& client) {
+bool test_local_drain_fill_eof(IODFSClient& client) {
 	string filename = "testing_drain_fill";
 	const unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
 	const unsigned long LENGTH = 4*SLIPCHUNCK;
@@ -117,6 +117,12 @@ bool test_local_drain_fill(IODFSClient& client) {
 
 		bytes_left -= bytes_to_read;
 
+		// EOF
+		if(bytes_left > 0)
+			result = result && !client.local_eof(filename);
+		else
+			result = result && client.local_eof(filename);
+	
 		read_results += read_buffer;
 	}
 
@@ -166,7 +172,7 @@ int main(int argc, char **argv) {
 
 	    do_test("test_local_create_exists_delete_one_file", &test_local_create_exists_delete_one_file, iodfs);
 	    do_test("test_local_create_exists_delete_two_files", &test_local_create_exists_delete_two_files, iodfs);
-	    do_test("test_local_drain_fill", &test_local_drain_fill, iodfs);
+	    do_test("test_local_drain_fill_eof", &test_local_drain_fill_eof, iodfs);
 
 		transport->close();
 	} catch (TException& tx) {
