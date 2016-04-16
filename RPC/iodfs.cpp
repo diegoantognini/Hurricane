@@ -36,6 +36,11 @@ class IODFSHandler : virtual public IODFSIf {
     init_req();  
   }
 
+  ~IODFSHandler() {
+  	for(auto& it : local_buffers)
+  		delete it.second;
+  }
+
   bool local_create(const std::string& filename) {
     if(!local_exists(filename))
       return false;
