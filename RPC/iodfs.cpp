@@ -64,38 +64,35 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
 
-  //We assume that _return has already the size = #bytes to read (e.g string s1(100,0)) (0 are really important) -> C++11
-  void local_fill(std::string& _return, const std::string& filename) {
+  void local_fill(std::string& _return, const std::string& filename, const int64_t size) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!local_exists(filename, it))
       _return = "";
     else {
-      unsigned long bytes_to_read = _return.size();
-
       init_req();
-      req.size = bytes_to_read;
-      unsigned long bytes_read = it->second->fill((unsigned char*) _return.c_str(), &req);
+      req.size = size;
+      _return = string(size, 0);
+      int64_t bytes_read = it->second->fill((unsigned char*) _return.c_str(), &req);
 
-      // EOF, should return a string smaller and so, its size is modified
-      if(bytes_read < bytes_to_read)
+	  // EOF, should return a string smaller and so, its size is modified
+      if(bytes_read < size)
         _return = _return.data();
     }
   }
-  //We assume that _return has already the size = #bytes to read (e.g string s1(100,0)) (0 are really important) -> C++11
-  void local_seek_and_fill(std::string& _return, const std::string& filename, const int64_t offset) {
+
+  void local_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!local_exists(filename, it))
       _return = "";
     else {
-      unsigned long bytes_to_read = _return.size();
-
       init_req();
-      req.size = bytes_to_read;
+      req.size = size;
       req.offset = offset;
-      unsigned long bytes_read = it->second->seek_and_fill((unsigned char*) _return.c_str(), &req);
+      _return = string(size, 0);
+      int64_t bytes_read = it->second->seek_and_fill((unsigned char*) _return.c_str(), &req);
 
-      // EOF, should return a string smaller and so, its size is modified
-      if(bytes_read < bytes_to_read)
+	  // EOF, should return a string smaller and so, its size is modified
+      if(bytes_read < size)
         _return = _return.data();
     }
   }
@@ -171,12 +168,12 @@ class IODFSHandler : virtual public IODFSIf {
     return false;
   }
 
-  void global_fill(std::string& _return, const std::string& filename) {
+  virtual void global_fill(std::string& _return, const std::string& filename, const int64_t size) {
     // Your implementation goes here
     printf("global_fill\n");
   }
 
-  void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t offset) {
+  void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) {
     // Your implementation goes here
     printf("global_seek_and_fill\n");
   }

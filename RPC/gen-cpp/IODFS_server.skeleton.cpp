@@ -35,12 +35,12 @@ class IODFSHandler : virtual public IODFSIf {
     printf("local_delete\n");
   }
 
-  void local_fill(std::string& _return, const std::string& filename) {
+  void local_fill(std::string& _return, const std::string& filename, const int64_t size) {
     // Your implementation goes here
     printf("local_fill\n");
   }
 
-  void local_seek_and_fill(std::string& _return, const std::string& filename, const int64_t offset) {
+  void local_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) {
     // Your implementation goes here
     printf("local_seek_and_fill\n");
   }
@@ -90,12 +90,12 @@ class IODFSHandler : virtual public IODFSIf {
     printf("global_delete\n");
   }
 
-  void global_fill(std::string& _return, const std::string& filename) {
+  void global_fill(std::string& _return, const std::string& filename, const int64_t size) {
     // Your implementation goes here
     printf("global_fill\n");
   }
 
-  void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t offset) {
+  void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) {
     // Your implementation goes here
     printf("global_seek_and_fill\n");
   }

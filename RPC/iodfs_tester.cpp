@@ -79,13 +79,14 @@ bool test_local_drain_fill(IODFSClient& client) {
 	const unsigned long LENGTH = 4*SLIPCHUNCK;
 	string buffer(SLIPCHUNCK, 0);
 	unsigned long results = 0;
+	unsigned long read_results = 0;
 	bool result = true;
 
 	result = result && client.local_create(filename);
 	result = result && client.local_exists(filename);
 
+	// Drain
 	unsigned long bytes_to_write = LENGTH;
-	std::cout << bytes_to_write << std::endl;
 	while(bytes_to_write > 0) {
 		std::cout << bytes_to_write << std::endl;
 		char var = 0;
@@ -96,10 +97,30 @@ bool test_local_drain_fill(IODFSClient& client) {
 			buffer[i] = var;
 			cout << buffer[i] << " ";
 		}
+
 		result = result && client.local_drain(filename, buffer);
 		bytes_to_write -= buffer.size();
 	}
 	cout << endl;
+
+	// Fill
+	std::string read_buffer;
+	unsigned long bytes_left = LENGTH;
+	unsigned long bytes_to_read = 0;
+	while(bytes_left > 0) {
+		bytes_to_read = (bytes_left > SLIPCHUNCK ? SLIPCHUNCK : bytes_left);
+		client.local_fill(read_buffer, filename, bytes_to_read);
+
+		if(bytes_to_read != read_buffer.size())
+			results = false;
+
+		bytes_left -= bytes_to_read;
+
+		for(unsigned int i = 0; i < bytes_to_read; ++i)
+			read_results += read_buffer[i];
+	}
+	
+	std::cout << results << " " << read_results << std::endl;
 
 	return true;
 }
@@ -122,8 +143,8 @@ int main(int argc, char **argv) {
 	    transport->open();
 
 	    do_test("test_local_create_exists_delete_one_file", &test_local_create_exists_delete_one_file, iodfs);
-	    //do_test("test_local_create_exists_delete_two_files", &test_local_create_exists_delete_two_files, iodfs);
-	    //do_test("test_local_drain_fill", &test_local_drain_fill, iodfs);
+	    do_test("test_local_create_exists_delete_two_files", &test_local_create_exists_delete_two_files, iodfs);
+	    do_test("test_local_drain_fill", &test_local_drain_fill, iodfs);
 
 		transport->close();
 	} catch (TException& tx) {

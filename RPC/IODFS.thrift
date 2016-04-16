@@ -4,8 +4,8 @@ service IODFS {
 	bool local_exists(1:string filename),
 	bool local_delete(1:string filename),
 
-	string local_fill(1:string filename),
-	string local_seek_and_fill(1:string filename, 2:i64 offset),
+	string local_fill(1:string filename, 2:i64 size),
+	string local_seek_and_fill(1:string filename, 2:i64 size, 3:i64 offset),
 	bool local_drain(1:string filename, 2:binary buffer),
 
 	bool local_rewind(1:string filename),
@@ -20,8 +20,8 @@ service IODFS {
 	bool global_exists(1:string filename),
 	bool global_delete(1:string filename),
 
-	string global_fill(1:string filename,),
-	string global_seek_and_fill(1:string filename, 2:i64 offset),
+	string global_fill(1:string filename, 2:i64 size),
+	string global_seek_and_fill(1:string filename, 2:i64 size, 3:i64 offset),
 	bool global_drain(1:string filename, 2:binary buffer),
 
 	bool global_rewind(1:string filename),
