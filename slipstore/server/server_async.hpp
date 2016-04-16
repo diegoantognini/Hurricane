@@ -4,6 +4,9 @@
 #include "server.hpp"
 #include "../interface.hpp"
 #include "../../utils/clock_utils.h"
+#include <string>
+
+using std::string;
 
 namespace slipstore {
   class server_async : public server {
@@ -30,6 +33,7 @@ namespace slipstore {
         while (true) {
           // Get cmd
           slipstore_req_t req;
+          string filename;
           unsigned long requestor;
           unsigned long resp;
 
@@ -59,6 +63,7 @@ namespace slipstore {
           }
 
           requestor = req.source_mc;
+          filename = req.filename;
           if (req.cmd == CMD_TERMINATE) {
             resp = RESP_ACK;
             (void) do_zmq_send(socket_cmd_in,
@@ -78,7 +83,7 @@ namespace slipstore {
           }
           else if (req.cmd == CMD_EOF) {
             // Check whether stream is empty
-            if ((*disks)[req.filename]->eof()) {
+            if ((*disks)[filename]->eof()) {
               resp = RESP_ACK;
             }
             else {
@@ -93,7 +98,7 @@ namespace slipstore {
           else if (req.cmd == CMD_RESET) {
             // Reset stream
             resp = RESP_ACK;
-            (*disks)[req.filename]->trunc();
+            (*disks)[filename]->trunc();
             (void) do_zmq_send(socket_cmd_in,
                                (unsigned char *) &resp,
                                sizeof(unsigned long),
@@ -102,7 +107,7 @@ namespace slipstore {
           }
           switch (req.cmd) {
             case CMD_FILL:
-              if (!(*disks)[req.filename]->eof()) {
+              if (!(*disks)[filename]->eof()) {
                 resp = RESP_ACK;
               }
               else {
@@ -114,7 +119,7 @@ namespace slipstore {
                                  "server resp out:");
               // If we responded positively then send the data
               if (resp == RESP_ACK) {
-                unsigned long size = (*disks)[req.filename]->fill(buffer, &req);
+                unsigned long size = (*disks)[filename]->fill(buffer, &req);
                 /*
                 unsigned int dummy;
                 (void) do_zmq_recv(sockets_data_out[requestor],
@@ -136,7 +141,7 @@ namespace slipstore {
                                  "server resp out:");
               // If we responded positively then send the data
               if (resp == RESP_ACK) {
-                unsigned long size = (*disks)[req.filename]->seek_and_fill(buffer, &req);
+                unsigned long size = (*disks)[filename]->seek_and_fill(buffer, &req);
                 /*
                 unsigned int dummy;
                 (void) do_zmq_recv(sockets_data_out[requestor],
@@ -152,7 +157,7 @@ namespace slipstore {
               break;
             case CMD_DRAIN:
               // Check whether we have space left
-              if ((*disks)[req.filename]->have_drain_space(&req)) {
+              if ((*disks)[filename]->have_drain_space(&req)) {
                 resp = RESP_ACK;
               }
               else {
@@ -184,7 +189,7 @@ namespace slipstore {
                 if (rc >= 0) {
                   // We have another request waiting
                   // Check if it's also a drain and we have enough space...
-                  if (prev_req.cmd == CMD_DRAIN && (*disks)[req.filename]->have_drain_space(prev_req.size + req.size)) {
+                  if (prev_req.cmd == CMD_DRAIN && (*disks)[filename]->have_drain_space(prev_req.size + req.size)) {
                     resp = RESP_ACK;
                     (void) do_zmq_send(socket_cmd_in,
                                        (unsigned char *) &resp,
@@ -201,7 +206,7 @@ namespace slipstore {
                 }
 
                 // Drain
-                (*disks)[req.filename]->drain(buffer, &req);
+                (*disks)[filename]->drain(buffer, &req);
               }
               break;
             default:

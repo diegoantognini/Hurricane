@@ -66,7 +66,7 @@ int main(int argc, const char **argv) {
   rtc_clock drain_clock;
   slipstore::slipstore_req_t req;
   bool silent;
-  unordered_map<string, slipstore::io*> disks;
+  unordered_map<string, slipstore::io*>* disks = new unordered_map<string, slipstore::io*>;
 
   /* Get options */
   setup_options(argc, argv);
@@ -86,8 +86,8 @@ int main(int argc, const char **argv) {
   const char* filename = "fill_data";
   string sFilename(filename);
   streams = new slipstore::io(filename, NULL);
-  disks[sFilename] = streams;
-  slipstore::init(&disks); // tilesize does not matter
+  (*disks)[sFilename] = streams;
+  slipstore::init(disks); // tilesize does not matter
   unsigned char *buffer = new unsigned char[slipchunk];
   unsigned long fill_bytes = 0;
   unsigned char *big_buffer;
@@ -126,7 +126,7 @@ int main(int argc, const char **argv) {
     BOOST_LOG_TRIVIAL(info) << "done";
   }
 
-  req.filename = filename;
+  strcpy(req.filename, filename);
   control_barrier(); // everyone started
   if (run_drain_test) {
     if (!silent) {
@@ -184,10 +184,11 @@ int main(int argc, const char **argv) {
       control_barrier();
     }
   }
-  req.filename = "fill_test_data";
-  disks[string(req.filename)] = streams;
   if (run_fill_test) {
-    streams->fill_test_prep(req.filename.c_str());
+    disks->clear();
+    strcpy(req.filename, "fill_test_data");
+    (*disks)[string(req.filename)] = streams;
+    streams->fill_test_prep(req.filename);
     control_barrier();
     if (!silent) {
       BOOST_LOG_TRIVIAL(info) << "Starting fill test";
@@ -231,6 +232,7 @@ int main(int argc, const char **argv) {
   }
   control_barrier(); // everyone done
   slipstore::shutdown();
+  delete disks;
   delete buffer;
   delete streams;
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::DRAIN_BYTES " << slipfile_size;

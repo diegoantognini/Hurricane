@@ -2,6 +2,9 @@
 #define _SERVER_SYNC_
 
 #include "server.hpp"
+#include <string>
+
+using std::string;
 
 namespace slipstore {
 class server_sync : public server {
@@ -23,6 +26,7 @@ class server_sync : public server {
         while (true) {
           // Get cmd
           slipstore_req_t req;
+          string filename;
           unsigned long requestor;
           unsigned long resp;
           current_busy_time->stop();
@@ -44,6 +48,7 @@ class server_sync : public server {
           busy_time_disk.start();
           current_busy_time = &busy_time_disk;
           requestor = req.source_mc;
+          filename = req.filename;
           if (req.cmd == CMD_TERMINATE) {
             resp = RESP_ACK;
             (void) do_zmq_send(socket_cmd_in,
@@ -63,7 +68,7 @@ class server_sync : public server {
           }
           else if (req.cmd == CMD_EOF) {
             // Check whether stream is empty
-            if ((*disks)[req.filename]->eof()) {
+            if ((*disks)[filename]->eof()) {
               resp = RESP_ACK;
             }
             else {
@@ -78,7 +83,7 @@ class server_sync : public server {
           else if (req.cmd == CMD_RESET) {
             // Reset stream
             resp = RESP_ACK;
-            (*disks)[req.filename]->trunc();
+            (*disks)[filename]->trunc();
             (void) do_zmq_send(socket_cmd_in,
                                (unsigned char *) &resp,
                                sizeof(unsigned long),
@@ -87,7 +92,7 @@ class server_sync : public server {
           }
           switch (req.cmd) {
             case CMD_FILL:
-              if (!(*disks)[req.filename]->eof()) {
+              if (!(*disks)[filename]->eof()) {
                 resp = RESP_ACK;
               }
               else {
@@ -99,7 +104,7 @@ class server_sync : public server {
                                  "server resp out:");
               // If we responded positively then send the data
               if (resp == RESP_ACK) {
-                unsigned long size = (*disks)[req.filename]->fill(buffer, &req);
+                unsigned long size = (*disks)[filename]->fill(buffer, &req);
                 /*unsigned int dummy;
                 (void) do_zmq_recv(sockets_data_out[requestor],
                  (unsigned char *)&dummy,
@@ -120,7 +125,7 @@ class server_sync : public server {
                                  "server resp out:");
               // If we responded positively then send the data
               if (resp == RESP_ACK) {
-                unsigned long size = (*disks)[req.filename]->seek_and_fill(buffer, &req);
+                unsigned long size = (*disks)[filename]->seek_and_fill(buffer, &req);
                 /*
                 unsigned int dummy;
                 (void) do_zmq_recv(sockets_data_out[requestor],
@@ -136,7 +141,7 @@ class server_sync : public server {
               break;
             case CMD_DRAIN:
               // Check whether we have space left
-              if ((*disks)[req.filename]->have_drain_space(&req)) {
+              if ((*disks)[filename]->have_drain_space(&req)) {
                 resp = RESP_ACK;
               }
               else {
@@ -152,7 +157,7 @@ class server_sync : public server {
                                    buffer,
                                    req.size,
                                    "server data in:");
-                (*disks)[req.filename]->drain(buffer, &req);
+                (*disks)[filename]->drain(buffer, &req);
               }
               break;
             default:

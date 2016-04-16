@@ -21,7 +21,6 @@
 // Handle Slipstream Disk I/O
 #include <unistd.h>
 #include <sys/types.h>
-#include <string>
 #include "boost/multi_array.hpp"
 #include "../../utils/memory_utils.h"
 #include "../../utils/clock_utils.h"
@@ -48,7 +47,7 @@ namespace slipstore {
       unsigned long cmd;
       unsigned long size;
       unsigned long offset; // Used only by seek and fill
-      std::string filename;
+      char filename[100];
   };
 
   class io {
