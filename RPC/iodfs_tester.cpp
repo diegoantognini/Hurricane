@@ -78,7 +78,7 @@ bool test_local_create_exists_delete_two_files(IODFSClient& client) {
 
 bool test_local_drain_fill(IODFSClient& client) {
 	string filename = "testing_drain_fill";
-	const unsigned long SLIPCHUNCK = 16;//4*1024*1024; // 4 Mo
+	const unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
 	const unsigned long LENGTH = 4*SLIPCHUNCK;
 	string buffer(SLIPCHUNCK, 0);
 	string write_results;

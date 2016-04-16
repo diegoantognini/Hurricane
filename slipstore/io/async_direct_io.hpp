@@ -46,8 +46,6 @@ namespace slipstore {
           data_bytes = get_file_size(fd);
         }
         else {
-          // This prevents us from over writing any snapshots
-          unlink_file(name);
           fd = open(name,
                     O_RDWR | O_LARGEFILE | O_CREAT | O_TRUNC | O_DIRECT,
                     S_IRWXU);
