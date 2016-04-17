@@ -76,10 +76,10 @@ bool test_local_create_exists_delete_two_files(IODFSClient& client) {
 	return result;
 }
 
-bool test_local_drain_fill_eof_size(IODFSClient& client) {
+bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
 	string filename = "testing_drain_fill";
 	const unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
-	const unsigned long LENGTH = 4*SLIPCHUNCK;
+	const unsigned long LENGTH = 32*SLIPCHUNCK;
 	string buffer(SLIPCHUNCK, 0);
 	string write_results;
 	string read_results;
@@ -112,7 +112,10 @@ bool test_local_drain_fill_eof_size(IODFSClient& client) {
 		write_results += buffer;
 
 		result = result && client.local_drain(filename, buffer);
+		result = result && (client.local_left(filename) == 0);
+		result = result && client.local_eof(filename);
 		bytes_to_write -= buffer.size();
+		result = result && (((unsigned long)client.local_size(filename)) == (LENGTH-bytes_to_write));
 	}
 
 	// Size
@@ -129,10 +132,14 @@ bool test_local_drain_fill_eof_size(IODFSClient& client) {
 	unsigned long bytes_to_read = 0;
 	unsigned long slipchunck = SLIPCHUNCK/3; //We want to check if it works it 
 	while(bytes_left > 0) {
+		// Left
+		result = result && (((unsigned long)client.local_left(filename)) == bytes_left);
+
 		bytes_to_read = (bytes_left > slipchunck ? slipchunck : bytes_left);
 		client.local_fill(read_buffer, filename, bytes_to_read);
 
 		result = result && (bytes_to_read == read_buffer.size());
+		result = result && (client.local_size(filename) == LENGTH);
 
 		bytes_left -= bytes_to_read;
 
@@ -158,6 +165,7 @@ bool test_local_drain_fill_eof_size(IODFSClient& client) {
 		client.local_fill(read_buffer, filename, bytes_to_read);
 
 		result = result && (bytes_to_read == read_buffer.size());
+		result = result && (client.local_size(filename) == LENGTH);
 
 		bytes_left -= bytes_to_read;
 
@@ -168,11 +176,106 @@ bool test_local_drain_fill_eof_size(IODFSClient& client) {
 
 	// Trunc
 	result = result && client.local_trunc(filename);
+	result = result && client.local_size(filename) == 0;
+	result = result && client.local_left(filename) == 0;
+
 	// Delete
 	result = result && client.local_delete(filename);
 
 	return result;
 }
+
+bool test_local_seek_and_fill(IODFSClient& client) {
+	string filename = "testing_seek_and_fill";
+	const unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
+	const unsigned long LENGTH = 32*SLIPCHUNCK;
+	string buffer(SLIPCHUNCK, 0);
+	string write_results;
+	string read_results;
+	bool result = true;
+
+	result = result && !client.local_drain(filename, buffer);
+	string dummy_buffer;
+	client.local_seek_and_fill(dummy_buffer, filename, SLIPCHUNCK, 0);
+	result = result && dummy_buffer.size() == 0;
+	result = result && (client.local_size(filename) == -1);
+	result = result && (client.local_left(filename) == -1);
+	result = result && client.local_eof(filename);
+	result = result && !client.local_rewind(filename);
+
+	result = result && client.local_create(filename);
+	result = result && client.local_exists(filename);
+	
+	// Size
+	result = result && (client.local_size(filename) == 0);
+
+	// Drain
+	unsigned long bytes_to_write = LENGTH;
+	while(bytes_to_write > 0) {
+		char var = 0;
+		for(unsigned long i = 0; i < SLIPCHUNCK; ++i) {
+			var = rand()%127 + 1;
+
+			buffer[i] = var;
+		}
+		write_results += buffer;
+
+		result = result && client.local_drain(filename, buffer);
+		bytes_to_write -= buffer.size();
+	}
+
+	// Size
+	result = result && (client.local_size(filename) == LENGTH);
+
+	// Seek and Fill reading per slipchunk
+	std::string read_buffer;
+	unsigned long bytes_left = LENGTH;
+	unsigned long bytes_to_read = 0;
+	unsigned long slipchunck = SLIPCHUNCK;
+	while(bytes_left > 0) {
+		bytes_to_read = (bytes_left > slipchunck ? slipchunck : bytes_left);
+		client.local_seek_and_fill(read_buffer, filename, bytes_to_read, LENGTH-bytes_left);
+
+		result = result && (bytes_to_read == read_buffer.size());
+
+		bytes_left -= bytes_to_read;
+		read_results += read_buffer;
+	}
+
+	result = result && (read_results == write_results);
+
+	// Seek and Fill reading every byte with slipchunk
+	read_buffer ="";
+	bytes_left = LENGTH;
+	bytes_to_read = 0;
+	slipchunck = SLIPCHUNCK;
+	int64_t offset = 0;
+	string chunk_write_results;
+	while(bytes_left > 0) {
+		bytes_to_read = (bytes_left > slipchunck ? slipchunck : bytes_left);
+		client.local_seek_and_fill(read_buffer, filename, bytes_to_read, offset);
+
+		result = result && (bytes_to_read == read_buffer.size());
+		result = result && (client.local_size(filename) == LENGTH);
+
+		chunk_write_results = string(write_results.begin()+offset, write_results.begin()+offset+bytes_to_read);
+		result = result && (read_buffer == chunk_write_results);
+
+		--bytes_left;
+		++offset;
+	}
+
+	// Trunc
+	result = result && client.local_trunc(filename);
+	result = result && client.local_size(filename) == 0;
+	result = result && client.local_left(filename) == 0;
+
+	// Delete
+	result = result && client.local_delete(filename);
+
+	return result;
+}
+
 void do_test(const char* name, bool (*fct)(IODFSClient&), IODFSClient& client) {
 	cout << name << " : ";
 	cout << " -> " << (fct(client) ? "PASSED" : "FAILED") << endl;
@@ -193,7 +296,8 @@ int main(int argc, char **argv) {
 
 	    do_test("test_local_create_exists_delete_one_file", &test_local_create_exists_delete_one_file, iodfs);
 	    do_test("test_local_create_exists_delete_two_files", &test_local_create_exists_delete_two_files, iodfs);
-	    do_test("test_local_drain_fill_eof_size", &test_local_drain_fill_eof_size, iodfs);
+	    do_test("test_local_drain_fill_eof_size_trunc_left", &test_local_drain_fill_eof_size_trunc_left, iodfs);
+	    do_test("test_local_seek_and_fill", &test_local_seek_and_fill, iodfs);
 
 		transport->close();
 	} catch (TException& tx) {
