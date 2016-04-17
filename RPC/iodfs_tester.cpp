@@ -79,7 +79,7 @@ bool test_local_create_exists_delete_two_files(IODFSClient& client) {
 bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
 	string filename = "testing_drain_fill";
 	const unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
-	const unsigned long LENGTH = 32*SLIPCHUNCK;
+	const unsigned long LENGTH = 8*SLIPCHUNCK;
 	string buffer(SLIPCHUNCK, 0);
 	string write_results;
 	string read_results;
@@ -187,7 +187,7 @@ bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
 
 bool test_local_seek_and_fill(IODFSClient& client) {
 	string filename = "testing_seek_and_fill";
-	const unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
+	const unsigned long SLIPCHUNCK = 4*1024; // 4 Ko
 	const unsigned long LENGTH = 32*SLIPCHUNCK;
 	string buffer(SLIPCHUNCK, 0);
 	string write_results;

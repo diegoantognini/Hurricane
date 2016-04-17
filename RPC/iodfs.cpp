@@ -27,6 +27,11 @@ class IODFSHandler : virtual public IODFSIf {
     return it != local_buffers.end();
   }
 
+  void local_delete(unordered_map<string, slipstore::io*>::iterator& it) {
+    unlink_file((char *)(it->first.c_str()));
+    delete it->second;
+  }
+
   void init_req() {
     req.source_mc = req.cmd = req.size = req.offset = 0;
   }
@@ -37,8 +42,8 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   ~IODFSHandler() {
-  	for(auto& it : local_buffers)
-  		delete it.second;
+  	for(unordered_map<string, slipstore::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
+  		local_delete(it);
   }
 
   bool local_create(const std::string& filename) {
@@ -57,9 +62,8 @@ class IODFSHandler : virtual public IODFSIf {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!local_exists(filename, it))
       return false;
-    
-    unlink_file((char *)(it->first.c_str()));
-    delete it->second;
+
+    local_delete(it);
     local_buffers.erase(it);
 
     return true;
