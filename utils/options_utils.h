@@ -32,16 +32,7 @@ static void setup_options(int argc, const char *argv[]) {
       ("processors,p", boost::program_options::value < unsigned
   long > ()->default_value(1),
       "Number of processors")
-  ("benchmark,b",
-      boost::program_options::value<std::string>()->default_value("bfs"),
-      "bfs, bfs_async, bfs_forest, bfs_filt, noop, degree_cnt, conductance, range_check, reverse, \
-     spmv, sssp, sssp_forest, cc, cc_online, als, als_async, als_graphchi, checkbip, mis, \
-     pagerank, pagerank_ddf, belief_propagation, belief_propagation_graphchi, \
-     mcst, hyperanf, scc, triangle_counting, kcores, bc")
-      ("graph,g", boost::program_options::value<std::string>()->default_value(""),
-       "Name of the graph/matrix")
-      ("autotune,a", "Autotune partition count")
-      ("cpu_cache_size",
+  ("cpu_cache_size",
        boost::program_options::value < unsigned
   long > ()->default_value(2097152),
       "Per-processor cache size")
@@ -56,30 +47,7 @@ static void setup_options(int argc, const char *argv[]) {
   ("blocked_memory",
       boost::program_options::value < unsigned
   long > ()->default_value(0),
-      "Physical memory to block before starting the test")
-  ("partitions,k", boost::program_options::value < unsigned
-  long > ()->default_value(32),
-      "Number of partitions")
-  ("super_partitions", boost::program_options::value < unsigned
-  long > ()->default_value(1),
-      "Number of partitions")
-  ("fanout,f", boost::program_options::value < unsigned
-  long > ()->default_value(32),
-      "Fanout for the tree splitter (power of two)")
-  ("qsort", "Use quicksort for partitioning")
-      ("heartbeat", "Emit a heartbeat message at the end of every phase")
-      ("destroy_init", "Trim the initial edge list file to release space")
-      ("measure_scatter_gather", "Measure sub-steps of scatter gather")
-      ("compressed_io", "Do compressed io")
-      ("ext_mem_shuffle", "Do an external memory shuffle")
-      ("ext_fanout",
-       boost::program_options::value < unsigned
-  long > ()->default_value(64),
-      "Fanout for external memory shuffle")
-  ("test_prefill",
-      boost::program_options::value < unsigned
-  long > ()->default_value(21474836480UL),
-      "Prefill amount for fanout test");
+      "Physical memory to block before starting the test");
 
   // Slipstore options
   desc.add_options()
@@ -96,20 +64,6 @@ static void setup_options(int argc, const char *argv[]) {
       < unsigned
   long > ()->default_value(ULONG_MAX),
       "Number of slipstore servers to use")
-  ("policy_help_all",
-      "Indiscriminately help all tiles")
-      ("policy_help_none", "Indiscriminately help no tiles")
-      ("policy_heuristic_new", "Use the new heuristic")
-      ("alpha",
-       boost::program_options::value<std::string>()->default_value("1.0"),
-       "Bias towards stealing (alpha > 1 means more stealing)")
-      ("sorted_order", "Consider partitions in order of size")
-      ("centralized_order", "Consider partitions in centralized order")
-      ("checkpoints", "Take checkpoints")
-      ("quota",
-       boost::program_options::value < unsigned
-  long > ()->default_value(ULONG_MAX),
-      "Maximum space to use on this machine")
   ("zmq_threads",
       boost::program_options::value < unsigned
   long > ()->default_value(2),
@@ -133,111 +87,7 @@ static void setup_options(int argc, const char *argv[]) {
        boost::program_options::value < unsigned
   long > ()->default_value(1),
       "Size of outstanding requests window");
-  // Scatter Gather driver options
-  desc.add_options()
-      ("vertices_disk",
-       boost::program_options::value < unsigned
-  long > ()->default_value(0),
-      "Disk containing vertex data files")
-  ("input_disk",
-      boost::program_options::value < unsigned
-  long > ()->default_value(0),
-      "Disk containing input edge list")
-  ("edges_disk",
-      boost::program_options::value < unsigned
-  long > ()->default_value(0),
-      "Disk containing edge stream")
-  ("updates0_disk",
-      boost::program_options::value < unsigned
-  long > ()->default_value(0),
-      "Disk containing first update stream")
-  ("updates1_disk",
-      boost::program_options::value < unsigned
-  long > ()->default_value(0),
-      "Disk containing second update stream")
-  ("output_disk",
-      boost::program_options::value < unsigned
-  long > ()->default_value(0),
-      "Disk containing output stream");
-  // Autotuner force options
-  desc.add_options()
-      ("force_buffers",
-       boost::program_options::value < unsigned
-  long > ()->default_value(0),
-      "force buffer count");
-  // Add algorithm specific options here !!!!!!!!!!!!!!!
-  // bfs
-  desc.add_options()
-      ("bfs::root",
-       boost::program_options::value < unsigned
-  long > ()->default_value(0),
-      "root vertex id for bfs and bfs_async");
-  desc.add_options()
-      ("bfs_forest_traced::print_interval",
-       boost::program_options::value < unsigned
-  long > ()->default_value(1),
-      "Tracing superstep print interval for bfs_forest_traced");
-  desc.add_options()
-      ("bfs_filt::filter_threshold",
-       boost::program_options::value<float>()->default_value(0.7f),
-       "Fraction wasted edges to do filtering");
-  desc.add_options()
-      ("bfs_yahoo::niters",
-       boost::program_options::value < unsigned
-  long > ()->default_value(1))
-  ("bfs_yahoo::undirected", "");
-  // sssp
-  desc.add_options()
-      ("sssp::source",
-       boost::program_options::value < unsigned
-  long > ()->default_value(0),
-      "source vertex id for sssp");
-  // cc online
-  desc.add_options()
-      ("cc_online::shm_key",
-       boost::program_options::value < unsigned
-  long > ()->default_value(0xf22UL),
-      "shm key for ingest buffer segment");
-  // als
-  desc.add_options()
-      ("als::niters",
-       boost::program_options::value < unsigned
-  long > ()->default_value(5),
-      "number of iterations for als and als_async");
-  // pagerank
-  desc.add_options()
-      ("pagerank::niters",
-       boost::program_options::value < unsigned
-  long > ()->default_value(5),
-      "number of iterations for pagerank and pagerank_ddf");
-  // belief propagation
-  desc.add_options()
-      ("belief_propagation::niters",
-       boost::program_options::value < unsigned
-  long > ()->default_value(5),
-      "number of iterations for bp and bp_graphchi");
-  // Hyperanf
-  desc.add_options()
-      ("hyperanf::maxiters",
-       boost::program_options::value < unsigned
-  long > ()->default_value(100),
-      "maximum number of iterations to run for unless run to completion")
-  ("hyperanf::rsd",
-      boost::program_options::value<float>()->default_value(0.10f),
-      "tolerated relative standard deviation in hyperanf result")
-      ("hyperanf::run_to_completion", "run hyperanf to completion");
-  // Triangle counting
-  desc.add_options()
-      ("triangle_counting::niters",
-       boost::program_options::value < unsigned
-  long > ()->default_value(100),
-      "number of iterations for triangle counting");
-  // bc
-  desc.add_options()
-      ("bc::source",
-       boost::program_options::value < unsigned
-  long > ()->default_value(0),
-      "source vertex for bc");
+
   // slipbench
   desc.add_options()
       ("slipbench_fsize",

@@ -74,8 +74,7 @@ int main(int argc, const char **argv) {
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::SLIPCHUNK " << slipchunk;
   unsigned long slipfile_size = vm["slipbench_fsize"].as < unsigned long > ();
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::SLIPBENCH_FIZE " << slipfile_size;
-  unsigned long background_threads =
-  vm["slipbench_background_threads"].as < unsigned long > ();
+  unsigned long background_threads = vm["slipbench_background_threads"].as < unsigned long > ();
   unsigned long align = vm["slipbench_align"].as < unsigned long > ();
   slipchunk = (slipchunk / align) * align;
   unsigned long blockmem = vm["blocked_memory"].as < unsigned long > ();
@@ -105,7 +104,6 @@ int main(int argc, const char **argv) {
   big_buffer = (unsigned char *) map_anon_memory(blockmem, true, "Blockmem");
   BOOST_LOG_TRIVIAL(info) << "Done ";
 
-  bool centralized = (vm.count("centralized") > 0);
   bool batching = (vm.count("request_batching") > 0);
 
   unsigned long silenced_clients = vm["slipbench_silence"].as < unsigned long > ();
@@ -155,14 +153,6 @@ int main(int argc, const char **argv) {
           unsigned long bytes;
           bytes = (drain_bytes > slipchunk) ?
                   slipchunk : drain_bytes;
-          if (centralized) {
-            req.cmd = slipstore::CMD_NOP;
-            req.size = 0;
-            if (!slipstore::slipstore_client_drain->access_store(&req, buffer, 0)) {
-              BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
-              exit(-1);
-            }
-          }
           req.cmd = slipstore::CMD_DRAIN;
           req.size = bytes;
           if (!slipstore::slipstore_client_drain->access_store(&req, buffer)) {
@@ -207,14 +197,6 @@ int main(int argc, const char **argv) {
       }
       else {
         do {
-          if (centralized) {
-            req.cmd = slipstore::CMD_NOP;
-            req.size = 0;
-            if (!slipstore::slipstore_client_drain->access_store(&req, buffer, 0)) {
-              BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
-              exit(-1);
-            }
-          }
           req.cmd = slipstore::CMD_FILL;
           req.size = slipchunk;
           if (!slipstore::slipstore_client_fill->access_store(&req, buffer)) {
