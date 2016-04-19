@@ -2,6 +2,9 @@
 #include "../slipstore/interface.hpp"
 #include "../slipstore/config.hpp"
 #include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TTransportUtils.h>
+#include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TBufferTransports.h>
@@ -21,16 +24,26 @@ using boost::shared_ptr;
 
 class IODFSHandler : virtual public IODFSIf {
   private:
+  // IO part
   unordered_map<string, slipstore::io*> local_buffers;
-  unordered_map<string, slipstore::io*> global_buffers;
+  unordered_map<string, slipstore::io*> global_buffers; //the value is null, but we can use the hash table to find in O(1) :)
   slipstore::slipstore_req_t req;
+  
+  // Network part
   vector<pair<string, string>> machines;
   unsigned long me;
   unsigned int port;
 
-  bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>::iterator& it, unordered_map<string, slipstore::io*>& buffer) {
-    it = buffer.find(filename);
-    return it != buffer.end();
+  vector<boost::shared_ptr<TTransport>> transports;
+  vector<IODFSClient*> clients;
+
+  bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>::iterator& it, unordered_map<string, slipstore::io*>& buffers) {
+    it = buffers.find(filename);
+    return it != buffers.end();
+  }
+
+  bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>& buffers) {
+    return buffers.find(filename) != buffers.end();
   }
 
   void helper_delete(unordered_map<string, slipstore::io*>::iterator& it) {
@@ -47,13 +60,32 @@ class IODFSHandler : virtual public IODFSIf {
     for(auto& it : _machines)
       machines.push_back(make_pair(it.first, it.second));
     init_req();  
+
+    // Init the network part
+    for(auto& it : machines) {
+      boost::shared_ptr<TTransport> socket(new TSocket(it.first.c_str(), port));
+      boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+      boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+      IODFSClient* client = new IODFSClient(protocol);
+
+      transports.push_back(transport);
+      clients.push_back(client);
+    }
+
+    for(auto& it : transports)
+      it->open();
   }
 
   ~IODFSHandler() {
   	for(unordered_map<string, slipstore::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
   		helper_delete(it);
-    for(unordered_map<string, slipstore::io*>::iterator it = global_buffers.begin(); it != global_buffers.end(); ++it)
-      helper_delete(it);
+    
+  
+    for(auto& it : transports)
+      it->close();
+
+    for(unsigned int i = 0; i < clients.size(); ++i)
+      delete clients[i];
   }
 
   bool local_create(const std::string& filename) {
@@ -65,7 +97,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   bool local_exists(const std::string& filename) {
-  	return local_buffers.find(filename) != local_buffers.end();
+  	return helper_exists(filename, local_buffers);
   }
 
   bool local_delete(const std::string& filename) {
@@ -165,22 +197,41 @@ class IODFSHandler : virtual public IODFSIf {
     return it->second->get_bytes_left();
   }
 
+  // False indicate that at least one machine already has this file. All other machine has created it
   bool global_create(const std::string& filename) {
-    // Your implementation goes here
-    printf("global_create\n");
-    return false;
+    if(helper_exists(filename, global_buffers) || global_exists(filename))
+      return false;
+
+    bool result = true;
+    for(auto& machine : clients)
+      result = result && machine->local_create(filename);
+
+    global_buffers[filename] = NULL;
+
+    return result;
   }
 
   bool global_exists(const std::string& filename) {
-    // Your implementation goes here
-    printf("global_exists\n");
-    return false;
+    if(!helper_exists(filename, global_buffers))
+      return false;
+
+    bool result = true;
+    for(auto& machine : clients)
+      result = result && machine->local_exists(filename);
+
+    return result;
   }
 
+  // False indicate that at least one machine didn't have the file, but all the other machines has deleted it
   bool global_delete(const std::string& filename) {
-    // Your implementation goes here
-    printf("global_delete\n");
-    return false;
+    if(!helper_exists(filename, global_buffers))
+      return false;
+
+    bool result = true;
+    for(auto& machine : clients)
+      result = result && machine->local_delete(filename);
+
+    return result;
   }
 
   virtual void global_fill(std::string& _return, const std::string& filename, const int64_t size) {
