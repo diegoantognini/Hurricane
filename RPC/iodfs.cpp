@@ -7,6 +7,7 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <unordered_map>
 #include <string>
+#include <vector>
 
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
@@ -14,20 +15,21 @@ using namespace ::apache::thrift::transport;
 using namespace ::apache::thrift::server;
 using std::unordered_map;
 using std::string;
-
+using std::vector;
 using boost::shared_ptr;
 
 class IODFSHandler : virtual public IODFSIf {
   private:
   unordered_map<string, slipstore::io*> local_buffers;
+  unordered_map<string, slipstore::io*> global_buffers;
   slipstore::slipstore_req_t req;
 
-  bool local_exists(const std::string& filename, unordered_map<string, slipstore::io*>::iterator& it) {
-    it = local_buffers.find(filename);
-    return it != local_buffers.end();
+  bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>::iterator& it, unordered_map<string, slipstore::io*>& buffer) {
+    it = buffer.find(filename);
+    return it != buffer.end();
   }
 
-  void local_delete(unordered_map<string, slipstore::io*>::iterator& it) {
+  void helper_delete(unordered_map<string, slipstore::io*>::iterator& it) {
     unlink_file((char *)(it->first.c_str()));
     delete it->second;
   }
@@ -43,7 +45,9 @@ class IODFSHandler : virtual public IODFSIf {
 
   ~IODFSHandler() {
   	for(unordered_map<string, slipstore::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
-  		local_delete(it);
+  		helper_delete(it);
+    for(unordered_map<string, slipstore::io*>::iterator it = global_buffers.begin(); it != global_buffers.end(); ++it)
+      helper_delete(it);
   }
 
   bool local_create(const std::string& filename) {
@@ -60,10 +64,10 @@ class IODFSHandler : virtual public IODFSIf {
 
   bool local_delete(const std::string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
-    if(!local_exists(filename, it))
+    if(!helper_exists(filename, it, local_buffers))
       return false;
 
-    local_delete(it);
+    helper_delete(it);
     local_buffers.erase(it);
 
     return true;
@@ -71,7 +75,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   void local_fill(std::string& _return, const std::string& filename, const int64_t size) {
     unordered_map<string, slipstore::io*>::iterator it;
-    if(!local_exists(filename, it))
+    if(!helper_exists(filename, it, local_buffers))
       _return = "";
     else {
       init_req();
@@ -87,7 +91,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   void local_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) {
     unordered_map<string, slipstore::io*>::iterator it;
-    if(!local_exists(filename, it))
+    if(!helper_exists(filename, it, local_buffers))
       _return = "";
     else {
       init_req();
@@ -104,7 +108,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   bool local_drain(const std::string& filename, const std::string& buffer) {
     unordered_map<string, slipstore::io*>::iterator it;
-    if(!local_exists(filename, it))
+    if(!helper_exists(filename, it, local_buffers))
       return false;
 
     init_req();
@@ -115,7 +119,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   bool local_rewind(const std::string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
-    if(!local_exists(filename, it))
+    if(!helper_exists(filename, it, local_buffers))
       return false;
 
     it->second->rewind();
@@ -124,7 +128,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   bool local_trunc(const std::string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
-    if(!local_exists(filename, it))
+    if(!helper_exists(filename, it, local_buffers))
       return false;
 
     it->second->trunc();
@@ -133,7 +137,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   bool local_eof(const std::string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
-    if(!local_exists(filename, it))
+    if(!helper_exists(filename, it, local_buffers))
       return true;
 
     return it->second->eof();
@@ -141,7 +145,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   int64_t local_size(const std::string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
-    if(!local_exists(filename, it))
+    if(!helper_exists(filename, it, local_buffers))
       return -1;
 
     return it->second->get_size();
@@ -149,7 +153,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   int64_t local_left(const std::string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
-    if(!local_exists(filename, it))
+    if(!helper_exists(filename, it, local_buffers))
       return -1;
 
     return it->second->get_bytes_left();
@@ -218,6 +222,16 @@ class IODFSHandler : virtual public IODFSIf {
 int main(int argc, const char **argv) {
   int port = 9090;
   setup_options(argc, argv);
+  init_slipstore_desc();
+  std::cout <<  vm["slipstore_servers"].as < unsigned long > () << std::endl;
+  std::cout << pt_slipstore.get < unsigned long > ("machines.me") << std::endl;
+  std::cout << pt_slipstore.get < unsigned long > ("machines.count") << std::endl;
+  
+  for(unsigned int i = 0; i < pt_slipstore.get < unsigned long > ("machines.count"); ++i){
+    std::stringstream name;
+    name << "machines.name" << i;
+    std::cout << pt_slipstore.get<std::string>(name.str().c_str()) << std::endl;
+  } 
 
   shared_ptr<IODFSHandler> handler(new IODFSHandler());
   shared_ptr<TProcessor> processor(new IODFSProcessor(handler));
@@ -229,4 +243,13 @@ int main(int argc, const char **argv) {
   server.serve();
   return 0;
 }
+
+
+
+
+
+
+
+
+
 
