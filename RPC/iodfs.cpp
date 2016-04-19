@@ -16,6 +16,7 @@ using namespace ::apache::thrift::server;
 using std::unordered_map;
 using std::string;
 using std::vector;
+using std::pair;
 using boost::shared_ptr;
 
 class IODFSHandler : virtual public IODFSIf {
@@ -23,6 +24,9 @@ class IODFSHandler : virtual public IODFSIf {
   unordered_map<string, slipstore::io*> local_buffers;
   unordered_map<string, slipstore::io*> global_buffers;
   slipstore::slipstore_req_t req;
+  vector<pair<string, string>> machines;
+  unsigned long me;
+  unsigned int port;
 
   bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>::iterator& it, unordered_map<string, slipstore::io*>& buffer) {
     it = buffer.find(filename);
@@ -39,7 +43,9 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
  public:
-  IODFSHandler() {
+  IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port) : me(_me), port(_port) {
+    for(auto& it : _machines)
+      machines.push_back(make_pair(it.first, it.second));
     init_req();  
   }
 
@@ -223,17 +229,18 @@ int main(int argc, const char **argv) {
   int port = 9090;
   setup_options(argc, argv);
   init_slipstore_desc();
-  std::cout <<  vm["slipstore_servers"].as < unsigned long > () << std::endl;
-  std::cout << pt_slipstore.get < unsigned long > ("machines.me") << std::endl;
-  std::cout << pt_slipstore.get < unsigned long > ("machines.count") << std::endl;
-  
+  unsigned long me = pt_slipstore.get < unsigned long > ("machines.me");
+
+  vector<pair<string, string>> machines;
   for(unsigned int i = 0; i < pt_slipstore.get < unsigned long > ("machines.count"); ++i){
     std::stringstream name;
+    std::stringstream iface;
     name << "machines.name" << i;
-    std::cout << pt_slipstore.get<std::string>(name.str().c_str()) << std::endl;
+    iface << "machines.iface" << i;
+    machines.push_back(make_pair(pt_slipstore.get<std::string>(name.str().c_str()), pt_slipstore.get<std::string>(iface.str().c_str())));
   } 
 
-  shared_ptr<IODFSHandler> handler(new IODFSHandler());
+  shared_ptr<IODFSHandler> handler(new IODFSHandler(machines, me, port));
   shared_ptr<TProcessor> processor(new IODFSProcessor(handler));
   shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
   shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
