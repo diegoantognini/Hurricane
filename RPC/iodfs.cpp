@@ -8,10 +8,14 @@
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TBufferTransports.h>
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <unordered_map>
 #include <string>
 #include <vector>
 
+#define NB_SECONDS_BETWEEN_RECONNECTION 1
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
 using namespace ::apache::thrift::transport;
@@ -33,9 +37,14 @@ class IODFSHandler : virtual public IODFSIf {
   vector<pair<string, string>> machines;
   unsigned long me;
   unsigned int port;
+  bool connection_to_server_done = false;
 
   vector<boost::shared_ptr<TTransport>> transports;
   vector<IODFSClient*> clients;
+
+  boost::asio::deadline_timer* reconnect_timer;
+  boost::asio::io_service reconnect_thread;
+  boost::thread_group threadpool;
 
   bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>::iterator& it, unordered_map<string, slipstore::io*>& buffers) {
     it = buffers.find(filename);
@@ -55,25 +64,61 @@ class IODFSHandler : virtual public IODFSIf {
     req.source_mc = req.cmd = req.size = req.offset = 0;
   }
 
+  /*void test() {
+    static int i = 0;
+    if(i++<5) {
+      std::cout << i << std::endl;
+      reconnect_timer->expires_at(reconnect_timer->expires_at() + boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
+      reconnect_timer->async_wait(boost::bind(&IODFSHandler::test, this));
+    }
+
+  }*/
+    
+  void reconnect() {
+    connection_to_server_done = false;
+    unsigned int i = 0;
+    try {
+      for(auto& transport : transports) {
+        if(!transport->isOpen()) {
+          transport->open();
+          BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].first << " SUCCESS !";
+        }
+        ++i;
+      }
+      connection_to_server_done = true;
+
+      //reconnect_timer->async_wait(boost::bind(&IODFSHandler::test, this));
+      //threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
+
+    } catch (TException& tx){
+      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].first << " FAILED : " << tx.what();
+      reconnect_timer->expires_at(reconnect_timer->expires_at() + boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
+      reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
+    }
+}
+
  public:
-  IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port) : me(_me), port(_port) {
+  IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port)
+  : me(_me), port(_port) {
     for(auto& it : _machines)
       machines.push_back(make_pair(it.first, it.second));
     init_req();  
 
     // Init the network part
-    for(auto& it : machines) {
-      boost::shared_ptr<TTransport> socket(new TSocket(it.first.c_str(), port));
-      boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-      boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-      IODFSClient* client = new IODFSClient(protocol);
+    for(auto& machine : machines) {
+        boost::shared_ptr<TTransport> socket(new TSocket(machine.first.c_str(), port));
+        boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+        boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+        IODFSClient* client = new IODFSClient(protocol);
 
-      transports.push_back(transport);
-      clients.push_back(client);
+        transports.push_back(transport);
+        clients.push_back(client);
     }
 
-    for(auto& it : transports)
-      it->open();
+    // Do the connection later
+    reconnect_timer = new boost::asio::deadline_timer(reconnect_thread, boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
+    reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
+    threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
   }
 
   ~IODFSHandler() {
@@ -197,9 +242,8 @@ class IODFSHandler : virtual public IODFSIf {
     return it->second->get_bytes_left();
   }
 
-  // False indicate that at least one machine already has this file. All other machine has created it
   bool global_create(const std::string& filename) {
-    if(helper_exists(filename, global_buffers) || global_exists(filename))
+    if(!connection_to_server_done || helper_exists(filename, global_buffers) || global_exists(filename))
       return false;
 
     bool result = true;
@@ -212,7 +256,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   bool global_exists(const std::string& filename) {
-    if(!helper_exists(filename, global_buffers))
+    if(!connection_to_server_done || !helper_exists(filename, global_buffers))
       return false;
 
     bool result = true;
@@ -222,9 +266,8 @@ class IODFSHandler : virtual public IODFSIf {
     return result;
   }
 
-  // False indicate that at least one machine didn't have the file, but all the other machines has deleted it
   bool global_delete(const std::string& filename) {
-    if(!helper_exists(filename, global_buffers))
+    if(!connection_to_server_done || !helper_exists(filename, global_buffers))
       return false;
 
     bool result = true;
@@ -292,6 +335,7 @@ int main(int argc, const char **argv) {
   } 
 
   shared_ptr<IODFSHandler> handler(new IODFSHandler(machines, me, port));
+
   shared_ptr<TProcessor> processor(new IODFSProcessor(handler));
   shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
   shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
@@ -299,6 +343,7 @@ int main(int argc, const char **argv) {
 
   TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
   server.serve();
+
   return 0;
 }
 
