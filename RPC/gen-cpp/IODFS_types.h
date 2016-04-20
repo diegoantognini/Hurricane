@@ -21,36 +21,19 @@
 
 class LostConnection;
 
-typedef struct _LostConnection__isset {
-  _LostConnection__isset() : whatOp(false), why(false) {}
-  bool whatOp :1;
-  bool why :1;
-} _LostConnection__isset;
 
 class LostConnection : public ::apache::thrift::TException {
  public:
 
   LostConnection(const LostConnection&);
   LostConnection& operator=(const LostConnection&);
-  LostConnection() : whatOp(0), why() {
+  LostConnection() {
   }
 
   virtual ~LostConnection() throw();
-  int32_t whatOp;
-  std::string why;
 
-  _LostConnection__isset __isset;
-
-  void __set_whatOp(const int32_t val);
-
-  void __set_why(const std::string& val);
-
-  bool operator == (const LostConnection & rhs) const
+  bool operator == (const LostConnection & /* rhs */) const
   {
-    if (!(whatOp == rhs.whatOp))
-      return false;
-    if (!(why == rhs.why))
-      return false;
     return true;
   }
   bool operator != (const LostConnection &rhs) const {

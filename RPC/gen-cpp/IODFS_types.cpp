@@ -18,14 +18,6 @@ LostConnection::~LostConnection() throw() {
 }
 
 
-void LostConnection::__set_whatOp(const int32_t val) {
-  this->whatOp = val;
-}
-
-void LostConnection::__set_why(const std::string& val) {
-  this->why = val;
-}
-
 uint32_t LostConnection::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
@@ -45,28 +37,7 @@ uint32_t LostConnection::read(::apache::thrift::protocol::TProtocol* iprot) {
     if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->whatOp);
-          this->__isset.whatOp = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 2:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->why);
-          this->__isset.why = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
+    xfer += iprot->skip(ftype);
     xfer += iprot->readFieldEnd();
   }
 
@@ -80,14 +51,6 @@ uint32_t LostConnection::write(::apache::thrift::protocol::TProtocol* oprot) con
   apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
   xfer += oprot->writeStructBegin("LostConnection");
 
-  xfer += oprot->writeFieldBegin("whatOp", ::apache::thrift::protocol::T_I32, 1);
-  xfer += oprot->writeI32(this->whatOp);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("why", ::apache::thrift::protocol::T_STRING, 2);
-  xfer += oprot->writeString(this->why);
-  xfer += oprot->writeFieldEnd();
-
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -95,27 +58,20 @@ uint32_t LostConnection::write(::apache::thrift::protocol::TProtocol* oprot) con
 
 void swap(LostConnection &a, LostConnection &b) {
   using ::std::swap;
-  swap(a.whatOp, b.whatOp);
-  swap(a.why, b.why);
-  swap(a.__isset, b.__isset);
+  (void) a;
+  (void) b;
 }
 
 LostConnection::LostConnection(const LostConnection& other0) : TException() {
-  whatOp = other0.whatOp;
-  why = other0.why;
-  __isset = other0.__isset;
+  (void) other0;
 }
 LostConnection& LostConnection::operator=(const LostConnection& other1) {
-  whatOp = other1.whatOp;
-  why = other1.why;
-  __isset = other1.__isset;
+  (void) other1;
   return *this;
 }
 void LostConnection::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
   out << "LostConnection(";
-  out << "whatOp=" << to_string(whatOp);
-  out << ", " << "why=" << to_string(why);
   out << ")";
 }
 

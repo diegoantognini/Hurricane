@@ -282,7 +282,7 @@ void do_test(const char* name, bool (*fct)(IODFSClient&), IODFSClient& client) {
 }
 
 int main(int argc, char **argv) {
-	const char* server = "localhost";
+	const char* server = "128.178.52.205";
 	int port = 9090;
 
 	srand (time(NULL));
@@ -291,18 +291,38 @@ int main(int argc, char **argv) {
 	boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 	IODFSClient iodfs(protocol);
 
+	transport->open();
 	try {
-	    transport->open();
-
 	    do_test("test_local_create_exists_delete_one_file", &test_local_create_exists_delete_one_file, iodfs);
 	    do_test("test_local_create_exists_delete_two_files", &test_local_create_exists_delete_two_files, iodfs);
 	    do_test("test_local_drain_fill_eof_size_trunc_left", &test_local_drain_fill_eof_size_trunc_left, iodfs);
-	    do_test("test_local_seek_and_fill", &test_local_seek_and_fill, iodfs);
+	    //do_test("test_local_seek_and_fill", &test_local_seek_and_fill, iodfs);
 
-		transport->close();
 	} catch (TException& tx) {
-		cout << "ERROR: " << tx.what() << endl;
+		cout << "Local Error: " << tx.what() << endl;
 	}
+
+	try {
+	    bool result = false;
+	    while(!result) {
+		    try {
+		    	result = iodfs.global_create("test");
+		    	int a = 0;
+		    	for(int i = 0; i < 1000000; ++i) {
+		    		a+=i;
+		    	}
+
+		    } catch (LostConnection& lc) {
+		    	cout << "Lost connection !" << endl;
+		    }
+		}
+
+		
+	} catch (TException& tx) {
+		cout << "Global Error: " << tx.what() << endl;
+	}
+
+	transport->close();
 
 	return 0;
 }

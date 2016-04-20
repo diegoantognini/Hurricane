@@ -2244,8 +2244,8 @@ uint32_t IODFS_global_create_result::read(::apache::thrift::protocol::TProtocol*
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2272,9 +2272,9 @@ uint32_t IODFS_global_create_result::write(::apache::thrift::protocol::TProtocol
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
     xfer += oprot->writeBool(this->success);
     xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.exp) {
-    xfer += oprot->writeFieldBegin("exp", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->exp.write(oprot);
+  } else if (this->__isset.lc) {
+    xfer += oprot->writeFieldBegin("lc", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->lc.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -2318,8 +2318,8 @@ uint32_t IODFS_global_create_presult::read(::apache::thrift::protocol::TProtocol
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2451,8 +2451,8 @@ uint32_t IODFS_global_exists_result::read(::apache::thrift::protocol::TProtocol*
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2479,9 +2479,9 @@ uint32_t IODFS_global_exists_result::write(::apache::thrift::protocol::TProtocol
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
     xfer += oprot->writeBool(this->success);
     xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.exp) {
-    xfer += oprot->writeFieldBegin("exp", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->exp.write(oprot);
+  } else if (this->__isset.lc) {
+    xfer += oprot->writeFieldBegin("lc", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->lc.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -2525,8 +2525,8 @@ uint32_t IODFS_global_exists_presult::read(::apache::thrift::protocol::TProtocol
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2658,8 +2658,8 @@ uint32_t IODFS_global_delete_result::read(::apache::thrift::protocol::TProtocol*
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2686,9 +2686,9 @@ uint32_t IODFS_global_delete_result::write(::apache::thrift::protocol::TProtocol
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
     xfer += oprot->writeBool(this->success);
     xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.exp) {
-    xfer += oprot->writeFieldBegin("exp", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->exp.write(oprot);
+  } else if (this->__isset.lc) {
+    xfer += oprot->writeFieldBegin("lc", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->lc.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -2732,8 +2732,8 @@ uint32_t IODFS_global_delete_presult::read(::apache::thrift::protocol::TProtocol
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2881,8 +2881,8 @@ uint32_t IODFS_global_fill_result::read(::apache::thrift::protocol::TProtocol* i
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2909,9 +2909,9 @@ uint32_t IODFS_global_fill_result::write(::apache::thrift::protocol::TProtocol* 
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
     xfer += oprot->writeString(this->success);
     xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.exp) {
-    xfer += oprot->writeFieldBegin("exp", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->exp.write(oprot);
+  } else if (this->__isset.lc) {
+    xfer += oprot->writeFieldBegin("lc", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->lc.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -2955,8 +2955,8 @@ uint32_t IODFS_global_fill_presult::read(::apache::thrift::protocol::TProtocol* 
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -3120,8 +3120,8 @@ uint32_t IODFS_global_seek_and_fill_result::read(::apache::thrift::protocol::TPr
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -3148,9 +3148,9 @@ uint32_t IODFS_global_seek_and_fill_result::write(::apache::thrift::protocol::TP
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
     xfer += oprot->writeString(this->success);
     xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.exp) {
-    xfer += oprot->writeFieldBegin("exp", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->exp.write(oprot);
+  } else if (this->__isset.lc) {
+    xfer += oprot->writeFieldBegin("lc", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->lc.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -3194,8 +3194,8 @@ uint32_t IODFS_global_seek_and_fill_presult::read(::apache::thrift::protocol::TP
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -3343,8 +3343,8 @@ uint32_t IODFS_global_drain_result::read(::apache::thrift::protocol::TProtocol* 
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -3371,9 +3371,9 @@ uint32_t IODFS_global_drain_result::write(::apache::thrift::protocol::TProtocol*
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
     xfer += oprot->writeBool(this->success);
     xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.exp) {
-    xfer += oprot->writeFieldBegin("exp", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->exp.write(oprot);
+  } else if (this->__isset.lc) {
+    xfer += oprot->writeFieldBegin("lc", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->lc.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -3417,8 +3417,8 @@ uint32_t IODFS_global_drain_presult::read(::apache::thrift::protocol::TProtocol*
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -3550,8 +3550,8 @@ uint32_t IODFS_global_rewind_result::read(::apache::thrift::protocol::TProtocol*
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -3578,9 +3578,9 @@ uint32_t IODFS_global_rewind_result::write(::apache::thrift::protocol::TProtocol
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
     xfer += oprot->writeBool(this->success);
     xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.exp) {
-    xfer += oprot->writeFieldBegin("exp", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->exp.write(oprot);
+  } else if (this->__isset.lc) {
+    xfer += oprot->writeFieldBegin("lc", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->lc.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -3624,8 +3624,8 @@ uint32_t IODFS_global_rewind_presult::read(::apache::thrift::protocol::TProtocol
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -3757,8 +3757,8 @@ uint32_t IODFS_global_trunc_result::read(::apache::thrift::protocol::TProtocol* 
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -3785,9 +3785,9 @@ uint32_t IODFS_global_trunc_result::write(::apache::thrift::protocol::TProtocol*
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
     xfer += oprot->writeBool(this->success);
     xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.exp) {
-    xfer += oprot->writeFieldBegin("exp", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->exp.write(oprot);
+  } else if (this->__isset.lc) {
+    xfer += oprot->writeFieldBegin("lc", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->lc.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -3831,8 +3831,8 @@ uint32_t IODFS_global_trunc_presult::read(::apache::thrift::protocol::TProtocol*
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -3964,8 +3964,8 @@ uint32_t IODFS_global_eof_result::read(::apache::thrift::protocol::TProtocol* ip
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -3992,9 +3992,9 @@ uint32_t IODFS_global_eof_result::write(::apache::thrift::protocol::TProtocol* o
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
     xfer += oprot->writeBool(this->success);
     xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.exp) {
-    xfer += oprot->writeFieldBegin("exp", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->exp.write(oprot);
+  } else if (this->__isset.lc) {
+    xfer += oprot->writeFieldBegin("lc", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->lc.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -4038,8 +4038,8 @@ uint32_t IODFS_global_eof_presult::read(::apache::thrift::protocol::TProtocol* i
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -4171,8 +4171,8 @@ uint32_t IODFS_global_size_result::read(::apache::thrift::protocol::TProtocol* i
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -4199,9 +4199,9 @@ uint32_t IODFS_global_size_result::write(::apache::thrift::protocol::TProtocol* 
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_I64, 0);
     xfer += oprot->writeI64(this->success);
     xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.exp) {
-    xfer += oprot->writeFieldBegin("exp", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->exp.write(oprot);
+  } else if (this->__isset.lc) {
+    xfer += oprot->writeFieldBegin("lc", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->lc.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -4245,8 +4245,174 @@ uint32_t IODFS_global_size_presult::read(::apache::thrift::protocol::TProtocol* 
         break;
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->exp.read(iprot);
-          this->__isset.exp = true;
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+
+IODFS_nop_args::~IODFS_nop_args() throw() {
+}
+
+
+uint32_t IODFS_nop_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    xfer += iprot->skip(ftype);
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t IODFS_nop_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("IODFS_nop_args");
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+
+IODFS_nop_pargs::~IODFS_nop_pargs() throw() {
+}
+
+
+uint32_t IODFS_nop_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("IODFS_nop_pargs");
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+
+IODFS_nop_result::~IODFS_nop_result() throw() {
+}
+
+
+uint32_t IODFS_nop_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->success);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t IODFS_nop_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("IODFS_nop_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
+    xfer += oprot->writeBool(this->success);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+
+IODFS_nop_presult::~IODFS_nop_presult() throw() {
+}
+
+
+uint32_t IODFS_nop_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool((*(this->success)));
+          this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -4960,8 +5126,8 @@ bool IODFSClient::recv_global_create()
   if (result.__isset.success) {
     return _return;
   }
-  if (result.__isset.exp) {
-    throw result.exp;
+  if (result.__isset.lc) {
+    throw result.lc;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_create failed: unknown result");
 }
@@ -5021,8 +5187,8 @@ bool IODFSClient::recv_global_exists()
   if (result.__isset.success) {
     return _return;
   }
-  if (result.__isset.exp) {
-    throw result.exp;
+  if (result.__isset.lc) {
+    throw result.lc;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_exists failed: unknown result");
 }
@@ -5082,8 +5248,8 @@ bool IODFSClient::recv_global_delete()
   if (result.__isset.success) {
     return _return;
   }
-  if (result.__isset.exp) {
-    throw result.exp;
+  if (result.__isset.lc) {
+    throw result.lc;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_delete failed: unknown result");
 }
@@ -5144,8 +5310,8 @@ void IODFSClient::recv_global_fill(std::string& _return)
     // _return pointer has now been filled
     return;
   }
-  if (result.__isset.exp) {
-    throw result.exp;
+  if (result.__isset.lc) {
+    throw result.lc;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_fill failed: unknown result");
 }
@@ -5207,8 +5373,8 @@ void IODFSClient::recv_global_seek_and_fill(std::string& _return)
     // _return pointer has now been filled
     return;
   }
-  if (result.__isset.exp) {
-    throw result.exp;
+  if (result.__isset.lc) {
+    throw result.lc;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_seek_and_fill failed: unknown result");
 }
@@ -5269,8 +5435,8 @@ bool IODFSClient::recv_global_drain()
   if (result.__isset.success) {
     return _return;
   }
-  if (result.__isset.exp) {
-    throw result.exp;
+  if (result.__isset.lc) {
+    throw result.lc;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_drain failed: unknown result");
 }
@@ -5330,8 +5496,8 @@ bool IODFSClient::recv_global_rewind()
   if (result.__isset.success) {
     return _return;
   }
-  if (result.__isset.exp) {
-    throw result.exp;
+  if (result.__isset.lc) {
+    throw result.lc;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_rewind failed: unknown result");
 }
@@ -5391,8 +5557,8 @@ bool IODFSClient::recv_global_trunc()
   if (result.__isset.success) {
     return _return;
   }
-  if (result.__isset.exp) {
-    throw result.exp;
+  if (result.__isset.lc) {
+    throw result.lc;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_trunc failed: unknown result");
 }
@@ -5452,8 +5618,8 @@ bool IODFSClient::recv_global_eof()
   if (result.__isset.success) {
     return _return;
   }
-  if (result.__isset.exp) {
-    throw result.exp;
+  if (result.__isset.lc) {
+    throw result.lc;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_eof failed: unknown result");
 }
@@ -5513,10 +5679,67 @@ int64_t IODFSClient::recv_global_size()
   if (result.__isset.success) {
     return _return;
   }
-  if (result.__isset.exp) {
-    throw result.exp;
+  if (result.__isset.lc) {
+    throw result.lc;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_size failed: unknown result");
+}
+
+bool IODFSClient::nop()
+{
+  send_nop();
+  return recv_nop();
+}
+
+void IODFSClient::send_nop()
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("nop", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  IODFS_nop_pargs args;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+bool IODFSClient::recv_nop()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("nop") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  bool _return;
+  IODFS_nop_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    return _return;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "nop failed: unknown result");
 }
 
 bool IODFSProcessor::dispatchCall(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, const std::string& fname, int32_t seqid, void* callContext) {
@@ -6157,9 +6380,9 @@ void IODFSProcessor::process_global_create(int32_t seqid, ::apache::thrift::prot
   try {
     result.success = iface_->global_create(args.filename);
     result.__isset.success = true;
-  } catch (LostConnection &exp) {
-    result.exp = exp;
-    result.__isset.exp = true;
+  } catch (LostConnection &lc) {
+    result.lc = lc;
+    result.__isset.lc = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
       this->eventHandler_->handlerError(ctx, "IODFS.global_create");
@@ -6214,9 +6437,9 @@ void IODFSProcessor::process_global_exists(int32_t seqid, ::apache::thrift::prot
   try {
     result.success = iface_->global_exists(args.filename);
     result.__isset.success = true;
-  } catch (LostConnection &exp) {
-    result.exp = exp;
-    result.__isset.exp = true;
+  } catch (LostConnection &lc) {
+    result.lc = lc;
+    result.__isset.lc = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
       this->eventHandler_->handlerError(ctx, "IODFS.global_exists");
@@ -6271,9 +6494,9 @@ void IODFSProcessor::process_global_delete(int32_t seqid, ::apache::thrift::prot
   try {
     result.success = iface_->global_delete(args.filename);
     result.__isset.success = true;
-  } catch (LostConnection &exp) {
-    result.exp = exp;
-    result.__isset.exp = true;
+  } catch (LostConnection &lc) {
+    result.lc = lc;
+    result.__isset.lc = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
       this->eventHandler_->handlerError(ctx, "IODFS.global_delete");
@@ -6328,9 +6551,9 @@ void IODFSProcessor::process_global_fill(int32_t seqid, ::apache::thrift::protoc
   try {
     iface_->global_fill(result.success, args.filename, args.size);
     result.__isset.success = true;
-  } catch (LostConnection &exp) {
-    result.exp = exp;
-    result.__isset.exp = true;
+  } catch (LostConnection &lc) {
+    result.lc = lc;
+    result.__isset.lc = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
       this->eventHandler_->handlerError(ctx, "IODFS.global_fill");
@@ -6385,9 +6608,9 @@ void IODFSProcessor::process_global_seek_and_fill(int32_t seqid, ::apache::thrif
   try {
     iface_->global_seek_and_fill(result.success, args.filename, args.size, args.offset);
     result.__isset.success = true;
-  } catch (LostConnection &exp) {
-    result.exp = exp;
-    result.__isset.exp = true;
+  } catch (LostConnection &lc) {
+    result.lc = lc;
+    result.__isset.lc = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
       this->eventHandler_->handlerError(ctx, "IODFS.global_seek_and_fill");
@@ -6442,9 +6665,9 @@ void IODFSProcessor::process_global_drain(int32_t seqid, ::apache::thrift::proto
   try {
     result.success = iface_->global_drain(args.filename, args.buffer);
     result.__isset.success = true;
-  } catch (LostConnection &exp) {
-    result.exp = exp;
-    result.__isset.exp = true;
+  } catch (LostConnection &lc) {
+    result.lc = lc;
+    result.__isset.lc = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
       this->eventHandler_->handlerError(ctx, "IODFS.global_drain");
@@ -6499,9 +6722,9 @@ void IODFSProcessor::process_global_rewind(int32_t seqid, ::apache::thrift::prot
   try {
     result.success = iface_->global_rewind(args.filename);
     result.__isset.success = true;
-  } catch (LostConnection &exp) {
-    result.exp = exp;
-    result.__isset.exp = true;
+  } catch (LostConnection &lc) {
+    result.lc = lc;
+    result.__isset.lc = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
       this->eventHandler_->handlerError(ctx, "IODFS.global_rewind");
@@ -6556,9 +6779,9 @@ void IODFSProcessor::process_global_trunc(int32_t seqid, ::apache::thrift::proto
   try {
     result.success = iface_->global_trunc(args.filename);
     result.__isset.success = true;
-  } catch (LostConnection &exp) {
-    result.exp = exp;
-    result.__isset.exp = true;
+  } catch (LostConnection &lc) {
+    result.lc = lc;
+    result.__isset.lc = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
       this->eventHandler_->handlerError(ctx, "IODFS.global_trunc");
@@ -6613,9 +6836,9 @@ void IODFSProcessor::process_global_eof(int32_t seqid, ::apache::thrift::protoco
   try {
     result.success = iface_->global_eof(args.filename);
     result.__isset.success = true;
-  } catch (LostConnection &exp) {
-    result.exp = exp;
-    result.__isset.exp = true;
+  } catch (LostConnection &lc) {
+    result.lc = lc;
+    result.__isset.lc = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
       this->eventHandler_->handlerError(ctx, "IODFS.global_eof");
@@ -6670,9 +6893,9 @@ void IODFSProcessor::process_global_size(int32_t seqid, ::apache::thrift::protoc
   try {
     result.success = iface_->global_size(args.filename);
     result.__isset.success = true;
-  } catch (LostConnection &exp) {
-    result.exp = exp;
-    result.__isset.exp = true;
+  } catch (LostConnection &lc) {
+    result.lc = lc;
+    result.__isset.lc = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
       this->eventHandler_->handlerError(ctx, "IODFS.global_size");
@@ -6699,6 +6922,60 @@ void IODFSProcessor::process_global_size(int32_t seqid, ::apache::thrift::protoc
 
   if (this->eventHandler_.get() != NULL) {
     this->eventHandler_->postWrite(ctx, "IODFS.global_size", bytes);
+  }
+}
+
+void IODFSProcessor::process_nop(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (this->eventHandler_.get() != NULL) {
+    ctx = this->eventHandler_->getContext("IODFS.nop", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "IODFS.nop");
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->preRead(ctx, "IODFS.nop");
+  }
+
+  IODFS_nop_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->postRead(ctx, "IODFS.nop", bytes);
+  }
+
+  IODFS_nop_result result;
+  try {
+    result.success = iface_->nop();
+    result.__isset.success = true;
+  } catch (const std::exception& e) {
+    if (this->eventHandler_.get() != NULL) {
+      this->eventHandler_->handlerError(ctx, "IODFS.nop");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("nop", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->preWrite(ctx, "IODFS.nop");
+  }
+
+  oprot->writeMessageBegin("nop", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->postWrite(ctx, "IODFS.nop", bytes);
   }
 }
 
@@ -7710,9 +7987,9 @@ bool IODFSConcurrentClient::recv_global_create(const int32_t seqid)
         sentry.commit();
         return _return;
       }
-      if (result.__isset.exp) {
+      if (result.__isset.lc) {
         sentry.commit();
-        throw result.exp;
+        throw result.lc;
       }
       // in a bad state, don't commit
       throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_create failed: unknown result");
@@ -7798,9 +8075,9 @@ bool IODFSConcurrentClient::recv_global_exists(const int32_t seqid)
         sentry.commit();
         return _return;
       }
-      if (result.__isset.exp) {
+      if (result.__isset.lc) {
         sentry.commit();
-        throw result.exp;
+        throw result.lc;
       }
       // in a bad state, don't commit
       throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_exists failed: unknown result");
@@ -7886,9 +8163,9 @@ bool IODFSConcurrentClient::recv_global_delete(const int32_t seqid)
         sentry.commit();
         return _return;
       }
-      if (result.__isset.exp) {
+      if (result.__isset.lc) {
         sentry.commit();
-        throw result.exp;
+        throw result.lc;
       }
       // in a bad state, don't commit
       throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_delete failed: unknown result");
@@ -7975,9 +8252,9 @@ void IODFSConcurrentClient::recv_global_fill(std::string& _return, const int32_t
         sentry.commit();
         return;
       }
-      if (result.__isset.exp) {
+      if (result.__isset.lc) {
         sentry.commit();
-        throw result.exp;
+        throw result.lc;
       }
       // in a bad state, don't commit
       throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_fill failed: unknown result");
@@ -8065,9 +8342,9 @@ void IODFSConcurrentClient::recv_global_seek_and_fill(std::string& _return, cons
         sentry.commit();
         return;
       }
-      if (result.__isset.exp) {
+      if (result.__isset.lc) {
         sentry.commit();
-        throw result.exp;
+        throw result.lc;
       }
       // in a bad state, don't commit
       throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_seek_and_fill failed: unknown result");
@@ -8154,9 +8431,9 @@ bool IODFSConcurrentClient::recv_global_drain(const int32_t seqid)
         sentry.commit();
         return _return;
       }
-      if (result.__isset.exp) {
+      if (result.__isset.lc) {
         sentry.commit();
-        throw result.exp;
+        throw result.lc;
       }
       // in a bad state, don't commit
       throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_drain failed: unknown result");
@@ -8242,9 +8519,9 @@ bool IODFSConcurrentClient::recv_global_rewind(const int32_t seqid)
         sentry.commit();
         return _return;
       }
-      if (result.__isset.exp) {
+      if (result.__isset.lc) {
         sentry.commit();
-        throw result.exp;
+        throw result.lc;
       }
       // in a bad state, don't commit
       throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_rewind failed: unknown result");
@@ -8330,9 +8607,9 @@ bool IODFSConcurrentClient::recv_global_trunc(const int32_t seqid)
         sentry.commit();
         return _return;
       }
-      if (result.__isset.exp) {
+      if (result.__isset.lc) {
         sentry.commit();
-        throw result.exp;
+        throw result.lc;
       }
       // in a bad state, don't commit
       throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_trunc failed: unknown result");
@@ -8418,9 +8695,9 @@ bool IODFSConcurrentClient::recv_global_eof(const int32_t seqid)
         sentry.commit();
         return _return;
       }
-      if (result.__isset.exp) {
+      if (result.__isset.lc) {
         sentry.commit();
-        throw result.exp;
+        throw result.lc;
       }
       // in a bad state, don't commit
       throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_eof failed: unknown result");
@@ -8506,12 +8783,95 @@ int64_t IODFSConcurrentClient::recv_global_size(const int32_t seqid)
         sentry.commit();
         return _return;
       }
-      if (result.__isset.exp) {
+      if (result.__isset.lc) {
         sentry.commit();
-        throw result.exp;
+        throw result.lc;
       }
       // in a bad state, don't commit
       throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "global_size failed: unknown result");
+    }
+    // seqid != rseqid
+    this->sync_.updatePending(fname, mtype, rseqid);
+
+    // this will temporarily unlock the readMutex, and let other clients get work done
+    this->sync_.waitForWork(seqid);
+  } // end while(true)
+}
+
+bool IODFSConcurrentClient::nop()
+{
+  int32_t seqid = send_nop();
+  return recv_nop(seqid);
+}
+
+int32_t IODFSConcurrentClient::send_nop()
+{
+  int32_t cseqid = this->sync_.generateSeqId();
+  ::apache::thrift::async::TConcurrentSendSentry sentry(&this->sync_);
+  oprot_->writeMessageBegin("nop", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  IODFS_nop_pargs args;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+
+  sentry.commit();
+  return cseqid;
+}
+
+bool IODFSConcurrentClient::recv_nop(const int32_t seqid)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  // the read mutex gets dropped and reacquired as part of waitForWork()
+  // The destructor of this sentry wakes up other clients
+  ::apache::thrift::async::TConcurrentRecvSentry sentry(&this->sync_, seqid);
+
+  while(true) {
+    if(!this->sync_.getPending(fname, mtype, rseqid)) {
+      iprot_->readMessageBegin(fname, mtype, rseqid);
+    }
+    if(seqid == rseqid) {
+      if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+        ::apache::thrift::TApplicationException x;
+        x.read(iprot_);
+        iprot_->readMessageEnd();
+        iprot_->getTransport()->readEnd();
+        sentry.commit();
+        throw x;
+      }
+      if (mtype != ::apache::thrift::protocol::T_REPLY) {
+        iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+        iprot_->readMessageEnd();
+        iprot_->getTransport()->readEnd();
+      }
+      if (fname.compare("nop") != 0) {
+        iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+        iprot_->readMessageEnd();
+        iprot_->getTransport()->readEnd();
+
+        // in a bad state, don't commit
+        using ::apache::thrift::protocol::TProtocolException;
+        throw TProtocolException(TProtocolException::INVALID_DATA);
+      }
+      bool _return;
+      IODFS_nop_presult result;
+      result.success = &_return;
+      result.read(iprot_);
+      iprot_->readMessageEnd();
+      iprot_->getTransport()->readEnd();
+
+      if (result.__isset.success) {
+        sentry.commit();
+        return _return;
+      }
+      // in a bad state, don't commit
+      throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "nop failed: unknown result");
     }
     // seqid != rseqid
     this->sync_.updatePending(fname, mtype, rseqid);

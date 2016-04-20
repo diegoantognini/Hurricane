@@ -8,11 +8,14 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
+#include <thrift/server/TThreadPoolServer.h>
+#include <thrift/server/TThreadedServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/make_shared.hpp>
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -39,7 +42,7 @@ class IODFSHandler : virtual public IODFSIf {
   vector<pair<string, string>> machines;
   unsigned long me;
   unsigned int port;
-  bool connection_to_server_done = false;
+  bool connection_to_server_done;
 
   vector<boost::shared_ptr<TTransport>> transports;
   vector<IODFSClient*> clients;
@@ -76,7 +79,9 @@ class IODFSHandler : virtual public IODFSIf {
 
   }*/
     
+  // We must close the connection in any cases, otherwise server cannot respond to client with this port number
   void reconnect() {
+    std::cout << "reconnect" << std::endl;
     connection_to_server_done = false;
     unsigned int i = 0;
     try {
@@ -89,6 +94,7 @@ class IODFSHandler : virtual public IODFSIf {
       }
       connection_to_server_done = true;
     } catch (TException& tx){
+      transports[i]->close();
       BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].first << " FAILED : " << tx.what();
       reconnect_timer->expires_at(reconnect_timer->expires_at() + boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
       reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
@@ -96,19 +102,33 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   void try_to_reconnect() {
+    std::cout << "try_to_reconnect:before launching thread" << std::endl;
     connection_to_server_done = false;
     reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
     threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
+    std::cout << "try_to_reconnect:after launching thread" << std::endl;
   }
 
   bool are_all_connection_open() {
     bool result = true;
-    
-    for(auto& transport : transports)
-      result = result && transport->isOpen();
 
+    std::cout << "Testing connections" << std::endl;
+    unsigned int i = 0;
+    try {
+     for(auto& machine : machines) {
+        result = result && machine->nop();
+        ++i;
+      }
+    } catch (TException& tx){
+      transports[i]->close();
+      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].first << " FAILED : " << tx.what();
+      result = false;
+    }
+
+    std::cout << "End testing connections : " << result << std::endl;
     if(!result) {
       connection_to_server_done = false;
+      std::cout << "are_all_connection_open:run try_to_reconnect" << std::endl;
       try_to_reconnect();
     }
 
@@ -117,7 +137,7 @@ class IODFSHandler : virtual public IODFSIf {
 
  public:
   IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port)
-  : me(_me), port(_port) {
+  : me(_me), port(_port), connection_to_server_done(false) {
     for(auto& it : _machines)
       machines.push_back(make_pair(it.first, it.second));
     init_req();  
@@ -153,7 +173,12 @@ class IODFSHandler : virtual public IODFSIf {
     delete reconnect_timer;
   }
 
+  bool nop() {
+    return true;
+  }
+
   bool local_create(const std::string& filename) {
+    std::cout << "Received a request" << std::endl;
     if(local_exists(filename))
       return false;
 
@@ -366,25 +391,48 @@ int main(int argc, const char **argv) {
     machines.push_back(make_pair(pt_slipstore.get<std::string>(name.str().c_str()), pt_slipstore.get<std::string>(iface.str().c_str())));
   } 
 
-  shared_ptr<IODFSHandler> handler(new IODFSHandler(machines, me, port));
+  TThreadedServer server(
+    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port)),
+    boost::make_shared<TServerSocket>(port),
+    boost::make_shared<TBufferedTransportFactory>(),
+    boost::make_shared<TBinaryProtocolFactory>());
+  
+  /*
+  // if you don't need per-connection state, do the following instead
+  TThreadedServer server(
+    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port)),
+    boost::make_shared<TServerSocket>(port),
+    boost::make_shared<TBufferedTransportFactory>(),
+    boost::make_shared<TBinaryProtocolFactory>());
+  */
+  /*
+  // This server only allows one connection at a time, but spawns no threads
+  TSimpleServer server(
+    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port)),
+    boost::make_shared<TServerSocket>(9090),
+    boost::make_shared<TBufferedTransportFactory>(),
+    boost::make_shared<TBinaryProtocolFactory>());
+  */
 
-  shared_ptr<TProcessor> processor(new IODFSProcessor(handler));
-  shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
-  shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
-  shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+  /*
+  const int workerCount = 4;
 
-  TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
+  boost::shared_ptr<ThreadManager> threadManager =
+    ThreadManager::newSimpleThreadManager(workerCount);
+  threadManager->threadFactory(
+    boost::make_shared<PlatformThreadFactory>());
+  threadManager->start();
+
+  // This server allows "workerCount" connection at a time, and reuses threads
+  TThreadPoolServer server(
+    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port)),
+    boost::make_shared<TServerSocket>(9090),
+    boost::make_shared<TBufferedTransportFactory>(),
+    boost::make_shared<TBinaryProtocolFactory>(),
+    threadManager);
+  */
+  
   server.serve();
 
   return 0;
 }
-
-
-
-
-
-
-
-
-
-
