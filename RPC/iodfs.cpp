@@ -1,4 +1,6 @@
 #include "gen-cpp/IODFS.h"
+#include "gen-cpp/IODFS_types.h"
+
 #include "../slipstore/interface.hpp"
 #include "../slipstore/config.hpp"
 #include <thrift/protocol/TBinaryProtocol.h>
@@ -86,16 +88,32 @@ class IODFSHandler : virtual public IODFSIf {
         ++i;
       }
       connection_to_server_done = true;
-
-      //reconnect_timer->async_wait(boost::bind(&IODFSHandler::test, this));
-      //threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
-
     } catch (TException& tx){
       BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].first << " FAILED : " << tx.what();
       reconnect_timer->expires_at(reconnect_timer->expires_at() + boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
       reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
     }
-}
+  }
+
+  void try_to_reconnect() {
+    connection_to_server_done = false;
+    reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
+    threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
+  }
+
+  bool are_all_connection_open() {
+    bool result = true;
+    
+    for(auto& transport : transports)
+      result = result && transport->isOpen();
+
+    if(!result) {
+      connection_to_server_done = false;
+      try_to_reconnect();
+    }
+
+    return result;
+  }
 
  public:
   IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port)
@@ -131,6 +149,8 @@ class IODFSHandler : virtual public IODFSIf {
 
     for(unsigned int i = 0; i < clients.size(); ++i)
       delete clients[i];
+
+    delete reconnect_timer;
   }
 
   bool local_create(const std::string& filename) {
@@ -243,7 +263,12 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   bool global_create(const std::string& filename) {
-    if(!connection_to_server_done || helper_exists(filename, global_buffers) || global_exists(filename))
+    if(!connection_to_server_done || !are_all_connection_open()) {
+      LostConnection lc;
+      throw lc;
+    }
+
+    if(global_exists(filename) || helper_exists(filename, global_buffers))
       return false;
 
     bool result = true;
@@ -256,8 +281,10 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   bool global_exists(const std::string& filename) {
-    if(!connection_to_server_done || !helper_exists(filename, global_buffers))
-      return false;
+    if(!connection_to_server_done || !are_all_connection_open()) {
+      LostConnection lc;
+      throw lc;
+    }
 
     bool result = true;
     for(auto& machine : clients)
@@ -267,7 +294,12 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   bool global_delete(const std::string& filename) {
-    if(!connection_to_server_done || !helper_exists(filename, global_buffers))
+    if(!connection_to_server_done || !are_all_connection_open()) {
+      LostConnection lc;
+      throw lc;
+    }
+
+    if(!global_exists(filename) || !helper_exists(filename, global_buffers))
       return false;
 
     bool result = true;

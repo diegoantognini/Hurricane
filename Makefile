@@ -1,5 +1,5 @@
 OBJECT_DIR= object_files
-UTILS_SRC= utils.o gIODFS.o
+UTILS_SRC= utils.o gIODFS.o gIODFS_types.o
 LIBS_SRC= $(UTILS_SRC)
 LIBS= $(addprefix $(OBJECT_DIR)/, $(LIBS_SRC))
 UTILS= $(addprefix $(OBJECT_DIR)/, $(UTILS_SRC))
@@ -53,6 +53,10 @@ $(OBJECT_DIR)/slipbench.o:utils/slipbench.cpp
 $(OBJECT_DIR)/gIODFS.o: RPC/gen-cpp/IODFS.cpp
 	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
 	$(CXX) -std=c++11 -MM -MT '$(OBJECT_DIR)/gIODFS.o' $< > $(@:.o=.d)
+
+$(OBJECT_DIR)/gIODFS_types.o: RPC/gen-cpp/IODFS_types.cpp
+	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
+	$(CXX) -std=c++11 -MM -MT '$(OBJECT_DIR)/gIODFS_types.o' $< > $(@:.o=.d)
 
 $(OBJECT_DIR)/iodfs.o:RPC/iodfs.cpp 
 	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<

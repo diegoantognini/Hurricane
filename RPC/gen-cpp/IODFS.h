@@ -1375,8 +1375,9 @@ class IODFS_global_create_pargs {
 };
 
 typedef struct _IODFS_global_create_result__isset {
-  _IODFS_global_create_result__isset() : success(false) {}
+  _IODFS_global_create_result__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_create_result__isset;
 
 class IODFS_global_create_result {
@@ -1389,14 +1390,19 @@ class IODFS_global_create_result {
 
   virtual ~IODFS_global_create_result() throw();
   bool success;
+  LostConnection exp;
 
   _IODFS_global_create_result__isset __isset;
 
   void __set_success(const bool val);
 
+  void __set_exp(const LostConnection& val);
+
   bool operator == (const IODFS_global_create_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(exp == rhs.exp))
       return false;
     return true;
   }
@@ -1412,8 +1418,9 @@ class IODFS_global_create_result {
 };
 
 typedef struct _IODFS_global_create_presult__isset {
-  _IODFS_global_create_presult__isset() : success(false) {}
+  _IODFS_global_create_presult__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_create_presult__isset;
 
 class IODFS_global_create_presult {
@@ -1422,6 +1429,7 @@ class IODFS_global_create_presult {
 
   virtual ~IODFS_global_create_presult() throw();
   bool* success;
+  LostConnection exp;
 
   _IODFS_global_create_presult__isset __isset;
 
@@ -1479,8 +1487,9 @@ class IODFS_global_exists_pargs {
 };
 
 typedef struct _IODFS_global_exists_result__isset {
-  _IODFS_global_exists_result__isset() : success(false) {}
+  _IODFS_global_exists_result__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_exists_result__isset;
 
 class IODFS_global_exists_result {
@@ -1493,14 +1502,19 @@ class IODFS_global_exists_result {
 
   virtual ~IODFS_global_exists_result() throw();
   bool success;
+  LostConnection exp;
 
   _IODFS_global_exists_result__isset __isset;
 
   void __set_success(const bool val);
 
+  void __set_exp(const LostConnection& val);
+
   bool operator == (const IODFS_global_exists_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(exp == rhs.exp))
       return false;
     return true;
   }
@@ -1516,8 +1530,9 @@ class IODFS_global_exists_result {
 };
 
 typedef struct _IODFS_global_exists_presult__isset {
-  _IODFS_global_exists_presult__isset() : success(false) {}
+  _IODFS_global_exists_presult__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_exists_presult__isset;
 
 class IODFS_global_exists_presult {
@@ -1526,6 +1541,7 @@ class IODFS_global_exists_presult {
 
   virtual ~IODFS_global_exists_presult() throw();
   bool* success;
+  LostConnection exp;
 
   _IODFS_global_exists_presult__isset __isset;
 
@@ -1583,8 +1599,9 @@ class IODFS_global_delete_pargs {
 };
 
 typedef struct _IODFS_global_delete_result__isset {
-  _IODFS_global_delete_result__isset() : success(false) {}
+  _IODFS_global_delete_result__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_delete_result__isset;
 
 class IODFS_global_delete_result {
@@ -1597,14 +1614,19 @@ class IODFS_global_delete_result {
 
   virtual ~IODFS_global_delete_result() throw();
   bool success;
+  LostConnection exp;
 
   _IODFS_global_delete_result__isset __isset;
 
   void __set_success(const bool val);
 
+  void __set_exp(const LostConnection& val);
+
   bool operator == (const IODFS_global_delete_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(exp == rhs.exp))
       return false;
     return true;
   }
@@ -1620,8 +1642,9 @@ class IODFS_global_delete_result {
 };
 
 typedef struct _IODFS_global_delete_presult__isset {
-  _IODFS_global_delete_presult__isset() : success(false) {}
+  _IODFS_global_delete_presult__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_delete_presult__isset;
 
 class IODFS_global_delete_presult {
@@ -1630,6 +1653,7 @@ class IODFS_global_delete_presult {
 
   virtual ~IODFS_global_delete_presult() throw();
   bool* success;
+  LostConnection exp;
 
   _IODFS_global_delete_presult__isset __isset;
 
@@ -1694,8 +1718,9 @@ class IODFS_global_fill_pargs {
 };
 
 typedef struct _IODFS_global_fill_result__isset {
-  _IODFS_global_fill_result__isset() : success(false) {}
+  _IODFS_global_fill_result__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_fill_result__isset;
 
 class IODFS_global_fill_result {
@@ -1708,14 +1733,19 @@ class IODFS_global_fill_result {
 
   virtual ~IODFS_global_fill_result() throw();
   std::string success;
+  LostConnection exp;
 
   _IODFS_global_fill_result__isset __isset;
 
   void __set_success(const std::string& val);
 
+  void __set_exp(const LostConnection& val);
+
   bool operator == (const IODFS_global_fill_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(exp == rhs.exp))
       return false;
     return true;
   }
@@ -1731,8 +1761,9 @@ class IODFS_global_fill_result {
 };
 
 typedef struct _IODFS_global_fill_presult__isset {
-  _IODFS_global_fill_presult__isset() : success(false) {}
+  _IODFS_global_fill_presult__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_fill_presult__isset;
 
 class IODFS_global_fill_presult {
@@ -1741,6 +1772,7 @@ class IODFS_global_fill_presult {
 
   virtual ~IODFS_global_fill_presult() throw();
   std::string* success;
+  LostConnection exp;
 
   _IODFS_global_fill_presult__isset __isset;
 
@@ -1812,8 +1844,9 @@ class IODFS_global_seek_and_fill_pargs {
 };
 
 typedef struct _IODFS_global_seek_and_fill_result__isset {
-  _IODFS_global_seek_and_fill_result__isset() : success(false) {}
+  _IODFS_global_seek_and_fill_result__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_seek_and_fill_result__isset;
 
 class IODFS_global_seek_and_fill_result {
@@ -1826,14 +1859,19 @@ class IODFS_global_seek_and_fill_result {
 
   virtual ~IODFS_global_seek_and_fill_result() throw();
   std::string success;
+  LostConnection exp;
 
   _IODFS_global_seek_and_fill_result__isset __isset;
 
   void __set_success(const std::string& val);
 
+  void __set_exp(const LostConnection& val);
+
   bool operator == (const IODFS_global_seek_and_fill_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(exp == rhs.exp))
       return false;
     return true;
   }
@@ -1849,8 +1887,9 @@ class IODFS_global_seek_and_fill_result {
 };
 
 typedef struct _IODFS_global_seek_and_fill_presult__isset {
-  _IODFS_global_seek_and_fill_presult__isset() : success(false) {}
+  _IODFS_global_seek_and_fill_presult__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_seek_and_fill_presult__isset;
 
 class IODFS_global_seek_and_fill_presult {
@@ -1859,6 +1898,7 @@ class IODFS_global_seek_and_fill_presult {
 
   virtual ~IODFS_global_seek_and_fill_presult() throw();
   std::string* success;
+  LostConnection exp;
 
   _IODFS_global_seek_and_fill_presult__isset __isset;
 
@@ -1923,8 +1963,9 @@ class IODFS_global_drain_pargs {
 };
 
 typedef struct _IODFS_global_drain_result__isset {
-  _IODFS_global_drain_result__isset() : success(false) {}
+  _IODFS_global_drain_result__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_drain_result__isset;
 
 class IODFS_global_drain_result {
@@ -1937,14 +1978,19 @@ class IODFS_global_drain_result {
 
   virtual ~IODFS_global_drain_result() throw();
   bool success;
+  LostConnection exp;
 
   _IODFS_global_drain_result__isset __isset;
 
   void __set_success(const bool val);
 
+  void __set_exp(const LostConnection& val);
+
   bool operator == (const IODFS_global_drain_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(exp == rhs.exp))
       return false;
     return true;
   }
@@ -1960,8 +2006,9 @@ class IODFS_global_drain_result {
 };
 
 typedef struct _IODFS_global_drain_presult__isset {
-  _IODFS_global_drain_presult__isset() : success(false) {}
+  _IODFS_global_drain_presult__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_drain_presult__isset;
 
 class IODFS_global_drain_presult {
@@ -1970,6 +2017,7 @@ class IODFS_global_drain_presult {
 
   virtual ~IODFS_global_drain_presult() throw();
   bool* success;
+  LostConnection exp;
 
   _IODFS_global_drain_presult__isset __isset;
 
@@ -2027,8 +2075,9 @@ class IODFS_global_rewind_pargs {
 };
 
 typedef struct _IODFS_global_rewind_result__isset {
-  _IODFS_global_rewind_result__isset() : success(false) {}
+  _IODFS_global_rewind_result__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_rewind_result__isset;
 
 class IODFS_global_rewind_result {
@@ -2041,14 +2090,19 @@ class IODFS_global_rewind_result {
 
   virtual ~IODFS_global_rewind_result() throw();
   bool success;
+  LostConnection exp;
 
   _IODFS_global_rewind_result__isset __isset;
 
   void __set_success(const bool val);
 
+  void __set_exp(const LostConnection& val);
+
   bool operator == (const IODFS_global_rewind_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(exp == rhs.exp))
       return false;
     return true;
   }
@@ -2064,8 +2118,9 @@ class IODFS_global_rewind_result {
 };
 
 typedef struct _IODFS_global_rewind_presult__isset {
-  _IODFS_global_rewind_presult__isset() : success(false) {}
+  _IODFS_global_rewind_presult__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_rewind_presult__isset;
 
 class IODFS_global_rewind_presult {
@@ -2074,6 +2129,7 @@ class IODFS_global_rewind_presult {
 
   virtual ~IODFS_global_rewind_presult() throw();
   bool* success;
+  LostConnection exp;
 
   _IODFS_global_rewind_presult__isset __isset;
 
@@ -2131,8 +2187,9 @@ class IODFS_global_trunc_pargs {
 };
 
 typedef struct _IODFS_global_trunc_result__isset {
-  _IODFS_global_trunc_result__isset() : success(false) {}
+  _IODFS_global_trunc_result__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_trunc_result__isset;
 
 class IODFS_global_trunc_result {
@@ -2145,14 +2202,19 @@ class IODFS_global_trunc_result {
 
   virtual ~IODFS_global_trunc_result() throw();
   bool success;
+  LostConnection exp;
 
   _IODFS_global_trunc_result__isset __isset;
 
   void __set_success(const bool val);
 
+  void __set_exp(const LostConnection& val);
+
   bool operator == (const IODFS_global_trunc_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(exp == rhs.exp))
       return false;
     return true;
   }
@@ -2168,8 +2230,9 @@ class IODFS_global_trunc_result {
 };
 
 typedef struct _IODFS_global_trunc_presult__isset {
-  _IODFS_global_trunc_presult__isset() : success(false) {}
+  _IODFS_global_trunc_presult__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_trunc_presult__isset;
 
 class IODFS_global_trunc_presult {
@@ -2178,6 +2241,7 @@ class IODFS_global_trunc_presult {
 
   virtual ~IODFS_global_trunc_presult() throw();
   bool* success;
+  LostConnection exp;
 
   _IODFS_global_trunc_presult__isset __isset;
 
@@ -2235,8 +2299,9 @@ class IODFS_global_eof_pargs {
 };
 
 typedef struct _IODFS_global_eof_result__isset {
-  _IODFS_global_eof_result__isset() : success(false) {}
+  _IODFS_global_eof_result__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_eof_result__isset;
 
 class IODFS_global_eof_result {
@@ -2249,14 +2314,19 @@ class IODFS_global_eof_result {
 
   virtual ~IODFS_global_eof_result() throw();
   bool success;
+  LostConnection exp;
 
   _IODFS_global_eof_result__isset __isset;
 
   void __set_success(const bool val);
 
+  void __set_exp(const LostConnection& val);
+
   bool operator == (const IODFS_global_eof_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(exp == rhs.exp))
       return false;
     return true;
   }
@@ -2272,8 +2342,9 @@ class IODFS_global_eof_result {
 };
 
 typedef struct _IODFS_global_eof_presult__isset {
-  _IODFS_global_eof_presult__isset() : success(false) {}
+  _IODFS_global_eof_presult__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_eof_presult__isset;
 
 class IODFS_global_eof_presult {
@@ -2282,6 +2353,7 @@ class IODFS_global_eof_presult {
 
   virtual ~IODFS_global_eof_presult() throw();
   bool* success;
+  LostConnection exp;
 
   _IODFS_global_eof_presult__isset __isset;
 
@@ -2339,8 +2411,9 @@ class IODFS_global_size_pargs {
 };
 
 typedef struct _IODFS_global_size_result__isset {
-  _IODFS_global_size_result__isset() : success(false) {}
+  _IODFS_global_size_result__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_size_result__isset;
 
 class IODFS_global_size_result {
@@ -2353,14 +2426,19 @@ class IODFS_global_size_result {
 
   virtual ~IODFS_global_size_result() throw();
   int64_t success;
+  LostConnection exp;
 
   _IODFS_global_size_result__isset __isset;
 
   void __set_success(const int64_t val);
 
+  void __set_exp(const LostConnection& val);
+
   bool operator == (const IODFS_global_size_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(exp == rhs.exp))
       return false;
     return true;
   }
@@ -2376,8 +2454,9 @@ class IODFS_global_size_result {
 };
 
 typedef struct _IODFS_global_size_presult__isset {
-  _IODFS_global_size_presult__isset() : success(false) {}
+  _IODFS_global_size_presult__isset() : success(false), exp(false) {}
   bool success :1;
+  bool exp :1;
 } _IODFS_global_size_presult__isset;
 
 class IODFS_global_size_presult {
@@ -2386,6 +2465,7 @@ class IODFS_global_size_presult {
 
   virtual ~IODFS_global_size_presult() throw();
   int64_t* success;
+  LostConnection exp;
 
   _IODFS_global_size_presult__isset __isset;
 
