@@ -49,6 +49,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   boost::asio::deadline_timer* reconnect_timer;
   boost::asio::io_service reconnect_thread;
+  boost::asio::io_service::work* reconnect_woker;
   boost::thread_group threadpool;
 
   bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>::iterator& it, unordered_map<string, slipstore::io*>& buffers) {
@@ -69,19 +70,7 @@ class IODFSHandler : virtual public IODFSIf {
     req.source_mc = req.cmd = req.size = req.offset = 0;
   }
 
-  /*void test() {
-    static int i = 0;
-    if(i++<5) {
-      std::cout << i << std::endl;
-      reconnect_timer->expires_at(reconnect_timer->expires_at() + boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
-      reconnect_timer->async_wait(boost::bind(&IODFSHandler::test, this));
-    }
-
-  }*/
-    
-  // We must close the connection in any cases, otherwise server cannot respond to client with this port number
   void reconnect() {
-    std::cout << "reconnect" << std::endl;
     connection_to_server_done = false;
     unsigned int i = 0;
     try {
@@ -102,20 +91,17 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   void try_to_reconnect() {
-    std::cout << "try_to_reconnect:before launching thread" << std::endl;
     connection_to_server_done = false;
     reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
     threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
-    std::cout << "try_to_reconnect:after launching thread" << std::endl;
   }
 
   bool are_all_connection_open() {
     bool result = true;
 
-    std::cout << "Testing connections" << std::endl;
     unsigned int i = 0;
     try {
-     for(auto& machine : machines) {
+     for(auto& machine : clients) {
         result = result && machine->nop();
         ++i;
       }
@@ -125,10 +111,8 @@ class IODFSHandler : virtual public IODFSIf {
       result = false;
     }
 
-    std::cout << "End testing connections : " << result << std::endl;
     if(!result) {
       connection_to_server_done = false;
-      std::cout << "are_all_connection_open:run try_to_reconnect" << std::endl;
       try_to_reconnect();
     }
 
@@ -153,6 +137,7 @@ class IODFSHandler : virtual public IODFSIf {
         clients.push_back(client);
     }
 
+    reconnect_woker = new boost::asio::io_service::work(reconnect_thread);
     // Do the connection later
     reconnect_timer = new boost::asio::deadline_timer(reconnect_thread, boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
     reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
@@ -162,7 +147,6 @@ class IODFSHandler : virtual public IODFSIf {
   ~IODFSHandler() {
   	for(unordered_map<string, slipstore::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
   		helper_delete(it);
-    
   
     for(auto& it : transports)
       it->close();
@@ -170,7 +154,9 @@ class IODFSHandler : virtual public IODFSIf {
     for(unsigned int i = 0; i < clients.size(); ++i)
       delete clients[i];
 
+    reconnect_thread.stop();
     delete reconnect_timer;
+    delete reconnect_woker;
   }
 
   bool nop() {
@@ -178,7 +164,6 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   bool local_create(const std::string& filename) {
-    std::cout << "Received a request" << std::endl;
     if(local_exists(filename))
       return false;
 

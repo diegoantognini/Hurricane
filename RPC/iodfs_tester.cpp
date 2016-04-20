@@ -296,7 +296,7 @@ int main(int argc, char **argv) {
 	    do_test("test_local_create_exists_delete_one_file", &test_local_create_exists_delete_one_file, iodfs);
 	    do_test("test_local_create_exists_delete_two_files", &test_local_create_exists_delete_two_files, iodfs);
 	    do_test("test_local_drain_fill_eof_size_trunc_left", &test_local_drain_fill_eof_size_trunc_left, iodfs);
-	    //do_test("test_local_seek_and_fill", &test_local_seek_and_fill, iodfs);
+	    do_test("test_local_seek_and_fill", &test_local_seek_and_fill, iodfs);
 
 	} catch (TException& tx) {
 		cout << "Local Error: " << tx.what() << endl;
