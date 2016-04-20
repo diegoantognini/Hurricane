@@ -297,7 +297,6 @@ int main(int argc, char **argv) {
 	    do_test("test_local_create_exists_delete_two_files", &test_local_create_exists_delete_two_files, iodfs);
 	    do_test("test_local_drain_fill_eof_size_trunc_left", &test_local_drain_fill_eof_size_trunc_left, iodfs);
 	    do_test("test_local_seek_and_fill", &test_local_seek_and_fill, iodfs);
-
 	} catch (TException& tx) {
 		cout << "Local Error: " << tx.what() << endl;
 	}
@@ -311,13 +310,10 @@ int main(int argc, char **argv) {
 		    	for(int i = 0; i < 1000000; ++i) {
 		    		a+=i;
 		    	}
-
 		    } catch (LostConnection& lc) {
 		    	cout << "Lost connection !" << endl;
 		    }
 		}
-
-		
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
 	}
