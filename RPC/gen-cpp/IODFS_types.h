@@ -21,19 +21,32 @@
 
 class LostConnection;
 
+class LostConnectionDuringCommit;
+
+typedef struct _LostConnection__isset {
+  _LostConnection__isset() : name_node_lost(false) {}
+  bool name_node_lost :1;
+} _LostConnection__isset;
 
 class LostConnection : public ::apache::thrift::TException {
  public:
 
   LostConnection(const LostConnection&);
   LostConnection& operator=(const LostConnection&);
-  LostConnection() {
+  LostConnection() : name_node_lost() {
   }
 
   virtual ~LostConnection() throw();
+  std::string name_node_lost;
 
-  bool operator == (const LostConnection & /* rhs */) const
+  _LostConnection__isset __isset;
+
+  void __set_name_node_lost(const std::string& val);
+
+  bool operator == (const LostConnection & rhs) const
   {
+    if (!(name_node_lost == rhs.name_node_lost))
+      return false;
     return true;
   }
   bool operator != (const LostConnection &rhs) const {
@@ -53,6 +66,54 @@ class LostConnection : public ::apache::thrift::TException {
 void swap(LostConnection &a, LostConnection &b);
 
 inline std::ostream& operator<<(std::ostream& out, const LostConnection& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _LostConnectionDuringCommit__isset {
+  _LostConnectionDuringCommit__isset() : name_node_lost(false) {}
+  bool name_node_lost :1;
+} _LostConnectionDuringCommit__isset;
+
+class LostConnectionDuringCommit : public ::apache::thrift::TException {
+ public:
+
+  LostConnectionDuringCommit(const LostConnectionDuringCommit&);
+  LostConnectionDuringCommit& operator=(const LostConnectionDuringCommit&);
+  LostConnectionDuringCommit() : name_node_lost() {
+  }
+
+  virtual ~LostConnectionDuringCommit() throw();
+  std::string name_node_lost;
+
+  _LostConnectionDuringCommit__isset __isset;
+
+  void __set_name_node_lost(const std::string& val);
+
+  bool operator == (const LostConnectionDuringCommit & rhs) const
+  {
+    if (!(name_node_lost == rhs.name_node_lost))
+      return false;
+    return true;
+  }
+  bool operator != (const LostConnectionDuringCommit &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const LostConnectionDuringCommit & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+  mutable std::string thriftTExceptionMessageHolder_;
+  const char* what() const throw();
+};
+
+void swap(LostConnectionDuringCommit &a, LostConnectionDuringCommit &b);
+
+inline std::ostream& operator<<(std::ostream& out, const LostConnectionDuringCommit& obj)
 {
   obj.printTo(out);
   return out;

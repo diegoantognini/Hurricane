@@ -18,6 +18,10 @@ LostConnection::~LostConnection() throw() {
 }
 
 
+void LostConnection::__set_name_node_lost(const std::string& val) {
+  this->name_node_lost = val;
+}
+
 uint32_t LostConnection::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
@@ -37,7 +41,20 @@ uint32_t LostConnection::read(::apache::thrift::protocol::TProtocol* iprot) {
     if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
-    xfer += iprot->skip(ftype);
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->name_node_lost);
+          this->__isset.name_node_lost = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
     xfer += iprot->readFieldEnd();
   }
 
@@ -51,6 +68,10 @@ uint32_t LostConnection::write(::apache::thrift::protocol::TProtocol* oprot) con
   apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
   xfer += oprot->writeStructBegin("LostConnection");
 
+  xfer += oprot->writeFieldBegin("name_node_lost", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->name_node_lost);
+  xfer += oprot->writeFieldEnd();
+
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -58,20 +79,23 @@ uint32_t LostConnection::write(::apache::thrift::protocol::TProtocol* oprot) con
 
 void swap(LostConnection &a, LostConnection &b) {
   using ::std::swap;
-  (void) a;
-  (void) b;
+  swap(a.name_node_lost, b.name_node_lost);
+  swap(a.__isset, b.__isset);
 }
 
 LostConnection::LostConnection(const LostConnection& other0) : TException() {
-  (void) other0;
+  name_node_lost = other0.name_node_lost;
+  __isset = other0.__isset;
 }
 LostConnection& LostConnection::operator=(const LostConnection& other1) {
-  (void) other1;
+  name_node_lost = other1.name_node_lost;
+  __isset = other1.__isset;
   return *this;
 }
 void LostConnection::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
   out << "LostConnection(";
+  out << "name_node_lost=" << to_string(name_node_lost);
   out << ")";
 }
 
@@ -83,6 +107,103 @@ const char* LostConnection::what() const throw() {
     return this->thriftTExceptionMessageHolder_.c_str();
   } catch (const std::exception&) {
     return "TException - service has thrown: LostConnection";
+  }
+}
+
+
+LostConnectionDuringCommit::~LostConnectionDuringCommit() throw() {
+}
+
+
+void LostConnectionDuringCommit::__set_name_node_lost(const std::string& val) {
+  this->name_node_lost = val;
+}
+
+uint32_t LostConnectionDuringCommit::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->name_node_lost);
+          this->__isset.name_node_lost = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t LostConnectionDuringCommit::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("LostConnectionDuringCommit");
+
+  xfer += oprot->writeFieldBegin("name_node_lost", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->name_node_lost);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(LostConnectionDuringCommit &a, LostConnectionDuringCommit &b) {
+  using ::std::swap;
+  swap(a.name_node_lost, b.name_node_lost);
+  swap(a.__isset, b.__isset);
+}
+
+LostConnectionDuringCommit::LostConnectionDuringCommit(const LostConnectionDuringCommit& other2) : TException() {
+  name_node_lost = other2.name_node_lost;
+  __isset = other2.__isset;
+}
+LostConnectionDuringCommit& LostConnectionDuringCommit::operator=(const LostConnectionDuringCommit& other3) {
+  name_node_lost = other3.name_node_lost;
+  __isset = other3.__isset;
+  return *this;
+}
+void LostConnectionDuringCommit::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "LostConnectionDuringCommit(";
+  out << "name_node_lost=" << to_string(name_node_lost);
+  out << ")";
+}
+
+const char* LostConnectionDuringCommit::what() const throw() {
+  try {
+    std::stringstream ss;
+    ss << "TException - service has thrown: " << *this;
+    this->thriftTExceptionMessageHolder_ = ss.str();
+    return this->thriftTExceptionMessageHolder_.c_str();
+  } catch (const std::exception&) {
+    return "TException - service has thrown: LostConnectionDuringCommit";
   }
 }
 

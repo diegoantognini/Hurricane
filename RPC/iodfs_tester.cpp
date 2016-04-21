@@ -1,4 +1,5 @@
 #include "gen-cpp/IODFS.h"
+#include "gen-cpp/IODFS_types.h"
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
@@ -311,7 +312,9 @@ int main(int argc, char **argv) {
 		    		a+=i;
 		    	}
 		    } catch (LostConnection& lc) {
-		    	cout << "Lost connection !" << endl;
+		    	cout << "Lost connection with : " << lc.name_node_lost << " !" << endl;
+		    } catch (LostConnectionDuringCommit& lcdc) {
+		    	cout << "INCONSISTENCE STATE : Lost connection with : " << lcdc.name_node_lost << " DURING COMMIT PHASE!" << endl;
 		    }
 		}
 	} catch (TException& tx) {

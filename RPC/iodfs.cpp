@@ -21,6 +21,7 @@
 #include <vector>
 
 #define NB_SECONDS_BETWEEN_RECONNECTION 1
+
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
 using namespace ::apache::thrift::transport;
@@ -96,18 +97,20 @@ class IODFSHandler : virtual public IODFSIf {
     threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
   }
 
-  bool are_all_connection_open() {
+  bool are_all_connection_open(unsigned int* pnode = NULL) {
     bool result = true;
 
-    unsigned int i = 0;
+    unsigned int node = 0;
     try {
      for(auto& machine : clients) {
         result = result && machine->nop();
-        ++i;
+        ++node;
       }
+      pnode = NULL;
     } catch (TException& tx){
-      transports[i]->close();
-      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].first << " FAILED : " << tx.what();
+      transports[node]->close();
+      *pnode = node;
+      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[node].first << " FAILED : " << tx.what();
       result = false;
     }
 
@@ -273,8 +276,10 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   bool global_create(const std::string& filename) {
-    if(!connection_to_server_done || !are_all_connection_open()) {
+    unsigned int lost_node;
+    if(!connection_to_server_done || !are_all_connection_open(&lost_node)) {
       LostConnection lc;
+      lc.name_node_lost = machines[lost_node].first;
       throw lc;
     }
 
@@ -282,8 +287,17 @@ class IODFSHandler : virtual public IODFSIf {
       return false;
 
     bool result = true;
-    for(auto& machine : clients)
-      result = result && machine->local_create(filename);
+    unsigned int node = 0; 
+    try {
+      for(auto& machine : clients) {
+        result = result && machine->local_create(filename);
+        ++node;
+      }
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[node].first;
+      throw lcdc;
+    }
 
     global_buffers[filename] = NULL;
 
@@ -291,21 +305,34 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   bool global_exists(const std::string& filename) {
-    if(!connection_to_server_done || !are_all_connection_open()) {
+    unsigned int lost_node;
+    if(!connection_to_server_done || !are_all_connection_open(&lost_node)) {
       LostConnection lc;
+      lc.name_node_lost = machines[lost_node].first;
       throw lc;
     }
 
     bool result = true;
-    for(auto& machine : clients)
-      result = result && machine->local_exists(filename);
+    unsigned int node = 0; 
+    try {
+      for(auto& machine : clients) {
+        result = result && machine->local_exists(filename);
+        ++node;
+      }
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[node].first;
+      throw lcdc;
+    }
 
     return result;
   }
 
   bool global_delete(const std::string& filename) {
-    if(!connection_to_server_done || !are_all_connection_open()) {
+    unsigned int lost_node;
+    if(!connection_to_server_done || !are_all_connection_open(&lost_node)) {
       LostConnection lc;
+      lc.name_node_lost = machines[lost_node].first;
       throw lc;
     }
 
@@ -313,8 +340,17 @@ class IODFSHandler : virtual public IODFSIf {
       return false;
 
     bool result = true;
-    for(auto& machine : clients)
-      result = result && machine->local_delete(filename);
+    unsigned int node = 0; 
+    try {
+      for(auto& machine : clients) {
+        result = result && machine->local_delete(filename);
+        ++node;
+      }
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[node].first;
+      throw lcdc;
+    }
 
     return result;
   }

@@ -1,4 +1,9 @@
 exception LostConnection {
+	1:string name_node_lost
+}
+
+exception LostConnectionDuringCommit {
+	1:string name_node_lost
 }
 
 service IODFS {
