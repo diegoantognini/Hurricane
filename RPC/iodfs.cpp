@@ -106,7 +106,7 @@ class IODFSHandler : virtual public IODFSIf {
         result = result && machine->nop();
         ++node;
       }
-      pnode = NULL;
+      *pnode = machines.size()+1;
     } catch (TException& tx){
       transports[node]->close();
       *pnode = node;

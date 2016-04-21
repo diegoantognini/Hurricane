@@ -308,7 +308,7 @@ int main(int argc, char **argv) {
 		    try {
 		    	result = iodfs.global_create("test");
 		    	int a = 0;
-		    	for(int i = 0; i < 1000000; ++i) {
+		    	for(int i = 0; i < 1000000000; ++i) {
 		    		a+=i;
 		    	}
 		    } catch (LostConnection& lc) {
@@ -317,6 +317,7 @@ int main(int argc, char **argv) {
 		    	cout << "INCONSISTENCE STATE : Lost connection with : " << lcdc.name_node_lost << " DURING COMMIT PHASE!" << endl;
 		    }
 		}
+		result = iodfs.global_delete("test");
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
 	}
