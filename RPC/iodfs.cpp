@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #define NB_SECONDS_BETWEEN_RECONNECTION 1
 
@@ -31,6 +32,7 @@ using std::string;
 using std::vector;
 using std::pair;
 using boost::shared_ptr;
+using std::random_shuffle;
 
 class IODFSHandler : virtual public IODFSIf {
   private:
@@ -44,6 +46,7 @@ class IODFSHandler : virtual public IODFSIf {
   unsigned long me;
   unsigned int port;
   bool connection_to_server_done;
+  unsigned int first_known_lost_node;
 
   vector<boost::shared_ptr<TTransport>> transports;
   vector<IODFSClient*> clients;
@@ -97,20 +100,19 @@ class IODFSHandler : virtual public IODFSIf {
     threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
   }
 
-  bool are_all_connection_open(unsigned int* pnode = NULL) {
+  bool are_all_connection_open() {
     bool result = true;
 
-    unsigned int node = 0;
+    first_known_lost_node = 0;
     try {
      for(auto& machine : clients) {
         result = result && machine->nop();
-        ++node;
+        ++first_known_lost_node;
       }
-      *pnode = machines.size()+1;
+      first_known_lost_node = machines.size()+1;
     } catch (TException& tx){
-      transports[node]->close();
-      *pnode = node;
-      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[node].first << " FAILED : " << tx.what();
+      transports[first_known_lost_node]->close();
+      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[first_known_lost_node].first << " FAILED : " << tx.what();
       result = false;
     }
 
@@ -122,12 +124,31 @@ class IODFSHandler : virtual public IODFSIf {
     return result;
   }
 
+  // true implies doing a voting phase
+  void handle_connection_to_server_done(bool with_are_all_connection_open = false) {
+     if(!connection_to_server_done || (with_are_all_connection_open && !are_all_connection_open())) {
+      LostConnection lc;
+      lc.name_node_lost = first_known_lost_node < machines.size() ? machines[first_known_lost_node].first : "Server hasn't been initialised";
+      throw lc;
+    }
+  }
+
  public:
   IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port)
-  : me(_me), port(_port), connection_to_server_done(false) {
+  : me(_me), port(_port), connection_to_server_done(false), first_known_lost_node(_machines.size()) {
+    
     for(auto& it : _machines)
       machines.push_back(make_pair(it.first, it.second));
+
     init_req();  
+
+    // Shuffling the machine in order that every machine have ~ the same amount of requests
+    string me_name = machines[me].first;
+    random_shuffle(machines.begin(), machines.end());
+    me = machines.size()+1;
+    for(unsigned int i = 0; me > machines.size() && i < machines.size(); ++i)
+      if(machines[i].first == me_name)
+        me = i;
 
     // Init the network part
     for(auto& machine : machines) {
@@ -140,7 +161,9 @@ class IODFSHandler : virtual public IODFSIf {
         clients.push_back(client);
     }
 
+    // Necessary if we want to reuse our thread
     reconnect_woker = new boost::asio::io_service::work(reconnect_thread);
+
     // Do the connection later
     reconnect_timer = new boost::asio::deadline_timer(reconnect_thread, boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
     reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
@@ -154,18 +177,20 @@ class IODFSHandler : virtual public IODFSIf {
     for(auto& it : transports)
       it->close();
 
-    for(unsigned int i = 0; i < clients.size(); ++i)
-      delete clients[i];
+    for(auto& client : clients)
+      delete client;
 
     reconnect_thread.stop();
     delete reconnect_timer;
     delete reconnect_woker;
   }
 
+  // Needed in order to know if a connected machine is still available
   bool nop() {
     return true;
   }
 
+  // False indicate that the file already exists
   bool local_create(const std::string& filename) {
     if(local_exists(filename))
       return false;
@@ -178,6 +203,7 @@ class IODFSHandler : virtual public IODFSIf {
   	return helper_exists(filename, local_buffers);
   }
 
+  // False indicates that the file already exists
   bool local_delete(const std::string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
@@ -189,6 +215,7 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
 
+  // An empty buffer implies either the file already exists or we are at the EOF
   void local_fill(std::string& _return, const std::string& filename, const int64_t size) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
@@ -205,6 +232,7 @@ class IODFSHandler : virtual public IODFSIf {
     }
   }
 
+  // An empty buffer implies either the file already exists or we are at the EOF
   void local_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
@@ -222,6 +250,7 @@ class IODFSHandler : virtual public IODFSIf {
     }
   }
 
+  // False indicate that the file doesn't exist
   bool local_drain(const std::string& filename, const std::string& buffer) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
@@ -233,6 +262,7 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
 
+  // False indicate that the file doesn't exist
   bool local_rewind(const std::string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
@@ -242,6 +272,7 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
 
+  // False indicate that the file doesn't exist
   bool local_trunc(const std::string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
@@ -251,6 +282,7 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
 
+  // True indicate that the file doesn't exist of we are EOF
   bool local_eof(const std::string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
@@ -259,6 +291,7 @@ class IODFSHandler : virtual public IODFSIf {
     return it->second->eof();
   }
 
+  // -1 indicate that the file doesn't exist
   int64_t local_size(const std::string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
@@ -267,6 +300,7 @@ class IODFSHandler : virtual public IODFSIf {
     return it->second->get_size();
   }
 
+  // -1 indicate that the file doesn't exist
   int64_t local_left(const std::string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
@@ -275,27 +309,22 @@ class IODFSHandler : virtual public IODFSIf {
     return it->second->get_bytes_left();
   }
 
+  // False implie that the file already exist on this machine
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   bool global_create(const std::string& filename) {
-    unsigned int lost_node;
-    if(!connection_to_server_done || !are_all_connection_open(&lost_node)) {
-      LostConnection lc;
-      lc.name_node_lost = machines[lost_node].first;
-      throw lc;
-    }
+    handle_connection_to_server_done(true);
 
     if(global_exists(filename) || helper_exists(filename, global_buffers))
       return false;
 
     bool result = true;
-    unsigned int node = 0; 
     try {
-      for(auto& machine : clients) {
-        result = result && machine->local_create(filename);
-        ++node;
-      }
+      for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
+        result = result && clients[first_known_lost_node]->local_create(filename);
     } catch(TException& tx) {
       LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[node].first;
+      lcdc.name_node_lost = machines[first_known_lost_node].first;
       throw lcdc;
     }
 
@@ -304,97 +333,140 @@ class IODFSHandler : virtual public IODFSIf {
     return result;
   }
 
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   bool global_exists(const std::string& filename) {
-    unsigned int lost_node;
-    if(!connection_to_server_done || !are_all_connection_open(&lost_node)) {
-      LostConnection lc;
-      lc.name_node_lost = machines[lost_node].first;
-      throw lc;
-    }
+    handle_connection_to_server_done(true);
 
     bool result = true;
-    unsigned int node = 0; 
     try {
-      for(auto& machine : clients) {
-        result = result && machine->local_exists(filename);
-        ++node;
-      }
+      for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
+        result = result && clients[first_known_lost_node]->local_exists(filename);
     } catch(TException& tx) {
       LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[node].first;
+      lcdc.name_node_lost = machines[first_known_lost_node].first;
       throw lcdc;
     }
 
     return result;
   }
 
+  // False implie that the file doesn't exist on this machine or on another machine
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   bool global_delete(const std::string& filename) {
-    unsigned int lost_node;
-    if(!connection_to_server_done || !are_all_connection_open(&lost_node)) {
-      LostConnection lc;
-      lc.name_node_lost = machines[lost_node].first;
-      throw lc;
-    }
+    handle_connection_to_server_done(true);
 
     if(!global_exists(filename) || !helper_exists(filename, global_buffers))
       return false;
 
     bool result = true;
-    unsigned int node = 0; 
     try {
-      for(auto& machine : clients) {
-        result = result && machine->local_delete(filename);
-        ++node;
-      }
+      for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
+        result = result && clients[first_known_lost_node]->local_delete(filename);
     } catch(TException& tx) {
       LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[node].first;
+      lcdc.name_node_lost = machines[first_known_lost_node].first;
       throw lcdc;
     }
 
     return result;
   }
 
-  virtual void global_fill(std::string& _return, const std::string& filename, const int64_t size) {
-    // Your implementation goes here
-    printf("global_fill\n");
+  void global_fill(std::string& _return, const std::string& filename, const int64_t size) {
+    handle_connection_to_server_done();
+
   }
 
   void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) {
-    // Your implementation goes here
-    printf("global_seek_and_fill\n");
+    handle_connection_to_server_done();
+
   }
 
   bool global_drain(const std::string& filename, const std::string& buffer) {
-    // Your implementation goes here
-    printf("global_drain\n");
+    handle_connection_to_server_done();
+
     return false;
   }
 
+  // False implie that the file doesn't exist on this machine or on another machine
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   bool global_rewind(const std::string& filename) {
-    // Your implementation goes here
-    printf("global_rewind\n");
-    return false;
+    handle_connection_to_server_done();
+
+    bool result = true;
+    try {
+      for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
+        result = result && clients[first_known_lost_node]->local_rewind(filename);
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[first_known_lost_node].first;
+      throw lcdc;
+    }
+
+    return result;
   }
 
+  // False implie that the file doesn't exist on this machine or on another machine
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   bool global_trunc(const std::string& filename) {
-    // Your implementation goes here
-    printf("global_trunc\n");
-    return false;
+    handle_connection_to_server_done();
+
+    bool result = true;
+    try {
+      for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
+        result = result && clients[first_known_lost_node]->local_trunc(filename);
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[first_known_lost_node].first;
+      throw lcdc;
+    }
+
+    return result;
   }
 
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   bool global_eof(const std::string& filename) {
-    // Your implementation goes here
-    printf("global_eof\n");
-    return false;
+    handle_connection_to_server_done();
+
+    bool result = true;
+    try {
+      for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
+        result = result && clients[first_known_lost_node]->local_eof(filename);
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[first_known_lost_node].first;
+      throw lcdc;
+    }
+
+    return result;
   }
 
+  // -1 indicate that on a machine, the file doesn't exist
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   int64_t global_size(const std::string& filename) {
-    // Your implementation goes here
-    printf("global_size\n");
-    return 0;
-  }
+    handle_connection_to_server_done();
 
+    int64_t result = 0;
+    try {
+      int64_t size;
+      for(first_known_lost_node = 0; result >= 0 && first_known_lost_node < clients.size(); ++first_known_lost_node) {
+        size = clients[first_known_lost_node]->local_size(filename);
+        if(size < 0)
+          result = -1;
+      }
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[first_known_lost_node].first;
+      throw lcdc;
+    }
+
+    return result;
+  }
 };
 
 int main(int argc, const char **argv) {
