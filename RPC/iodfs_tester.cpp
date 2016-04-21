@@ -277,36 +277,121 @@ bool test_local_seek_and_fill(IODFSClient& client) {
 	return result;
 }
 
+bool test_global_create_exists_delete_size_eof_one_file(IODFSClient& client) {
+	bool result = true;
+	string file1 = "file1.txt";
+
+	// Non-existing file
+	result = result && !client.global_exists(file1);
+	result = result && !client.global_delete(file1);
+	result = result && (client.global_size(file1) == -1);
+	result = result && client.global_eof(file1);
+
+	// Creation file
+	result = result && client.global_create(file1);
+	result = result && !client.global_create(file1); 
+	result = result && (client.global_size(file1) == 0);
+	result = result && client.global_eof(file1);
+
+	// Existence
+	result = result && client.global_exists(file1);
+	result = result && (client.global_size(file1) == 0);
+	result = result && client.global_eof(file1);
+
+	// Deletion file
+	result = result && client.global_delete(file1);
+	result = result && (client.global_size(file1) == -1);
+	result = result && !client.global_delete(file1);
+	result = result && !client.global_exists(file1);
+	result = result && (client.global_size(file1) == -1);
+	result = result && client.global_eof(file1);
+
+	// Recreation file
+	result = result && client.global_create(file1);
+	result = result && client.global_exists(file1);
+	result = result && (client.global_size(file1) == 0);
+	result = result && client.global_eof(file1);
+
+	result = result && client.global_delete(file1);
+	result = result && (client.global_size(file1) == -1);
+	result = result && client.global_eof(file1);
+
+	return result;
+}
+
+bool test_global_create_exists_delete_size_eof_two_files(IODFSClient& client) {
+	bool result = true;
+	string file1 = "file1.txt";
+	string file2 = "file2.txt";
+
+	// Creation file1
+	result = result && client.global_create(file1);
+	result = result && !client.global_create(file1); 
+	result = result && (client.global_size(file1) == 0);
+	result = result && (client.global_size(file2) == -1);
+	result = result && client.global_eof(file1);
+	result = result && client.global_eof(file2);
+
+	// Existence
+	result = result && client.global_exists(file1);
+	result = result && !client.global_exists(file2);
+	result = result && (client.global_size(file1) == 0);
+	result = result && (client.global_size(file2) == -1);
+	result = result && client.global_eof(file1);
+	result = result && client.global_eof(file2);
+
+	// Creation file2
+	result = result && client.global_create(file2);
+	result = result && client.global_exists(file1);
+	result = result && client.global_exists(file2);
+	result = result && (client.global_size(file1) == 0);
+	result = result && (client.global_size(file2) == 0);
+	result = result && client.global_eof(file1);
+	result = result && client.global_eof(file2);
+
+	// Deletion file1
+	result = result && client.global_delete(file1);
+	result = result && !client.global_delete(file1);
+	result = result && !client.global_exists(file1);
+	result = result && client.global_exists(file2);
+	result = result && (client.global_size(file1) == -1);
+	result = result && (client.global_size(file2) == 0);
+	result = result && client.global_eof(file1);
+	result = result && client.global_eof(file2);
+
+	// Deletion file2
+	result = result && client.global_delete(file2);
+	result = result && !client.global_delete(file2);
+	result = result && (client.global_size(file1) == -1);
+	result = result && (client.global_size(file2) == -1);
+	result = result && client.global_eof(file1);
+	result = result && client.global_eof(file2);
+
+	return result;
+}
+
 void do_test(const char* name, bool (*fct)(IODFSClient&), IODFSClient& client) {
 	cout << name << " : ";
 	cout << " -> " << (fct(client) ? "PASSED" : "FAILED") << endl;
 }
 
-int main(int argc, char **argv) {
-	const char* server = "128.178.52.205";
-	int port = 9090;
-
-	srand (time(NULL));
-	boost::shared_ptr<TTransport> socket(new TSocket(server, port));
-	boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-	boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-	IODFSClient iodfs(protocol);
-
-	transport->open();
+void testing_local_requests(IODFSClient& client) {
 	try {
-	    do_test("test_local_create_exists_delete_one_file", &test_local_create_exists_delete_one_file, iodfs);
-	    do_test("test_local_create_exists_delete_two_files", &test_local_create_exists_delete_two_files, iodfs);
-	    do_test("test_local_drain_fill_eof_size_trunc_left", &test_local_drain_fill_eof_size_trunc_left, iodfs);
-	    do_test("test_local_seek_and_fill", &test_local_seek_and_fill, iodfs);
+	    do_test("test_local_create_exists_delete_one_file", &test_local_create_exists_delete_one_file, client);
+	    do_test("test_local_create_exists_delete_two_files", &test_local_create_exists_delete_two_files, client);
+	    do_test("test_local_drain_fill_eof_size_trunc_left", &test_local_drain_fill_eof_size_trunc_left, client);
+	    do_test("test_local_seek_and_fill", &test_local_seek_and_fill, client);
 	} catch (TException& tx) {
 		cout << "Local Error: " << tx.what() << endl;
 	}
+}
 
+void testing_deconnection_reconnection(IODFSClient& client) {
 	try {
 	    bool result = false;
 	    while(!result) {
 		    try {
-		    	result = iodfs.global_create("test");
+		    	result = client.global_create("test");
 		    	int a = 0;
 		    	for(int i = 0; i < 1000000000; ++i) {
 		    		a+=i;
@@ -317,10 +402,37 @@ int main(int argc, char **argv) {
 		    	cout << "INCONSISTENCE STATE : Lost connection with : " << lcdc.name_node_lost << " DURING COMMIT PHASE!" << endl;
 		    }
 		}
-		result = iodfs.global_delete("test");
+		result = client.global_delete("test");
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
 	}
+}
+
+void testing_global_requests(IODFSClient& client) {
+	try {
+	    do_test("test_global_create_exists_delete_size_eof_one_file", &test_global_create_exists_delete_size_eof_one_file, client);
+	    do_test("test_global_create_exists_delete_size_eof_two_files", &test_global_create_exists_delete_size_eof_two_files, client);
+	} catch (TException& tx) {
+		cout << "Global Error: " << tx.what() << endl;
+	}
+}
+
+int main(int argc, char **argv) {
+	const char* server = "128.178.52.205";
+	int port = 9090;
+
+	srand (time(NULL));
+	boost::shared_ptr<TTransport> socket(new TSocket(server, port));
+	boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+	boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+	IODFSClient client(protocol);
+
+	transport->open();
+
+	
+	testing_local_requests(client);
+	testing_deconnection_reconnection(client);
+	testing_global_requests(client);
 
 	transport->close();
 

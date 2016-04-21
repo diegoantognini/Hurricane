@@ -212,6 +212,10 @@ class IODFSHandler : virtual public IODFSIf {
     helper_delete(it);
     local_buffers.erase(it);
 
+    // Remove from global_buffer if the request come from global
+    if(global_buffers.find(filename) != global_buffers.end())
+      global_buffers.erase(filename);
+
     return true;
   }
 
@@ -356,7 +360,6 @@ class IODFSHandler : virtual public IODFSIf {
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   bool global_delete(const std::string& filename) {
     handle_connection_to_server_done(true);
-
     if(!global_exists(filename) || !helper_exists(filename, global_buffers))
       return false;
 
