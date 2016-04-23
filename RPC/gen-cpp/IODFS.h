@@ -36,7 +36,6 @@ class IODFSIf {
   virtual bool global_exists(const std::string& filename) = 0;
   virtual bool global_delete(const std::string& filename) = 0;
   virtual void global_fill(std::string& _return, const std::string& filename, const int64_t size) = 0;
-  virtual void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) = 0;
   virtual bool global_drain(const std::string& filename, const std::string& buffer) = 0;
   virtual bool global_rewind(const std::string& filename) = 0;
   virtual bool global_trunc(const std::string& filename) = 0;
@@ -127,9 +126,6 @@ class IODFSNull : virtual public IODFSIf {
     return _return;
   }
   void global_fill(std::string& /* _return */, const std::string& /* filename */, const int64_t /* size */) {
-    return;
-  }
-  void global_seek_and_fill(std::string& /* _return */, const std::string& /* filename */, const int64_t /* size */, const int64_t /* offset */) {
     return;
   }
   bool global_drain(const std::string& /* filename */, const std::string& /* buffer */) {
@@ -1785,132 +1781,6 @@ class IODFS_global_fill_presult {
 
 };
 
-typedef struct _IODFS_global_seek_and_fill_args__isset {
-  _IODFS_global_seek_and_fill_args__isset() : filename(false), size(false), offset(false) {}
-  bool filename :1;
-  bool size :1;
-  bool offset :1;
-} _IODFS_global_seek_and_fill_args__isset;
-
-class IODFS_global_seek_and_fill_args {
- public:
-
-  IODFS_global_seek_and_fill_args(const IODFS_global_seek_and_fill_args&);
-  IODFS_global_seek_and_fill_args& operator=(const IODFS_global_seek_and_fill_args&);
-  IODFS_global_seek_and_fill_args() : filename(), size(0), offset(0) {
-  }
-
-  virtual ~IODFS_global_seek_and_fill_args() throw();
-  std::string filename;
-  int64_t size;
-  int64_t offset;
-
-  _IODFS_global_seek_and_fill_args__isset __isset;
-
-  void __set_filename(const std::string& val);
-
-  void __set_size(const int64_t val);
-
-  void __set_offset(const int64_t val);
-
-  bool operator == (const IODFS_global_seek_and_fill_args & rhs) const
-  {
-    if (!(filename == rhs.filename))
-      return false;
-    if (!(size == rhs.size))
-      return false;
-    if (!(offset == rhs.offset))
-      return false;
-    return true;
-  }
-  bool operator != (const IODFS_global_seek_and_fill_args &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const IODFS_global_seek_and_fill_args & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-
-class IODFS_global_seek_and_fill_pargs {
- public:
-
-
-  virtual ~IODFS_global_seek_and_fill_pargs() throw();
-  const std::string* filename;
-  const int64_t* size;
-  const int64_t* offset;
-
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-typedef struct _IODFS_global_seek_and_fill_result__isset {
-  _IODFS_global_seek_and_fill_result__isset() : success(false), lc(false) {}
-  bool success :1;
-  bool lc :1;
-} _IODFS_global_seek_and_fill_result__isset;
-
-class IODFS_global_seek_and_fill_result {
- public:
-
-  IODFS_global_seek_and_fill_result(const IODFS_global_seek_and_fill_result&);
-  IODFS_global_seek_and_fill_result& operator=(const IODFS_global_seek_and_fill_result&);
-  IODFS_global_seek_and_fill_result() : success() {
-  }
-
-  virtual ~IODFS_global_seek_and_fill_result() throw();
-  std::string success;
-  LostConnection lc;
-
-  _IODFS_global_seek_and_fill_result__isset __isset;
-
-  void __set_success(const std::string& val);
-
-  void __set_lc(const LostConnection& val);
-
-  bool operator == (const IODFS_global_seek_and_fill_result & rhs) const
-  {
-    if (!(success == rhs.success))
-      return false;
-    if (!(lc == rhs.lc))
-      return false;
-    return true;
-  }
-  bool operator != (const IODFS_global_seek_and_fill_result &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const IODFS_global_seek_and_fill_result & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-typedef struct _IODFS_global_seek_and_fill_presult__isset {
-  _IODFS_global_seek_and_fill_presult__isset() : success(false), lc(false) {}
-  bool success :1;
-  bool lc :1;
-} _IODFS_global_seek_and_fill_presult__isset;
-
-class IODFS_global_seek_and_fill_presult {
- public:
-
-
-  virtual ~IODFS_global_seek_and_fill_presult() throw();
-  std::string* success;
-  LostConnection lc;
-
-  _IODFS_global_seek_and_fill_presult__isset __isset;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-
-};
-
 typedef struct _IODFS_global_drain_args__isset {
   _IODFS_global_drain_args__isset() : filename(false), buffer(false) {}
   bool filename :1;
@@ -2640,9 +2510,6 @@ class IODFSClient : virtual public IODFSIf {
   void global_fill(std::string& _return, const std::string& filename, const int64_t size);
   void send_global_fill(const std::string& filename, const int64_t size);
   void recv_global_fill(std::string& _return);
-  void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset);
-  void send_global_seek_and_fill(const std::string& filename, const int64_t size, const int64_t offset);
-  void recv_global_seek_and_fill(std::string& _return);
   bool global_drain(const std::string& filename, const std::string& buffer);
   void send_global_drain(const std::string& filename, const std::string& buffer);
   bool recv_global_drain();
@@ -2691,7 +2558,6 @@ class IODFSProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_global_exists(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_delete(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_fill(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
-  void process_global_seek_and_fill(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_drain(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_rewind(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_trunc(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -2716,7 +2582,6 @@ class IODFSProcessor : public ::apache::thrift::TDispatchProcessor {
     processMap_["global_exists"] = &IODFSProcessor::process_global_exists;
     processMap_["global_delete"] = &IODFSProcessor::process_global_delete;
     processMap_["global_fill"] = &IODFSProcessor::process_global_fill;
-    processMap_["global_seek_and_fill"] = &IODFSProcessor::process_global_seek_and_fill;
     processMap_["global_drain"] = &IODFSProcessor::process_global_drain;
     processMap_["global_rewind"] = &IODFSProcessor::process_global_rewind;
     processMap_["global_trunc"] = &IODFSProcessor::process_global_trunc;
@@ -2889,16 +2754,6 @@ class IODFSMultiface : virtual public IODFSIf {
     return;
   }
 
-  void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) {
-    size_t sz = ifaces_.size();
-    size_t i = 0;
-    for (; i < (sz - 1); ++i) {
-      ifaces_[i]->global_seek_and_fill(_return, filename, size, offset);
-    }
-    ifaces_[i]->global_seek_and_fill(_return, filename, size, offset);
-    return;
-  }
-
   bool global_drain(const std::string& filename, const std::string& buffer) {
     size_t sz = ifaces_.size();
     size_t i = 0;
@@ -3028,9 +2883,6 @@ class IODFSConcurrentClient : virtual public IODFSIf {
   void global_fill(std::string& _return, const std::string& filename, const int64_t size);
   int32_t send_global_fill(const std::string& filename, const int64_t size);
   void recv_global_fill(std::string& _return, const int32_t seqid);
-  void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset);
-  int32_t send_global_seek_and_fill(const std::string& filename, const int64_t size, const int64_t offset);
-  void recv_global_seek_and_fill(std::string& _return, const int32_t seqid);
   bool global_drain(const std::string& filename, const std::string& buffer);
   int32_t send_global_drain(const std::string& filename, const std::string& buffer);
   bool recv_global_drain(const int32_t seqid);

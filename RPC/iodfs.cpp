@@ -50,7 +50,8 @@ class IODFSHandler : virtual public IODFSIf {
   unordered_map<string, slipstore::io*> local_buffers;
   unordered_map<string, slipstore::io*> global_buffers; //the value is null, but we can use the hash table to find in O(1) :)
   slipstore::slipstore_req_t req;
-  bool batching;
+  unsigned long slipchunk;
+  unsigned long slipfile_size;
 
   // Network part
   vector<pair<string, string>> machines;
@@ -67,8 +68,8 @@ class IODFSHandler : virtual public IODFSIf {
   boost::asio::io_service::work* reconnect_woker;
 
  public:
-  IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port, bool _batching)
-  : batching(_batching), me(_me), port(_port), connection_to_server_done(false), first_known_lost_node(_machines.size()) {
+  IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port, unsigned long _slipchunk, unsigned long _slipfile_size)
+  : slipchunk(_slipchunk), slipfile_size(_slipfile_size), me(_me), port(_port), connection_to_server_done(false), first_known_lost_node(_machines.size()) {
     
     for(auto& it : _machines)
       machines.push_back(make_pair(it.first, it.second));
@@ -342,19 +343,20 @@ class IODFSHandler : virtual public IODFSIf {
     req.cmd = slipstore::CMD_FILL;
     req.size = size;
 
+    unsigned long fill_bytes = 0;
+    unsigned long filled_bytes = 0;
     _return = string(size, 0);
-    if(!slipstore::slipstore_client_fill->access_store(&req,(unsigned char*) _return.data()))
-      _return="";
+    
+    do {
+      filled_bytes = slipstore::slipstore_client_fill->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
+      fill_bytes += filled_bytes;
+    } while (filled_bytes > 0);
 
     // EOF, should return a string smaller and so, its size is modified
-    if(req.size < ((unsigned long)size))
+    if(filled_bytes < ((unsigned long)size))
         _return = _return.data();
   }
 
-  void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) {
-    handle_connection_to_server_done(false);
-
-  }
 
   bool global_drain(const std::string& filename, const std::string& buffer) {
     handle_connection_to_server_done(false);
@@ -364,9 +366,16 @@ class IODFSHandler : virtual public IODFSIf {
     req.cmd = slipstore::CMD_DRAIN;
     req.size = buffer.size();
     
-    if (!slipstore::slipstore_client_drain->access_store(&req,(unsigned char*) buffer.data())) {
-      BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
-      return false;
+    unsigned long drain_bytes = slipfile_size;
+    while (drain_bytes) {
+      unsigned long bytes_to_drain = (drain_bytes > buffer.size()) ? buffer.size() : drain_bytes;
+
+      if (slipstore::slipstore_client_drain->batch_access_store(&req, (unsigned char*) buffer.c_str(), slipchunk, bytes_to_drain)) {
+        BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
+        return false;
+      }
+
+      drain_bytes -= bytes_to_drain;
     }
 
     return true;
@@ -556,7 +565,11 @@ int main(int argc, const char **argv) {
   setup_options(argc, argv);
   init_slipstore_desc();
   unsigned long me = pt_slipstore.get < unsigned long > ("machines.me");
-  bool batching = (vm.count("request_batching") > 0);
+
+  unsigned long slipchunk = vm["slipchunk"].as < unsigned long > ();
+  unsigned long slipfile_size = vm["slipbench_fsize"].as < unsigned long > ();
+  unsigned long align = vm["slipbench_align"].as < unsigned long > ();
+  slipchunk = (slipchunk / align) * align;
 
   vector<pair<string, string>> machines;
   for(unsigned int i = 0; i < pt_slipstore.get < unsigned long > ("machines.count"); ++i){
@@ -568,7 +581,7 @@ int main(int argc, const char **argv) {
   } 
 
   TThreadedServer server(
-    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port, batching)),
+    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port, slipchunk, slipfile_size)),
     boost::make_shared<TServerSocket>(port),
     boost::make_shared<TBufferedTransportFactory>(),
     boost::make_shared<TBinaryProtocolFactory>());

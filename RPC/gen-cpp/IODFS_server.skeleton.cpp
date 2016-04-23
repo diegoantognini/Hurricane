@@ -95,11 +95,6 @@ class IODFSHandler : virtual public IODFSIf {
     printf("global_fill\n");
   }
 
-  void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) {
-    // Your implementation goes here
-    printf("global_seek_and_fill\n");
-  }
-
   bool global_drain(const std::string& filename, const std::string& buffer) {
     // Your implementation goes here
     printf("global_drain\n");

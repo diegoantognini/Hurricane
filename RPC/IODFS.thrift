@@ -29,7 +29,6 @@ service IODFS {
 	bool global_delete(1:string filename) throws (1:LostConnection lc),
 
 	string global_fill(1:string filename, 2:i64 size) throws (1:LostConnection lc),
-	string global_seek_and_fill(1:string filename, 2:i64 size, 3:i64 offset) throws (1:LostConnection lc),
 	bool global_drain(1:string filename, 2:binary buffer) throws (1:LostConnection lc),
 
 	bool global_rewind(1:string filename) throws (1:LostConnection lc),
