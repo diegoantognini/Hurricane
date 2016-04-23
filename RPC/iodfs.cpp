@@ -50,6 +50,7 @@ class IODFSHandler : virtual public IODFSIf {
   unordered_map<string, slipstore::io*> local_buffers;
   unordered_map<string, slipstore::io*> global_buffers; //the value is null, but we can use the hash table to find in O(1) :)
   slipstore::slipstore_req_t req;
+  bool batching;
 
   // Network part
   vector<pair<string, string>> machines;
@@ -66,8 +67,8 @@ class IODFSHandler : virtual public IODFSIf {
   boost::asio::io_service::work* reconnect_woker;
 
  public:
-  IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port)
-  : me(_me), port(_port), connection_to_server_done(false), first_known_lost_node(_machines.size()) {
+  IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port, bool _batching)
+  : batching(_batching), me(_me), port(_port), connection_to_server_done(false), first_known_lost_node(_machines.size()) {
     
     for(auto& it : _machines)
       machines.push_back(make_pair(it.first, it.second));
@@ -106,7 +107,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   ~IODFSHandler() {
     slipstore::shutdown();
-    
+
     reconnect_thread.stop();
 
   	for(unordered_map<string, slipstore::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
@@ -334,19 +335,41 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   void global_fill(std::string& _return, const std::string& filename, const int64_t size) {
-    handle_connection_to_server_done();
+    handle_connection_to_server_done(false);
 
+    init_req();
+    strcpy(req.filename, filename.c_str());
+    req.cmd = slipstore::CMD_FILL;
+    req.size = size;
+
+    _return = string(size, 0);
+    if(!slipstore::slipstore_client_fill->access_store(&req,(unsigned char*) _return.data()))
+      _return="";
+
+    // EOF, should return a string smaller and so, its size is modified
+    if(req.size < ((unsigned long)size))
+        _return = _return.data();
   }
 
   void global_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) {
-    handle_connection_to_server_done();
+    handle_connection_to_server_done(false);
 
   }
 
   bool global_drain(const std::string& filename, const std::string& buffer) {
-    handle_connection_to_server_done();
+    handle_connection_to_server_done(false);
 
-    return false;
+    init_req();
+    strcpy(req.filename, filename.c_str());
+    req.cmd = slipstore::CMD_DRAIN;
+    req.size = buffer.size();
+    
+    if (!slipstore::slipstore_client_drain->access_store(&req,(unsigned char*) buffer.data())) {
+      BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
+      return false;
+    }
+
+    return true;
   }
 
   // False implie that the file doesn't exist on this machine or on another machine
@@ -533,6 +556,7 @@ int main(int argc, const char **argv) {
   setup_options(argc, argv);
   init_slipstore_desc();
   unsigned long me = pt_slipstore.get < unsigned long > ("machines.me");
+  bool batching = (vm.count("request_batching") > 0);
 
   vector<pair<string, string>> machines;
   for(unsigned int i = 0; i < pt_slipstore.get < unsigned long > ("machines.count"); ++i){
@@ -544,7 +568,7 @@ int main(int argc, const char **argv) {
   } 
 
   TThreadedServer server(
-    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port)),
+    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port, batching)),
     boost::make_shared<TServerSocket>(port),
     boost::make_shared<TBufferedTransportFactory>(),
     boost::make_shared<TBinaryProtocolFactory>());
