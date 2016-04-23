@@ -72,8 +72,7 @@ namespace slipstore {
         else 
           buffer = new sync_pagecache_io(filename);
 
-        quota = vm["quota"].as < unsigned
-        long > ();
+        quota = vm["quota"].as < unsigned long > ();
         usage = 0;
         max_quota_usage = 0;
       }

@@ -65,16 +65,17 @@ namespace slipstore {
   static
   void init(unordered_map<string, slipstore::io*>* disks) {
     unsigned long zmq_threads = vm["zmq_threads"].as < unsigned long > ();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::ZMQ_THREADS " <<
-    zmq_threads;
+    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::ZMQ_THREADS " << zmq_threads;
     zmq_context = zmq_init(zmq_threads);
     zmq_context_data_out = zmq_init(zmq_threads);
     zmq_context_data_in = zmq_init(zmq_threads);
     baseport = vm["baseport"].as < unsigned long > ();
+
     slipstore_client_fill = new client_fill();
     slipstore_client_drain = new client_drain();
     slipstore_client_barrier = new client_barrier();
     have_outstanding_request = new busy_counter();
+    
     if (vm.count("use_async_server") > 0) {
       slipstore_server = new server_async(disks);
       BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER ASYNC";
@@ -82,12 +83,14 @@ namespace slipstore {
       slipstore_server = new server_sync(disks);
       BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER SYNC";
     }
+
    // Launch server thread
     server_thread = new boost::thread(boost::ref(*slipstore_server));
     BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::MACHINES " << slipstore_client_fill->get_machines();
     BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::ME " << slipstore_client_fill->get_me();
     BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SLIPCHUNK " << slipstore_client_barrier->get_slipchunk();
     BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::QUOTA " << quota;
+
     // Launch async client thread
     threadpool.create_thread(boost::bind(&boost::asio::io_service::run,
                                          &ioService));

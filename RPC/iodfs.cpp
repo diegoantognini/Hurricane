@@ -50,16 +50,6 @@ class IODFSHandler : virtual public IODFSIf {
   unordered_map<string, slipstore::io*> local_buffers;
   unordered_map<string, slipstore::io*> global_buffers; //the value is null, but we can use the hash table to find in O(1) :)
   slipstore::slipstore_req_t req;
-  
-  slipstore::server *slipstore_server;
-  boost::thread *server_thread;
-  slipstore::client_fill *slipstore_client_fill;
-  slipstore::client_drain *slipstore_client_drain;
-
-  boost::asio::io_service ioService;
-  boost::thread_group threadpool;
-  boost::asio::io_service dioService;
-  boost::thread_group diopool;
 
   // Network part
   vector<pair<string, string>> machines;
@@ -84,7 +74,7 @@ class IODFSHandler : virtual public IODFSIf {
 
     init_req();  
 
-    init_run_server_clients();
+    slipstore::init(&local_buffers);
 
     // Shuffling the machine in order that every machine have ~ the same amount of requests
     string me_name = machines[me].first;
@@ -111,30 +101,12 @@ class IODFSHandler : virtual public IODFSIf {
     // Do the connection later
     reconnect_timer = new boost::asio::deadline_timer(reconnect_thread, boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
     reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
-    threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
+    slipstore::threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
   }
 
   ~IODFSHandler() {
-    // Shut down async client service
-    ioService.stop();
-    threadpool.join_all();
+    slipstore::shutdown();
     
-    // Shut down dio service
-    if (vm.count("use_direct_io") > 0) {
-      dioService.stop();
-      diopool.join_all();
-    }
-    
-    // Terminate server
-    slipstore::slipstore_req_t req;
-    req.cmd = slipstore::CMD_TERMINATE;
-    slipstore_client_drain->access_store(&req, NULL, slipstore_client_drain->get_me());
-    server_thread->join();
-    
-    // Teardown sockets
-    slipstore_client_drain->teardown_conn();
-    slipstore_client_fill->teardown_conn();
-
     reconnect_thread.stop();
 
   	for(unordered_map<string, slipstore::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
@@ -508,7 +480,7 @@ private:
   void try_to_reconnect() {
     connection_to_server_done = false;
     reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
-    threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
+    slipstore::threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
   }
 
   bool are_all_connection_open() {
@@ -542,33 +514,6 @@ private:
       lc.name_node_lost = first_known_lost_node < machines.size() ? machines[first_known_lost_node].first : "Server hasn't been initialised";
       throw lc;
     }
-  }
-
-  void init_run_server_clients() {
-    if (vm.count("use_async_server") > 0) {
-      slipstore_server = new slipstore::server_async(&local_buffers);
-      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER ASYNC";
-    } else {
-      slipstore_server = new slipstore::server_sync(&local_buffers);
-      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER SYNC";
-    }
-
-    server_thread = new boost::thread(boost::ref(*slipstore_server));
-
-    slipstore_client_fill = new slipstore::client_fill();
-    slipstore_client_drain = new slipstore::client_drain();
-
-    // Launch async client thread
-    threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &ioService));
-    //Launch async dio thread if needed
-    if (vm.count("use_direct_io") > 0) {
-      diopool.create_thread(boost::bind(&boost::asio::io_service::run, &dioService));
-      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::IO DIRECT";
-    }
-    else if (vm.count("use_dummy_io") > 0)
-      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::IO DUMMY";
-    else
-      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::IO PAGECACHE";
   }
 };
 
