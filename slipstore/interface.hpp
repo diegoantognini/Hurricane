@@ -84,14 +84,10 @@ namespace slipstore {
     }
    // Launch server thread
     server_thread = new boost::thread(boost::ref(*slipstore_server));
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::MACHINES " <<
-    slipstore_client_fill->get_machines();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::ME " <<
-    slipstore_client_fill->get_me();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SLIPCHUNK " <<
-    slipstore_client_barrier->get_slipchunk();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::QUOTA " <<
-    quota;
+    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::MACHINES " << slipstore_client_fill->get_machines();
+    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::ME " << slipstore_client_fill->get_me();
+    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SLIPCHUNK " << slipstore_client_barrier->get_slipchunk();
+    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::QUOTA " << quota;
     // Launch async client thread
     threadpool.create_thread(boost::bind(&boost::asio::io_service::run,
                                          &ioService));

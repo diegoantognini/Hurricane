@@ -429,7 +429,6 @@ int main(int argc, char **argv) {
 
 	transport->open();
 
-	
 	testing_local_requests(client);
 	testing_deconnection_reconnection(client);
 	testing_global_requests(client);

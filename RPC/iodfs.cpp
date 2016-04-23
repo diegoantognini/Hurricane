@@ -3,6 +3,14 @@
 
 #include "../slipstore/interface.hpp"
 #include "../slipstore/config.hpp"
+#include "../slipstore/io/io.hpp"
+
+#include "../slipstore/server/server_async.hpp"
+#include "../slipstore/server/server_sync.hpp"
+
+#include "../slipstore/client/client_fill.hpp"
+#include "../slipstore/client/client_drain.hpp"
+
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
@@ -12,10 +20,12 @@
 #include <thrift/server/TThreadedServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TBufferTransports.h>
+
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/make_shared.hpp>
+
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -41,6 +51,16 @@ class IODFSHandler : virtual public IODFSIf {
   unordered_map<string, slipstore::io*> global_buffers; //the value is null, but we can use the hash table to find in O(1) :)
   slipstore::slipstore_req_t req;
   
+  slipstore::server *slipstore_server;
+  boost::thread *server_thread;
+  slipstore::client_fill *slipstore_client_fill;
+  slipstore::client_drain *slipstore_client_drain;
+
+  boost::asio::io_service ioService;
+  boost::thread_group threadpool;
+  boost::asio::io_service dioService;
+  boost::thread_group diopool;
+
   // Network part
   vector<pair<string, string>> machines;
   unsigned long me;
@@ -54,84 +74,6 @@ class IODFSHandler : virtual public IODFSIf {
   boost::asio::deadline_timer* reconnect_timer;
   boost::asio::io_service reconnect_thread;
   boost::asio::io_service::work* reconnect_woker;
-  boost::thread_group threadpool;
-
-  bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>::iterator& it, unordered_map<string, slipstore::io*>& buffers) {
-    it = buffers.find(filename);
-    return it != buffers.end();
-  }
-
-  bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>& buffers) {
-    return buffers.find(filename) != buffers.end();
-  }
-
-  void helper_delete(unordered_map<string, slipstore::io*>::iterator& it) {
-    unlink_file((char *)(it->first.c_str()));
-    delete it->second;
-  }
-
-  void init_req() {
-    req.source_mc = req.cmd = req.size = req.offset = 0;
-  }
-
-  void reconnect() {
-    connection_to_server_done = false;
-    unsigned int i = 0;
-    try {
-      for(auto& transport : transports) {
-        if(!transport->isOpen()) {
-          transport->open();
-          BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].first << " SUCCESS !";
-        }
-        ++i;
-      }
-      connection_to_server_done = true;
-    } catch (TException& tx){
-      transports[i]->close();
-      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].first << " FAILED : " << tx.what();
-      reconnect_timer->expires_at(reconnect_timer->expires_at() + boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
-      reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
-    }
-  }
-
-  void try_to_reconnect() {
-    connection_to_server_done = false;
-    reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
-    threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
-  }
-
-  bool are_all_connection_open() {
-    bool result = true;
-
-    first_known_lost_node = 0;
-    try {
-     for(auto& machine : clients) {
-        result = result && machine->nop();
-        ++first_known_lost_node;
-      }
-      first_known_lost_node = machines.size()+1;
-    } catch (TException& tx){
-      transports[first_known_lost_node]->close();
-      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[first_known_lost_node].first << " FAILED : " << tx.what();
-      result = false;
-    }
-
-    if(!result) {
-      connection_to_server_done = false;
-      try_to_reconnect();
-    }
-
-    return result;
-  }
-
-  // true implies doing a voting phase
-  void handle_connection_to_server_done(bool with_are_all_connection_open = false) {
-     if(!connection_to_server_done || (with_are_all_connection_open && !are_all_connection_open())) {
-      LostConnection lc;
-      lc.name_node_lost = first_known_lost_node < machines.size() ? machines[first_known_lost_node].first : "Server hasn't been initialised";
-      throw lc;
-    }
-  }
 
  public:
   IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port)
@@ -141,6 +83,8 @@ class IODFSHandler : virtual public IODFSIf {
       machines.push_back(make_pair(it.first, it.second));
 
     init_req();  
+
+    init_run_server_clients();
 
     // Shuffling the machine in order that every machine have ~ the same amount of requests
     string me_name = machines[me].first;
@@ -171,6 +115,28 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   ~IODFSHandler() {
+    // Shut down async client service
+    ioService.stop();
+    threadpool.join_all();
+    
+    // Shut down dio service
+    if (vm.count("use_direct_io") > 0) {
+      dioService.stop();
+      diopool.join_all();
+    }
+    
+    // Terminate server
+    slipstore::slipstore_req_t req;
+    req.cmd = slipstore::CMD_TERMINATE;
+    slipstore_client_drain->access_store(&req, NULL, slipstore_client_drain->get_me());
+    server_thread->join();
+    
+    // Teardown sockets
+    slipstore_client_drain->teardown_conn();
+    slipstore_client_fill->teardown_conn();
+
+    reconnect_thread.stop();
+
   	for(unordered_map<string, slipstore::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
   		helper_delete(it);
   
@@ -180,16 +146,21 @@ class IODFSHandler : virtual public IODFSIf {
     for(auto& client : clients)
       delete client;
 
-    reconnect_thread.stop();
     delete reconnect_timer;
     delete reconnect_woker;
   }
 
-  // Needed in order to know if a connected machine is still available
-  bool nop() {
-    return true;
-  }
 
+
+
+  ////////////////////////////////////////////
+  //////////// LOCAL PART ////////////////////
+  ////////////////////////////////////////////
+
+
+
+
+  
   // False indicate that the file already exists
   bool local_create(const std::string& filename) {
     if(local_exists(filename))
@@ -311,6 +282,20 @@ class IODFSHandler : virtual public IODFSIf {
       return -1;
 
     return it->second->get_bytes_left();
+  }
+
+
+
+
+  ////////////////////////////////////////////
+  //////////// GLOBAL PART ///////////////////
+  ////////////////////////////////////////////
+
+
+
+  // Needed in order to know if a connected machine is still available
+  bool nop() {
+    return true;
   }
 
   // False implie that the file already exist on this machine
@@ -470,8 +455,134 @@ class IODFSHandler : virtual public IODFSIf {
 
     return result;
   }
+
+
+
+
+  ////////////////////////////////////////////
+  //////////// PRIVATE PART //////////////////
+  ////////////////////////////////////////////
+
+
+
+  
+private:
+  bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>::iterator& it, unordered_map<string, slipstore::io*>& buffers) {
+    it = buffers.find(filename);
+    return it != buffers.end();
+  }
+
+  bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>& buffers) {
+    return buffers.find(filename) != buffers.end();
+  }
+
+  void helper_delete(unordered_map<string, slipstore::io*>::iterator& it) {
+    unlink_file((char *)(it->first.c_str()));
+    delete it->second;
+  }
+
+  void init_req() {
+    req.source_mc = req.cmd = req.size = req.offset = 0;
+  }
+
+  void reconnect() {
+    connection_to_server_done = false;
+    unsigned int i = 0;
+    try {
+      for(auto& transport : transports) {
+        if(!transport->isOpen()) {
+          transport->open();
+          BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].first << " SUCCESS !";
+        }
+        ++i;
+      }
+      connection_to_server_done = true;
+    } catch (TException& tx){
+      transports[i]->close();
+      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].first << " FAILED : " << tx.what();
+      reconnect_timer->expires_at(reconnect_timer->expires_at() + boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
+      reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
+    }
+  }
+
+  void try_to_reconnect() {
+    connection_to_server_done = false;
+    reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
+    threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
+  }
+
+  bool are_all_connection_open() {
+    bool result = true;
+
+    first_known_lost_node = 0;
+    try {
+     for(auto& machine : clients) {
+        result = result && machine->nop();
+        ++first_known_lost_node;
+      }
+      first_known_lost_node = machines.size()+1;
+    } catch (TException& tx){
+      transports[first_known_lost_node]->close();
+      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[first_known_lost_node].first << " FAILED : " << tx.what();
+      result = false;
+    }
+
+    if(!result) {
+      connection_to_server_done = false;
+      try_to_reconnect();
+    }
+
+    return result;
+  }
+
+  // true implies doing a voting phase
+  void handle_connection_to_server_done(bool with_are_all_connection_open = false) {
+     if(!connection_to_server_done || (with_are_all_connection_open && !are_all_connection_open())) {
+      LostConnection lc;
+      lc.name_node_lost = first_known_lost_node < machines.size() ? machines[first_known_lost_node].first : "Server hasn't been initialised";
+      throw lc;
+    }
+  }
+
+  void init_run_server_clients() {
+    if (vm.count("use_async_server") > 0) {
+      slipstore_server = new slipstore::server_async(&local_buffers);
+      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER ASYNC";
+    } else {
+      slipstore_server = new slipstore::server_sync(&local_buffers);
+      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER SYNC";
+    }
+
+    server_thread = new boost::thread(boost::ref(*slipstore_server));
+
+    slipstore_client_fill = new slipstore::client_fill();
+    slipstore_client_drain = new slipstore::client_drain();
+
+    // Launch async client thread
+    threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &ioService));
+    //Launch async dio thread if needed
+    if (vm.count("use_direct_io") > 0) {
+      diopool.create_thread(boost::bind(&boost::asio::io_service::run, &dioService));
+      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::IO DIRECT";
+    }
+    else if (vm.count("use_dummy_io") > 0)
+      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::IO DUMMY";
+    else
+      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::IO PAGECACHE";
+  }
 };
 
+
+
+
+
+  ////////////////////////////////////////////
+  //////////// MAIN ////// ///////////////////
+  ////////////////////////////////////////////
+
+
+
+  
 int main(int argc, const char **argv) {
   int port = 9090;
   setup_options(argc, argv);
