@@ -338,28 +338,35 @@ class IODFSHandler : virtual public IODFSIf {
   void global_fill(std::string& _return, const std::string& filename, const int64_t size) {
     handle_connection_to_server_done(false);
 
-    init_req();
-    strcpy(req.filename, filename.c_str());
-    req.cmd = slipstore::CMD_FILL;
-    req.size = size;
+    if(!global_exists(filename) || !helper_exists(filename, global_buffers))
+      _return = "";
+    else {
+      init_req();
+      strcpy(req.filename, filename.c_str());
+      req.cmd = slipstore::CMD_FILL;
+      req.size = size;
 
-    unsigned long fill_bytes = 0;
-    unsigned long filled_bytes = 0;
-    _return = string(size, 0);
-    
-    do {
-      filled_bytes = slipstore::slipstore_client_fill->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
-      fill_bytes += filled_bytes;
-    } while (filled_bytes > 0);
+      unsigned long fill_bytes = 0;
+      unsigned long filled_bytes = 0;
+      _return = string(size, 0);
+      
+      do {
+        filled_bytes = slipstore::slipstore_client_fill->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
+        fill_bytes += filled_bytes;
+      } while (filled_bytes > 0);
 
-    // EOF, should return a string smaller and so, its size is modified
-    if(filled_bytes < ((unsigned long)size))
-        _return = _return.data();
+      // EOF, should return a string smaller and so, its size is modified
+      if(filled_bytes < ((unsigned long)size))
+          _return = _return.data();
+    }
   }
 
 
   bool global_drain(const std::string& filename, const std::string& buffer) {
     handle_connection_to_server_done(false);
+
+    if(!global_exists(filename) || !helper_exists(filename, global_buffers))
+      return false;
 
     init_req();
     strcpy(req.filename, filename.c_str());
@@ -387,6 +394,9 @@ class IODFSHandler : virtual public IODFSIf {
   bool global_rewind(const std::string& filename) {
     handle_connection_to_server_done();
 
+    if(!global_exists(filename) || !helper_exists(filename, global_buffers))
+      return false;
+    
     bool result = true;
     try {
       for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
@@ -406,6 +416,9 @@ class IODFSHandler : virtual public IODFSIf {
   bool global_trunc(const std::string& filename) {
     handle_connection_to_server_done();
 
+    if(!global_exists(filename) || !helper_exists(filename, global_buffers))
+      return false;
+
     bool result = true;
     try {
       for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
@@ -423,6 +436,9 @@ class IODFSHandler : virtual public IODFSIf {
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   bool global_eof(const std::string& filename) {
     handle_connection_to_server_done();
+
+    if(!global_exists(filename) || !helper_exists(filename, global_buffers))
+      return true;
 
     bool result = true;
     try {
@@ -442,6 +458,9 @@ class IODFSHandler : virtual public IODFSIf {
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   int64_t global_size(const std::string& filename) {
     handle_connection_to_server_done();
+
+    if(!global_exists(filename) || !helper_exists(filename, global_buffers))
+      return -1;
 
     int64_t result = 0;
     try {

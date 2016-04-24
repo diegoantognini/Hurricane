@@ -370,6 +370,57 @@ bool test_global_create_exists_delete_size_eof_two_files(IODFSClient& client) {
 	return result;
 }
 
+bool test_global_drain_fill(IODFSClient& client) {
+	string filename = "testing_drain_fill";
+	const unsigned long SLIPCHUNCK = 4*1024; // 4 Ko
+	const unsigned long LENGTH = 32*SLIPCHUNCK;
+	string buffer(SLIPCHUNCK, 0);
+	string write_results;
+	string read_results;
+	bool result = true;
+
+	result = result && !client.global_drain(filename, buffer);
+	string dummy_buffer;
+	client.global_fill(dummy_buffer, filename, SLIPCHUNCK);
+	result = result && dummy_buffer.size() == 0;
+	result = result && (client.global_size(filename) == -1);
+	result = result && client.global_eof(filename);
+	result = result && !client.global_rewind(filename);
+
+	result = result && client.global_create(filename);
+	result = result && client.global_exists(filename);
+	
+	// Size
+	result = result && (client.global_size(filename) == 0);
+
+	// Drain
+	unsigned long bytes_to_write = LENGTH;
+	while(bytes_to_write > 0) {
+		char var = 0;
+		for(unsigned long i = 0; i < SLIPCHUNCK; ++i) {
+			var = rand()%127 + 1;
+
+			buffer[i] = var;
+		}
+		write_results += buffer;
+
+		result = result && client.global_drain(filename, buffer);
+		bytes_to_write -= buffer.size();
+	}
+
+	// Size
+	result = result && (client.global_size(filename) == LENGTH);
+
+	// Trunc
+	result = result && client.global_trunc(filename);
+	result = result && client.global_size(filename) == 0;
+
+	// Delete
+	result = result && client.global_delete(filename);
+
+	return result;
+}
+
 void do_test(const char* name, bool (*fct)(IODFSClient&), IODFSClient& client) {
 	cout << name << " : ";
 	cout << " -> " << (fct(client) ? "PASSED" : "FAILED") << endl;
@@ -412,6 +463,7 @@ void testing_global_requests(IODFSClient& client) {
 	try {
 	    do_test("test_global_create_exists_delete_size_eof_one_file", &test_global_create_exists_delete_size_eof_one_file, client);
 	    do_test("test_global_create_exists_delete_size_eof_two_files", &test_global_create_exists_delete_size_eof_two_files, client);
+	    do_test("test_global_drain_fill", &test_global_drain_fill, client);
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
 	}
