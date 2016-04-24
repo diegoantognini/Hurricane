@@ -411,6 +411,26 @@ bool test_global_drain_fill(IODFSClient& client) {
 	// Size
 	result = result && (client.global_size(filename) == LENGTH);
 
+	// Fill s.t. slipchunk % SLIPCHUNK != 0
+	result = result && client.global_rewind(filename);
+
+	// Size
+	result = result && (client.global_size(filename) == LENGTH);
+	
+	std::string read_buffer;
+
+	client.global_fill(read_buffer, filename, LNEGTH);
+	result = result && (LENGTH == read_buffer.size());
+	result = result && (client.global_size(filename) == LENGTH);
+	bytes_left -= read_buffer.size();
+
+	result = result && client.global_eof(filename);
+
+	std::sort(read_results.begin(), read_results.end());
+	std::sort(write_results.begin(), write_results.end());
+
+	result = result && (read_results == write_results);
+
 	// Trunc
 	result = result && client.global_trunc(filename);
 	result = result && client.global_size(filename) == 0;

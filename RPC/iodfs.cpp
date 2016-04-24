@@ -349,7 +349,7 @@ class IODFSHandler : virtual public IODFSIf {
       unsigned long fill_bytes = 0;
       unsigned long filled_bytes = 0;
       _return = string(size, 0);
-      
+
       do {
         filled_bytes = slipstore::slipstore_client_fill->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
         fill_bytes += filled_bytes;
@@ -371,18 +371,10 @@ class IODFSHandler : virtual public IODFSIf {
     init_req();
     strcpy(req.filename, filename.c_str());
     req.cmd = slipstore::CMD_DRAIN;
-    req.size = buffer.size();
     
-    unsigned long drain_bytes = slipfile_size;
-    while (drain_bytes) {
-      unsigned long bytes_to_drain = (drain_bytes > buffer.size()) ? buffer.size() : drain_bytes;
-
-      if (slipstore::slipstore_client_drain->batch_access_store(&req, (unsigned char*) buffer.c_str(), slipchunk, bytes_to_drain)) {
-        BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
-        return false;
-      }
-
-      drain_bytes -= bytes_to_drain;
+    if (slipstore::slipstore_client_drain->batch_access_store(&req, (unsigned char*) buffer.c_str(), slipchunk, buffer.size())) {
+      BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
+      return false;
     }
 
     return true;
@@ -396,7 +388,7 @@ class IODFSHandler : virtual public IODFSIf {
 
     if(!global_exists(filename) || !helper_exists(filename, global_buffers))
       return false;
-    
+
     bool result = true;
     try {
       for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
@@ -469,6 +461,8 @@ class IODFSHandler : virtual public IODFSIf {
         size = clients[first_known_lost_node]->local_size(filename);
         if(size < 0)
           result = -1;
+        else
+          result += size;
       }
     } catch(TException& tx) {
       LostConnectionDuringCommit lcdc;
@@ -598,6 +592,13 @@ int main(int argc, const char **argv) {
     iface << "machines.iface" << i;
     machines.push_back(make_pair(pt_slipstore.get<std::string>(name.str().c_str()), pt_slipstore.get<std::string>(iface.str().c_str())));
   } 
+
+  bool batching = (vm.count("request_batching") > 0);
+  unsigned long batch_size = vm["batch_size"].as < unsigned long > ();
+
+  BOOST_LOG_TRIVIAL(info) << "BATCHING : " << batching;
+  BOOST_LOG_TRIVIAL(info) << "SLIPCHUNK" << slipchunk;
+  BOOST_LOG_TRIVIAL(info) << "BATCH SIZE" << batch_size;
 
   TThreadedServer server(
     boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port, slipchunk, slipfile_size)),
