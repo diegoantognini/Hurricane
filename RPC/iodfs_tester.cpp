@@ -422,7 +422,6 @@ bool test_global_drain_fill(IODFSClient& client) {
 	client.global_fill(read_buffer, filename, LENGTH);
 	result = result && (LENGTH == read_buffer.size());
 	result = result && (client.global_size(filename) == LENGTH);
-	bytes_left -= read_buffer.size();
 
 	result = result && client.global_eof(filename);
 
