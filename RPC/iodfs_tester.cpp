@@ -7,6 +7,7 @@
 #include <cassert>
 #include <ctime>
 #include <string>
+#include <unistd.h>
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -78,7 +79,7 @@ bool test_local_create_exists_delete_two_files(IODFSClient& client) {
 }
 
 bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
-	string filename = "testing_drain_fill";
+	string filename = "testing_local_drain_fill";
 	const unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
 	const unsigned long LENGTH = 8*SLIPCHUNCK;
 	string buffer(SLIPCHUNCK, 0);
@@ -187,7 +188,7 @@ bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
 }
 
 bool test_local_seek_and_fill(IODFSClient& client) {
-	string filename = "testing_seek_and_fill";
+	string filename = "testing_local_seek_and_fill";
 	const unsigned long SLIPCHUNCK = 4*1024; // 4 Ko
 	const unsigned long LENGTH = 32*SLIPCHUNCK;
 	string buffer(SLIPCHUNCK, 0);
@@ -206,8 +207,7 @@ bool test_local_seek_and_fill(IODFSClient& client) {
 
 	result = result && client.local_create(filename);
 	result = result && client.local_exists(filename);
-	
-	// Size
+
 	result = result && (client.local_size(filename) == 0);
 
 	// Drain
@@ -225,7 +225,6 @@ bool test_local_seek_and_fill(IODFSClient& client) {
 		bytes_to_write -= buffer.size();
 	}
 
-	// Size
 	result = result && (client.local_size(filename) == LENGTH);
 
 	// Seek and Fill reading per slipchunk
@@ -371,12 +370,10 @@ bool test_global_create_exists_delete_size_eof_two_files(IODFSClient& client) {
 }
 
 bool test_global_drain_fill(IODFSClient& client) {
-	string filename = "testing_drain_fill";
-	const unsigned long SLIPCHUNCK = 4*1024; // 4 Ko
+	string filename = "testing_global_drain_fill";
+	const unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
 	const unsigned long LENGTH = 32*SLIPCHUNCK;
-	string buffer(SLIPCHUNCK, 0);
-	string write_results;
-	string read_results;
+	string buffer(LENGTH, 0);
 	bool result = true;
 
 	result = result && !client.global_drain(filename, buffer);
@@ -394,42 +391,34 @@ bool test_global_drain_fill(IODFSClient& client) {
 	result = result && (client.global_size(filename) == 0);
 
 	// Drain
-	unsigned long bytes_to_write = LENGTH;
-	while(bytes_to_write > 0) {
-		char var = 0;
-		for(unsigned long i = 0; i < SLIPCHUNCK; ++i) {
-			var = rand()%127 + 1;
+	char var = 0;
+	for(unsigned long i = 0; i < LENGTH; ++i) {
+		var = rand()%127 + 1;
 
-			buffer[i] = var;
-		}
-		write_results += buffer;
-
-		result = result && client.global_drain(filename, buffer);
-		bytes_to_write -= buffer.size();
+		buffer[i] = var;
 	}
 
-	// Size
+	result = result && client.global_drain(filename, buffer);
+
+	usleep(5*1000*1000);
+
 	result = result && (client.global_size(filename) == LENGTH);
 
-	// Fill s.t. slipchunk % SLIPCHUNK != 0
+	// Fill
 	result = result && client.global_rewind(filename);
 
-	// Size
 	result = result && (client.global_size(filename) == LENGTH);
 	
-	std::string read_buffer;
-
+	std::string read_buffer(LENGTH, 0);
 	client.global_fill(read_buffer, filename, LENGTH);
 	result = result && (LENGTH == read_buffer.size());
 	result = result && (client.global_size(filename) == LENGTH);
 	result = result && client.global_eof(filename);
 
-	read_results += read_buffer;
+	std::sort(read_buffer.begin(), read_buffer.end());
+	std::sort(buffer.begin(), buffer.end());
 
-	std::sort(read_results.begin(), read_results.end());
-	std::sort(write_results.begin(), write_results.end());
-
-	result = result && (read_results == write_results);
+	result = result && (read_buffer == buffer);
 
 	// Trunc
 	result = result && client.global_trunc(filename);
