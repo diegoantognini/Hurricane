@@ -444,7 +444,7 @@ bool test_global_drain_fill(IODFSClient& client) {
 
 	result = result && (read_buffer == buffer);
 
-	// Fill : a third of the file (just to not have a multiple of slipchunk)
+	// Fill : chunk : multiple of slipchunk
 	result = result && client.global_rewind(filename);
 	result = result && (client.global_size(filename) == LENGTH);
 
@@ -473,8 +473,41 @@ bool test_global_drain_fill(IODFSClient& client) {
 	}
 
 	std::sort(result_buffer.begin(), result_buffer.end());
-	
 	result = result && (result_buffer == buffer);
+
+	// Fill : a third of the file (just to not have a multiple of slipchunk)
+	/*result = result && client.global_rewind(filename);
+	result = result && (client.global_size(filename) == LENGTH);
+
+	fill_bytes = LENGTH;
+	chunk = LENGTH/3;
+	length = 0;
+	result_buffer = "";
+	while(fill_bytes > 0) {
+		if(fill_bytes >= chunk)
+			length = chunk;
+		else
+			length = fill_bytes;
+
+		read_buffer = "";
+		client.global_fill(read_buffer, filename, length);
+		result = result && (length == read_buffer.size());
+		result_buffer += read_buffer;
+
+		fill_bytes -= length;
+
+		result = result && (client.global_size(filename) == LENGTH);
+		if(fill_bytes > 0)
+			result = result && !client.global_eof(filename);
+		else
+			result = result && client.global_eof(filename);
+	}
+
+	std::sort(result_buffer.begin(), result_buffer.end());
+	result = result && (result_buffer == buffer);
+	for(int i = 0; i < 1000; ++i)
+		std::cout << result_buffer[i] << " - " << buffer[i] << std::endl;
+	*/
 
 	// Trunc
 	result = result && client.global_trunc(filename);

@@ -356,13 +356,12 @@ class IODFSHandler : virtual public IODFSIf {
       init_req();
       strcpy(req.filename, filename.c_str());
       req.cmd = slipstore::CMD_FILL;
-      req.size = size;
 
       _return = string(size, 0);
       int64_t fill_bytes = size;
       int64_t filled_bytes = 0;
       do {
-        std::cout << filled_bytes << std::endl;
+        req.size = fill_bytes;
         filled_bytes = slipstore::slipstore_client_fill->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, fill_bytes);
         fill_bytes -= filled_bytes;
       } while(fill_bytes > 0);
@@ -383,7 +382,8 @@ class IODFSHandler : virtual public IODFSIf {
     init_req();
     strcpy(req.filename, filename.c_str());
     req.cmd = slipstore::CMD_DRAIN;
-    
+    req.size = buffer.size();
+
     if (slipstore::slipstore_client_drain->batch_access_store(&req, (unsigned char*) buffer.c_str(), slipchunk, buffer.size())) {
       BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
       return false;
