@@ -37,5 +37,7 @@ service IODFS {
 	bool global_eof(1:string filename) throws (1:LostConnection lc),
 	i64 global_size(1:string filename) throws (1:LostConnection lc),
 
+
+	void clear(),
 	bool nop()
 }

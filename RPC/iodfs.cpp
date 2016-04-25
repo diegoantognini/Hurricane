@@ -275,6 +275,15 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
 
+  // Delete all the files() 
+  void clear() {
+    for(unordered_map<string, slipstore::io*>::iterator it = global_buffers.begin(); it != global_buffers.end(); ++it)
+      global_delete(it->first);
+  
+    for(unordered_map<string, slipstore::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
+      local_delete(it->first);
+  }
+
   // False implie that the file already exist on this machine
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase

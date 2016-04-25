@@ -487,6 +487,7 @@ bool test_global_drain_fill(IODFSClient& client) {
 }
 
 void do_test(const char* name, bool (*fct)(IODFSClient&), IODFSClient& client) {
+	client.clear();
 	cout << name << " : ";
 	cout << " -> " << (fct(client) ? "PASSED" : "FAILED") << endl;
 }
@@ -547,8 +548,8 @@ int main(int argc, char **argv) {
 
 	transport->open();
 
-	//testing_local_requests(client);
-	//testing_deconnection_reconnection(client);
+	testing_local_requests(client);
+	testing_deconnection_reconnection(client);
 	testing_global_requests(client);
 
 	transport->close();
