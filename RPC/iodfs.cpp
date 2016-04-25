@@ -346,14 +346,8 @@ class IODFSHandler : virtual public IODFSIf {
       req.cmd = slipstore::CMD_FILL;
       req.size = size;
 
-      unsigned long fill_bytes = 0;
-      unsigned long filled_bytes = 0;
       _return = string(size, 0);
-
-      do {
-        filled_bytes = slipstore::slipstore_client_fill->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
-        fill_bytes += filled_bytes;
-      } while (filled_bytes > 0);
+      unsigned long filled_bytes = filled_bytes = slipstore::slipstore_client_fill->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
 
       // EOF, should return a string smaller and so, its size is modified
       if(filled_bytes < ((unsigned long)size))
