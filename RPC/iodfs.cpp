@@ -51,7 +51,6 @@ class IODFSHandler : virtual public IODFSIf {
   unordered_map<string, slipstore::io*> global_buffers; //the value is null, but we can use the hash table to find in O(1) :)
   slipstore::slipstore_req_t req;
   unsigned long slipchunk;
-  unsigned long slipfile_size;
 
   // Network part
   vector<pair<string, string>> machines;
@@ -68,9 +67,8 @@ class IODFSHandler : virtual public IODFSIf {
   boost::asio::io_service::work* reconnect_woker;
 
  public:
-  IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port, unsigned long _slipchunk, unsigned long _slipfile_size)
+  IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port, unsigned long _slipchunk)
   : slipchunk(_slipchunk), 
-    slipfile_size(_slipfile_size), 
     me(_me), 
     port(_port), 
     connection_to_server_done(false), 
@@ -116,8 +114,8 @@ class IODFSHandler : virtual public IODFSIf {
 
     reconnect_thread.stop();
 
-  	for(unordered_map<string, slipstore::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
-  		helper_delete(it);
+    for(unordered_map<string, slipstore::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
+      helper_delete(it);
   
     for(auto& it : transports)
       it->close();
@@ -150,7 +148,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   bool local_exists(const std::string& filename) {
-  	return helper_exists(filename, local_buffers);
+    return helper_exists(filename, local_buffers);
   }
 
   // False indicates that the file already exists
@@ -180,7 +178,7 @@ class IODFSHandler : virtual public IODFSIf {
       _return = string(size, 0);
       int64_t bytes_read = it->second->fill((unsigned char*) _return.c_str(), &req);
 
-	  // EOF, should return a string smaller and so, its size is modified
+    // EOF, should return a string smaller and so, its size is modified
       if(bytes_read < size)
         _return = _return.data();
     }
@@ -198,7 +196,7 @@ class IODFSHandler : virtual public IODFSIf {
       _return = string(size, 0);
       int64_t bytes_read = it->second->seek_and_fill((unsigned char*) _return.c_str(), &req);
 
-	  // EOF, should return a string smaller and so, its size is modified
+    // EOF, should return a string smaller and so, its size is modified
       if(bytes_read < size)
         _return = _return.data();
     }
@@ -352,15 +350,16 @@ class IODFSHandler : virtual public IODFSIf {
       req.size = size;
 
       _return = string(size, 0);
-      unsigned long fill_bytes = size;
-      unsigned long filled_bytes = 0;
+      int64_t fill_bytes = size;
+      int64_t filled_bytes = 0;
       do {
+        std::cout << filled_bytes << std::endl;
         filled_bytes = slipstore::slipstore_client_fill->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, fill_bytes);
         fill_bytes -= filled_bytes;
       } while(fill_bytes > 0);
       
       // EOF, should return a string smaller and so, its size is modified
-      if(filled_bytes < ((unsigned long)size))
+      if(filled_bytes < size)
           _return = _return.data();
     }
   }
@@ -584,7 +583,6 @@ int main(int argc, const char **argv) {
   unsigned long me = pt_slipstore.get < unsigned long > ("machines.me");
 
   unsigned long slipchunk = vm["slipchunk"].as < unsigned long > ();
-  unsigned long slipfile_size = vm["slipbench_fsize"].as < unsigned long > ();
   unsigned long align = vm["slipbench_align"].as < unsigned long > ();
   slipchunk = (slipchunk / align) * align;
 
@@ -605,7 +603,7 @@ int main(int argc, const char **argv) {
   BOOST_LOG_TRIVIAL(info) << "BATCH SIZE" << batch_size;
 
   TThreadedServer server(
-    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port, slipchunk, slipfile_size)),
+    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port, slipchunk)),
     boost::make_shared<TServerSocket>(port),
     boost::make_shared<TBufferedTransportFactory>(),
     boost::make_shared<TBinaryProtocolFactory>());

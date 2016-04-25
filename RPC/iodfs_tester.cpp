@@ -439,7 +439,7 @@ bool test_global_drain_fill(IODFSClient& client) {
 	result = result && client.global_eof(filename);
 
 	std::sort(read_buffer.begin(), read_buffer.end());
-	std::string buffer_old = buffer;
+	std::string buffer_old(buffer);
 	std::sort(buffer.begin(), buffer.end());
 
 	result = result && (read_buffer == buffer);
@@ -448,17 +448,33 @@ bool test_global_drain_fill(IODFSClient& client) {
 	result = result && client.global_rewind(filename);
 	result = result && (client.global_size(filename) == LENGTH);
 
-	unsigned long length = LENGTH/3;
-	read_buffer = "";
-	client.global_fill(read_buffer, filename, length);
-	result = result && (length == read_buffer.size());
-	result = result && (client.global_size(filename) == LENGTH);
-	result = result && !client.global_eof(filename);
+	unsigned long fill_bytes = LENGTH;
+	unsigned long chunk = LENGTH/4;
+	unsigned long length;
+	std::string result_buffer = "";
+	while(fill_bytes > 0) {
+		if(fill_bytes >= chunk)
+			length = chunk;
+		else
+			length = fill_bytes;
 
-	std::sort(read_buffer.begin(), read_buffer.end());
-	std::sort(buffer_old.begin(), buffer_old.begin()+length);
+		read_buffer = "";
+		client.global_fill(read_buffer, filename, length);
+		result = result && (length == read_buffer.size());
+		result_buffer += read_buffer;
 
-	result = result && (read_buffer == buffer_old);
+		fill_bytes -= length;
+
+		result = result && (client.global_size(filename) == LENGTH);
+		if(fill_bytes > 0)
+			result = result && !client.global_eof(filename);
+		else
+			result = result && client.global_eof(filename);
+	}
+
+	std::sort(result_buffer.begin(), result_buffer.end());
+	
+	result = result && (result_buffer == buffer);
 
 	// Trunc
 	result = result && client.global_trunc(filename);
@@ -492,6 +508,7 @@ void testing_deconnection_reconnection(IODFSClient& client) {
 	    while(!result) {
 		    try {
 		    	result = client.global_create("test");
+		    	//You should deconnect a machine right know
 		    	int a = 0;
 		    	for(int i = 0; i < 1000000000; ++i) {
 		    		a+=i;
