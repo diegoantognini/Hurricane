@@ -69,8 +69,13 @@ class IODFSHandler : virtual public IODFSIf {
 
  public:
   IODFSHandler(const vector<pair<string, string>>& _machines, unsigned long _me, unsigned long _port, unsigned long _slipchunk, unsigned long _slipfile_size)
-  : slipchunk(_slipchunk), slipfile_size(_slipfile_size), me(_me), port(_port), connection_to_server_done(false), first_known_lost_node(_machines.size()) {
-    
+  : slipchunk(_slipchunk), 
+    slipfile_size(_slipfile_size), 
+    me(_me), 
+    port(_port), 
+    connection_to_server_done(false), 
+    first_known_lost_node(_machines.size()) {
+
     for(auto& it : _machines)
       machines.push_back(make_pair(it.first, it.second));
 
@@ -157,7 +162,7 @@ class IODFSHandler : virtual public IODFSIf {
     helper_delete(it);
     local_buffers.erase(it);
 
-    // Remove from global_buffer if the request come from global
+    // Remove from global_buffer if the request comes from global
     if(global_buffers.find(filename) != global_buffers.end())
       global_buffers.erase(filename);
 
@@ -347,8 +352,13 @@ class IODFSHandler : virtual public IODFSIf {
       req.size = size;
 
       _return = string(size, 0);
-      unsigned long filled_bytes = slipstore::slipstore_client_fill->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
-
+      unsigned long fill_bytes = size;
+      unsigned long filled_bytes = 0;
+      do {
+        filled_bytes = slipstore::slipstore_client_fill->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, fill_bytes);
+        fill_bytes -= filled_bytes;
+      } while(fill_bytes > 0);
+      
       // EOF, should return a string smaller and so, its size is modified
       if(filled_bytes < ((unsigned long)size))
           _return = _return.data();

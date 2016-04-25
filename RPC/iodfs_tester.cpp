@@ -18,6 +18,18 @@ using std::cout;
 using std::endl;
 using std::string;
 
+
+
+
+
+  ////////////////////////////////////////////
+  //////////// LOCAL PART ////////////////////
+  ////////////////////////////////////////////
+
+
+
+
+  
 bool test_local_create_exists_delete_one_file(IODFSClient& client) {
 	bool result = true;
 	string file1 = "file1.txt";
@@ -276,6 +288,17 @@ bool test_local_seek_and_fill(IODFSClient& client) {
 	return result;
 }
 
+
+
+
+
+  ////////////////////////////////////////////
+  //////////// GLOBAL PART ///////////////////
+  ////////////////////////////////////////////
+
+
+
+
 bool test_global_create_exists_delete_size_eof_one_file(IODFSClient& client) {
 	bool result = true;
 	string file1 = "file1.txt";
@@ -404,7 +427,7 @@ bool test_global_drain_fill(IODFSClient& client) {
 
 	result = result && (client.global_size(filename) == LENGTH);
 
-	// Fill
+	// Fill all the file
 	result = result && client.global_rewind(filename);
 
 	result = result && (client.global_size(filename) == LENGTH);
@@ -416,9 +439,26 @@ bool test_global_drain_fill(IODFSClient& client) {
 	result = result && client.global_eof(filename);
 
 	std::sort(read_buffer.begin(), read_buffer.end());
+	std::string buffer_old = buffer;
 	std::sort(buffer.begin(), buffer.end());
 
 	result = result && (read_buffer == buffer);
+
+	// Fill : a third of the file (just to not have a multiple of slipchunk)
+	result = result && client.global_rewind(filename);
+	result = result && (client.global_size(filename) == LENGTH);
+
+	unsigned long length = LENGTH/3;
+	read_buffer = "";
+	client.global_fill(read_buffer, filename, length);
+	result = result && (length == read_buffer.size());
+	result = result && (client.global_size(filename) == LENGTH);
+	result = result && !client.global_eof(filename);
+
+	std::sort(read_buffer.begin(), read_buffer.end());
+	std::sort(buffer_old.begin(), buffer_old.begin()+length);
+
+	result = result && (read_buffer == buffer_old);
 
 	// Trunc
 	result = result && client.global_trunc(filename);
@@ -490,8 +530,8 @@ int main(int argc, char **argv) {
 
 	transport->open();
 
-	testing_local_requests(client);
-	testing_deconnection_reconnection(client);
+	//testing_local_requests(client);
+	//testing_deconnection_reconnection(client);
 	testing_global_requests(client);
 
 	transport->close();
