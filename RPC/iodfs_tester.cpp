@@ -116,7 +116,7 @@ bool helper_test_local_drain_fill_eof_size_trunc_left(IODFSClient& client, int64
 	int64_t bytes_to_write = LENGTH;
 	while(bytes_to_write > 0) {
 		char var = 0;
-		for(unsigned long i = 0; i < SLIPCHUNCK; ++i) {
+		for(int64_t i = 0; i < SLIPCHUNCK; ++i) {
 			var = rand()%127 + 1;
 
 			buffer[i] = var;
@@ -150,7 +150,7 @@ bool helper_test_local_drain_fill_eof_size_trunc_left(IODFSClient& client, int64
 		bytes_to_read = (bytes_left > slipchunck ? slipchunck : bytes_left);
 		client.local_fill(read_buffer, filename, bytes_to_read);
 
-		result = result && (bytes_to_read == read_buffer.size());
+		result = result && (bytes_to_read == ((int64_t)read_buffer.size()));
 		result = result && (client.local_size(filename) == LENGTH);
 
 		bytes_left -= bytes_to_read;
@@ -176,7 +176,7 @@ bool helper_test_local_drain_fill_eof_size_trunc_left(IODFSClient& client, int64
 		bytes_to_read = (bytes_left > slipchunck ? slipchunck : bytes_left);
 		client.local_fill(read_buffer, filename, bytes_to_read);
 
-		result = result && (bytes_to_read == read_buffer.size());
+		result = result && (bytes_to_read == ((int64_t)read_buffer.size()));
 		result = result && (client.local_size(filename) == LENGTH);
 
 		bytes_left -= bytes_to_read;
@@ -404,16 +404,15 @@ bool test_global_create_exists_delete_size_eof_two_files(IODFSClient& client) {
 	return result;
 }
 
-bool test_global_drain_fill(IODFSClient& client) {
+bool helper_test_global_drain_fill(IODFSClient& client, unsigned long SLIPCHUNCK, int64_t LENGTH, int64_t LENGTH2) {
 	string filename = "testing_global_drain_fill";
-	const unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
-	const unsigned long LENGTH = 32*SLIPCHUNCK;
 	string buffer(LENGTH, 0);
 	bool result = true;
 
+	//Basic empty tests
 	result = result && !client.global_drain(filename, buffer);
 	string dummy_buffer;
-	client.global_fill(dummy_buffer, filename, SLIPCHUNCK);
+	client.global_fill(dummy_buffer, filename, LENGTH);
 	result = result && dummy_buffer.size() == 0;
 	result = result && (client.global_size(filename) == -1);
 	result = result && client.global_eof(filename);
@@ -427,26 +426,25 @@ bool test_global_drain_fill(IODFSClient& client) {
 
 	// Drain
 	char var = 0;
-	for(unsigned long i = 0; i < LENGTH; ++i) {
+	for(int64_t i = 0; i < LENGTH; ++i) {
 		var = rand()%127 + 1;
-
 		buffer[i] = var;
 	}
 
 	result = result && client.global_drain(filename, buffer);
 
-	usleep(5*1000*1000);
+	usleep(5*1000*1000); // As a "cyclic barrier"
 
 	result = result && (client.global_size(filename) == LENGTH);
 
 	// Fill all the file
 	result = result && client.global_rewind(filename);
-
 	result = result && (client.global_size(filename) == LENGTH);
 	
-	std::string read_buffer(LENGTH, 0);
-	client.global_fill(read_buffer, filename, LENGTH);
-	result = result && (LENGTH == read_buffer.size());
+	std::string read_buffer(LENGTH2, 0);
+	client.global_fill(read_buffer, filename, LENGTH2);
+
+	result = result && (LENGTH == ((int64_t) read_buffer.size()));
 	result = result && (client.global_size(filename) == LENGTH);
 	result = result && client.global_eof(filename);
 
@@ -456,73 +454,9 @@ bool test_global_drain_fill(IODFSClient& client) {
 
 	result = result && (read_buffer == buffer);
 
-	// Fill : chunk : multiple of slipchunk
-	result = result && client.global_rewind(filename);
-	result = result && (client.global_size(filename) == LENGTH);
-
-	unsigned long fill_bytes = LENGTH;
-	unsigned long chunk = LENGTH/4;
-	unsigned long length;
-	std::string result_buffer = "";
-	while(fill_bytes > 0) {
-		if(fill_bytes >= chunk)
-			length = chunk;
-		else
-			length = fill_bytes;
-
-		read_buffer = "";
-		client.global_fill(read_buffer, filename, length);
-		result = result && (length == read_buffer.size());
-		result_buffer += read_buffer;
-
-		fill_bytes -= length;
-
-		result = result && (client.global_size(filename) == LENGTH);
-		if(fill_bytes > 0)
-			result = result && !client.global_eof(filename);
-		else
-			result = result && client.global_eof(filename);
-	}
-
-	std::sort(result_buffer.begin(), result_buffer.end());
-	result = result && (result_buffer == buffer);
-
-	// Fill : a third of the file (just to not have a multiple of slipchunk)
-	/*result = result && client.global_rewind(filename);
-	result = result && (client.global_size(filename) == LENGTH);
-
-	fill_bytes = LENGTH;
-	chunk = LENGTH/3;
-	length = 0;
-	result_buffer = "";
-	while(fill_bytes > 0) {
-		if(fill_bytes >= chunk)
-			length = chunk;
-		else
-			length = fill_bytes;
-
-		read_buffer = "";
-		client.global_fill(read_buffer, filename, length);
-		result = result && (length == read_buffer.size());
-		result_buffer += read_buffer;
-
-		fill_bytes -= length;
-
-		result = result && (client.global_size(filename) == LENGTH);
-		if(fill_bytes > 0)
-			result = result && !client.global_eof(filename);
-		else
-			result = result && client.global_eof(filename);
-	}
-
-	std::sort(result_buffer.begin(), result_buffer.end());
-	result = result && (result_buffer == buffer);
-	for(int i = 0; i < 1000; ++i)
-		std::cout << result_buffer[i] << " - " << buffer[i] << std::endl;
-	*/
-
 	// Trunc
 	result = result && client.global_trunc(filename);
+
 	result = result && client.global_size(filename) == 0;
 
 	// Delete
@@ -531,8 +465,80 @@ bool test_global_drain_fill(IODFSClient& client) {
 	return result;
 }
 
+bool helper_chunk_test_global_drain_fill(IODFSClient& client, unsigned long SLIPCHUNCK, int64_t LENGTH, int64_t LENGTH2) {
+	string filename = "testing_global_drain_fill";
+	string buffer(LENGTH, 0);
+	bool result = true;
+	
+	result = result && client.global_create(filename);
+	result = result && client.global_exists(filename);
+
+	// Drain
+	char var = 0;
+	for(int64_t i = 0; i < LENGTH; ++i) {
+		var = rand()%127 + 1;
+		buffer[i] = var;
+	}
+
+	result = result && client.global_drain(filename, buffer);
+
+	usleep(5*1000*1000); // As a "cyclic barrier"
+
+	result = result && (client.global_size(filename) == LENGTH);
+
+	// Fill only a part of the file
+	result = result && client.global_rewind(filename);
+	result = result && (client.global_size(filename) == LENGTH);
+
+	std::string res = "";
+	std::string read_buffer(LENGTH2, 0);
+	do{
+		client.global_fill(read_buffer, filename, LENGTH2);
+		res += read_buffer;
+
+		result = result && (LENGTH2 == ((int64_t) read_buffer.size()));
+		result = result && (client.global_size(filename) == LENGTH);
+	}while(res.size() != buffer.size());
+
+	std::sort(res.begin(), res.end());
+	std::sort(buffer.begin(), buffer.end());
+
+	result = result && (res == buffer);
+	
+	// Trunc
+	result = result && client.global_trunc(filename);
+
+	result = result && client.global_size(filename) == 0;
+
+	// Delete
+	result = result && client.global_delete(filename);
+
+	return result;
+}
+
+bool test_global_drain_fill(IODFSClient& client) {
+	bool result = true;
+	
+	// first case, we read all the file which is a multiple of slipchunk
+	int64_t SLIPCHUNCK = 4*1024*1024; // 4 Mb
+	int64_t LENGTH = 32*SLIPCHUNCK;
+	int64_t LENGTH2 = LENGTH;
+	result = result && helper_test_global_drain_fill(client, SLIPCHUNCK, LENGTH, LENGTH2);
+	
+	// second case : we write an non-multiple of slipchunk and want to read the whole file (the length must be a multiple of slipchunk, but the buffer will be smaller at the end)	
+	LENGTH = 133*1024*1024;
+	LENGTH2 = 140*1024*1024; //Read more than our 135Mb
+	result = result && helper_test_global_drain_fill(client, SLIPCHUNCK, LENGTH, LENGTH2);
+	
+	// third case : same as first but only a chunk
+	LENGTH = 32*SLIPCHUNCK;
+	LENGTH2 = 4*SLIPCHUNCK;
+	result = result && helper_chunk_test_global_drain_fill(client, SLIPCHUNCK, LENGTH, LENGTH2);
+	
+	return result;
+}
+
 void do_test(const char* name, bool (*fct)(IODFSClient&), IODFSClient& client) {
-	client.clear();
 	cout << name << " : ";
 	cout << " -> " << (fct(client) ? "PASSED" : "FAILED") << endl;
 }

@@ -120,11 +120,6 @@ class IODFSHandler : virtual public IODFSIf {
     printf("global_size\n");
   }
 
-  void clear() {
-    // Your implementation goes here
-    printf("clear\n");
-  }
-
   bool nop() {
     // Your implementation goes here
     printf("nop\n");

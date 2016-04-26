@@ -275,17 +275,8 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
 
-  // Delete all the files() 
-  void clear() {
-    for(unordered_map<string, slipstore::io*>::iterator it = global_buffers.begin(); it != global_buffers.end(); ++it)
-      global_delete(it->first);
-  
-    for(unordered_map<string, slipstore::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
-      local_delete(it->first);
-  }
-
   // False implie that the file already exist on this machine
-  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnection if the server is blocked (loosing a node or initializing) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   bool global_create(const std::string& filename) {
     handle_connection_to_server_done(true);
@@ -347,32 +338,29 @@ class IODFSHandler : virtual public IODFSIf {
     return result;
   }
 
+  // An empty buffer implies that either the file doesn't exisir or the size is not a multiple of slipchunk !
+  // Throw LostConnection if the server is blocked (initializing)
   void global_fill(std::string& _return, const std::string& filename, const int64_t size) {
     handle_connection_to_server_done(false);
 
-    if(!global_exists(filename) || !helper_exists(filename, global_buffers))
+    if(!global_exists(filename) || !helper_exists(filename, global_buffers) || (size%slipchunk != 0))
       _return = "";
     else {
       init_req();
       strcpy(req.filename, filename.c_str());
       req.cmd = slipstore::CMD_FILL;
+      req.size = size;
 
       _return = string(size, 0);
-      int64_t fill_bytes = size;
-      int64_t filled_bytes = 0;
-      do {
-        req.size = fill_bytes;
-        filled_bytes = slipstore::slipstore_client_fill->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, fill_bytes);
-        fill_bytes -= filled_bytes;
-      } while(fill_bytes > 0);
-      
+      int64_t filled_bytes = slipstore::slipstore_client_fill->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
+
       // EOF, should return a string smaller and so, its size is modified
-      if(filled_bytes < size)
+      if(filled_bytes < size) 
           _return = _return.data();
     }
   }
 
-
+  // Throw LostConnection if the server is blocked (initializing)
   bool global_drain(const std::string& filename, const std::string& buffer) {
     handle_connection_to_server_done(false);
 
@@ -506,8 +494,9 @@ private:
   }
 
   void helper_delete(unordered_map<string, slipstore::io*>::iterator& it) {
-    unlink_file((char *)(it->first.c_str()));
+    const char* filename = it->first.c_str();
     delete it->second;
+    unlink_file(((char*)filename));
   }
 
   void init_req() {

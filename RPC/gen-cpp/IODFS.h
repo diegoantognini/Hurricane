@@ -41,7 +41,6 @@ class IODFSIf {
   virtual bool global_trunc(const std::string& filename) = 0;
   virtual bool global_eof(const std::string& filename) = 0;
   virtual int64_t global_size(const std::string& filename) = 0;
-  virtual void clear() = 0;
   virtual bool nop() = 0;
 };
 
@@ -148,9 +147,6 @@ class IODFSNull : virtual public IODFSIf {
   int64_t global_size(const std::string& /* filename */) {
     int64_t _return = 0;
     return _return;
-  }
-  void clear() {
-    return;
   }
   bool nop() {
     bool _return = false;
@@ -2353,80 +2349,6 @@ class IODFS_global_size_presult {
 };
 
 
-class IODFS_clear_args {
- public:
-
-  IODFS_clear_args(const IODFS_clear_args&);
-  IODFS_clear_args& operator=(const IODFS_clear_args&);
-  IODFS_clear_args() {
-  }
-
-  virtual ~IODFS_clear_args() throw();
-
-  bool operator == (const IODFS_clear_args & /* rhs */) const
-  {
-    return true;
-  }
-  bool operator != (const IODFS_clear_args &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const IODFS_clear_args & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-
-class IODFS_clear_pargs {
- public:
-
-
-  virtual ~IODFS_clear_pargs() throw();
-
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-
-class IODFS_clear_result {
- public:
-
-  IODFS_clear_result(const IODFS_clear_result&);
-  IODFS_clear_result& operator=(const IODFS_clear_result&);
-  IODFS_clear_result() {
-  }
-
-  virtual ~IODFS_clear_result() throw();
-
-  bool operator == (const IODFS_clear_result & /* rhs */) const
-  {
-    return true;
-  }
-  bool operator != (const IODFS_clear_result &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const IODFS_clear_result & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-
-class IODFS_clear_presult {
- public:
-
-
-  virtual ~IODFS_clear_presult() throw();
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-
-};
-
-
 class IODFS_nop_args {
  public:
 
@@ -2603,9 +2525,6 @@ class IODFSClient : virtual public IODFSIf {
   int64_t global_size(const std::string& filename);
   void send_global_size(const std::string& filename);
   int64_t recv_global_size();
-  void clear();
-  void send_clear();
-  void recv_clear();
   bool nop();
   void send_nop();
   bool recv_nop();
@@ -2644,7 +2563,6 @@ class IODFSProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_global_trunc(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_eof(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_size(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
-  void process_clear(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_nop(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   IODFSProcessor(boost::shared_ptr<IODFSIf> iface) :
@@ -2669,7 +2587,6 @@ class IODFSProcessor : public ::apache::thrift::TDispatchProcessor {
     processMap_["global_trunc"] = &IODFSProcessor::process_global_trunc;
     processMap_["global_eof"] = &IODFSProcessor::process_global_eof;
     processMap_["global_size"] = &IODFSProcessor::process_global_size;
-    processMap_["clear"] = &IODFSProcessor::process_clear;
     processMap_["nop"] = &IODFSProcessor::process_nop;
   }
 
@@ -2882,15 +2799,6 @@ class IODFSMultiface : virtual public IODFSIf {
     return ifaces_[i]->global_size(filename);
   }
 
-  void clear() {
-    size_t sz = ifaces_.size();
-    size_t i = 0;
-    for (; i < (sz - 1); ++i) {
-      ifaces_[i]->clear();
-    }
-    ifaces_[i]->clear();
-  }
-
   bool nop() {
     size_t sz = ifaces_.size();
     size_t i = 0;
@@ -2990,9 +2898,6 @@ class IODFSConcurrentClient : virtual public IODFSIf {
   int64_t global_size(const std::string& filename);
   int32_t send_global_size(const std::string& filename);
   int64_t recv_global_size(const int32_t seqid);
-  void clear();
-  int32_t send_clear();
-  void recv_clear(const int32_t seqid);
   bool nop();
   int32_t send_nop();
   bool recv_nop(const int32_t seqid);
