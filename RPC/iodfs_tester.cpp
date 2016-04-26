@@ -90,10 +90,8 @@ bool test_local_create_exists_delete_two_files(IODFSClient& client) {
 	return result;
 }
 
-bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
+bool helper_test_local_drain_fill_eof_size_trunc_left(IODFSClient& client, int64_t SLIPCHUNCK, int64_t LENGTH) {
 	string filename = "testing_local_drain_fill";
-	const unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
-	const unsigned long LENGTH = 8*SLIPCHUNCK;
 	string buffer(SLIPCHUNCK, 0);
 	string write_results;
 	string read_results;
@@ -115,7 +113,7 @@ bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
 	result = result && (client.local_size(filename) == 0);
 
 	// Drain
-	unsigned long bytes_to_write = LENGTH;
+	int64_t bytes_to_write = LENGTH;
 	while(bytes_to_write > 0) {
 		char var = 0;
 		for(unsigned long i = 0; i < SLIPCHUNCK; ++i) {
@@ -129,7 +127,7 @@ bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
 		result = result && (client.local_left(filename) == 0);
 		result = result && client.local_eof(filename);
 		bytes_to_write -= buffer.size();
-		result = result && (((unsigned long)client.local_size(filename)) == (LENGTH-bytes_to_write));
+		result = result && (client.local_size(filename) == (LENGTH-bytes_to_write));
 	}
 
 	// Size
@@ -142,12 +140,12 @@ bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
 	result = result && (client.local_size(filename) == LENGTH);
 
 	std::string read_buffer;
-	unsigned long bytes_left = LENGTH;
-	unsigned long bytes_to_read = 0;
-	unsigned long slipchunck = SLIPCHUNCK/3; //We want to check if it works it 
+	int64_t bytes_left = LENGTH;
+	int64_t bytes_to_read = 0;
+	int64_t slipchunck = SLIPCHUNCK/3; //We want to check if it works it 
 	while(bytes_left > 0) {
 		// Left
-		result = result && (((unsigned long)client.local_left(filename)) == bytes_left);
+		result = result && (client.local_left(filename) == bytes_left);
 
 		bytes_to_read = (bytes_left > slipchunck ? slipchunck : bytes_left);
 		client.local_fill(read_buffer, filename, bytes_to_read);
@@ -195,6 +193,20 @@ bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
 
 	// Delete
 	result = result && client.local_delete(filename);
+
+	return result;
+}
+
+bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
+	string filename = "testing_local_drain_fill";
+	unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
+	unsigned long LENGTH = 8*SLIPCHUNCK;
+
+	bool result = true;
+	result = result && helper_test_local_drain_fill_eof_size_trunc_left(client, SLIPCHUNCK, LENGTH);
+	SLIPCHUNCK = 712*716*812;
+	LENGTH = 7*SLIPCHUNCK;
+	result = result && helper_test_local_drain_fill_eof_size_trunc_left(client, SLIPCHUNCK, LENGTH);
 
 	return result;
 }
