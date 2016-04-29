@@ -85,7 +85,7 @@ class IODFSHandler : virtual public IODFSIf {
       std::stringstream iface;
       name << "machines.name" << i;
       iface << "machines.iface" << i;
-      add_new_machine(name.str().c_str(), iface.str().c_str());
+      add_new_machine_in_machines(name.str().c_str(), iface.str().c_str());
     } 
 
     first_known_lost_node = machines.size();
@@ -101,6 +101,9 @@ class IODFSHandler : virtual public IODFSIf {
     for(unsigned int i = 0; me > machines.size() && i < machines.size(); ++i)
       if(machines[i].first == me_name)
         me = i;
+
+    for(auto& machine : machines)
+      add_new_machine_network(machine.first.c_str());
 
     // Necessary if we want to reuse our thread
     reconnect_woker = new boost::asio::io_service::work(reconnect_thread);
@@ -290,10 +293,12 @@ class IODFSHandler : virtual public IODFSIf {
   // False implie that the file already exist on this machine
   // Throw LostConnection if the server is blocked (loosing a node or initializing) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
   bool global_create(const std::string& filename, const std::string& token) {
     handle_connection_to_server_done(true);
+    handle_token(token);
 
-    if(global_exists(filename, token) || helper_exists(filename, global_buffers) || tokens.find(token) == tokens.end())
+    if(global_exists(filename, token) || helper_exists(filename, global_buffers))
       return false;
 
     bool result = true;
@@ -313,10 +318,10 @@ class IODFSHandler : virtual public IODFSIf {
 
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
   bool global_exists(const std::string& filename, const std::string& token) {
     handle_connection_to_server_done(true);
-    if(tokens.find(token) == tokens.end())
-      return false;
+    handle_token(token);
 
     bool result = true;
     try {
@@ -334,9 +339,12 @@ class IODFSHandler : virtual public IODFSIf {
   // False implie that the file doesn't exist on this machine or on another machine
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
   bool global_delete(const std::string& filename, const std::string& token) {
     handle_connection_to_server_done(true);
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || tokens.find(token) == tokens.end())
+    handle_token(token);
+
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
       return false;
 
     bool result = true;
@@ -354,10 +362,12 @@ class IODFSHandler : virtual public IODFSIf {
 
   // An empty buffer implies that either the file doesn't exisir or the size is not a multiple of slipchunk !
   // Throw LostConnection if the server is blocked (initializing)
+  // Throw BadToken if the token is not recognized
   void global_fill(std::string& _return, const std::string& filename, const int64_t size, const std::string& token) {
     handle_connection_to_server_done(false);
+    handle_token(token, true, false);
 
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || (size%slipchunk != 0) || tokens.find(token) == tokens.end() || client_fills.find(token) == client_fills.end())
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || (size%slipchunk != 0))
       _return = "";
     else {
       init_req();
@@ -375,10 +385,12 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // Throw LostConnection if the server is blocked (initializing)
+  // Throw BadToken if the token is not recognized
   bool global_drain(const std::string& filename, const std::string& buffer, const std::string& token) {
     handle_connection_to_server_done(false);
+    handle_token(token, false, true);
 
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || tokens.find(token) == tokens.end() || client_drains.find(token) == client_drains.end())
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
       return false;
 
     init_req();
@@ -397,10 +409,12 @@ class IODFSHandler : virtual public IODFSIf {
   // False implie that the file doesn't exist on this machine or on another machine
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
   bool global_rewind(const std::string& filename, const std::string& token) {
     handle_connection_to_server_done();
+    handle_token(token);
 
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || tokens.find(token) == tokens.end())
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
       return false;
 
     bool result = true;
@@ -419,10 +433,12 @@ class IODFSHandler : virtual public IODFSIf {
   // False implie that the file doesn't exist on this machine or on another machine
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
   bool global_trunc(const std::string& filename, const std::string& token) {
     handle_connection_to_server_done();
+    handle_token(token);
 
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || tokens.find(token) == tokens.end())
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
       return false;
 
     bool result = true;
@@ -440,10 +456,12 @@ class IODFSHandler : virtual public IODFSIf {
 
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
   bool global_eof(const std::string& filename, const std::string& token) {
     handle_connection_to_server_done();
+    handle_token(token);
 
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || tokens.find(token) == tokens.end())
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
       return true;
 
     bool result = true;
@@ -462,10 +480,12 @@ class IODFSHandler : virtual public IODFSIf {
   // -1 indicate that on a machine, the file doesn't exist
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
   int64_t global_size(const std::string& filename, const std::string& token) {
     handle_connection_to_server_done();
+    handle_token(token);
 
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || tokens.find(token) == tokens.end())
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
       return -1;
 
     int64_t result = 0;
@@ -622,9 +642,18 @@ private:
     }
   }
 
-  void add_new_machine(const char* name, const char* iface) {
-    machines.push_back(make_pair(pt_slipstore.get<std::string>(name), pt_slipstore.get<std::string>(iface)));
+  void handle_token(const std::string& token, bool check_fill = false, bool check_drain = false) {
+    if (tokens.find(token) == tokens.end() || (check_fill && (client_fills.find(token) == client_fills.end()))  || (check_drain && (client_drains.find(token) == client_drains.end())) ) {
+      BadToken bt;
+      throw bt;
+    }
+  }
 
+  void add_new_machine_in_machines(const char* name, const char* iface) {
+    machines.push_back(make_pair(pt_slipstore.get<std::string>(name), pt_slipstore.get<std::string>(iface)));
+  }
+
+  void add_new_machine_network(const char* name) {
     // Init the network part
     boost::shared_ptr<TTransport> socket(new TSocket(name, port));
     boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
@@ -634,6 +663,12 @@ private:
     transports.push_back(transport);
     clients.push_back(client);
   }
+
+  void add_new_machine(const char* name, const char* iface) {
+    add_new_machine_in_machines(name, iface);
+    add_new_machine_network(name);
+  }
+
 };
 
 

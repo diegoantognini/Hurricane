@@ -6,6 +6,9 @@ exception LostConnectionDuringCommit {
 	1:string name_node_lost
 }
 
+exception BadToken {
+}
+
 service IODFS {
 	// Local IO
 	bool local_create(1:string filename),
@@ -29,18 +32,18 @@ service IODFS {
 	bool leave(1:string token),
 
 	// Global IO
-	bool global_create(1:string filename, 2:string token) throws (1:LostConnection lc),
-	bool global_exists(1:string filename, 2:string token) throws (1:LostConnection lc),
-	bool global_delete(1:string filename, 2:string token) throws (1:LostConnection lc),
+	bool global_create(1:string filename, 2:string token) throws (1:LostConnection lc, 2:LostConnectionDuringCommit lcdc, 3:BadToken bt),
+	bool global_exists(1:string filename, 2:string token) throws (1:LostConnection lc, 2:LostConnectionDuringCommit lcdc, 3:BadToken bt),
+	bool global_delete(1:string filename, 2:string token) throws (1:LostConnection lc, 2:LostConnectionDuringCommit lcdc, 3:BadToken bt),
 
-	string global_fill(1:string filename, 2:i64 size, 3:string token) throws (1:LostConnection lc),
-	bool global_drain(1:string filename, 2:binary buffer, 3:string token) throws (1:LostConnection lc),
+	string global_fill(1:string filename, 2:i64 size, 3:string token) throws (1:LostConnection lc, 2:BadToken bt),
+	bool global_drain(1:string filename, 2:binary buffer, 3:string token) throws (1:LostConnection lc, 2:BadToken bt),
 
-	bool global_rewind(1:string filename, 2:string token) throws (1:LostConnection lc),
-	bool global_trunc(1:string filename, 2:string token) throws (1:LostConnection lc),
+	bool global_rewind(1:string filename, 2:string token) throws (1:LostConnection lc, 2:LostConnectionDuringCommit lcdc, 3:BadToken bt),
+	bool global_trunc(1:string filename, 2:string token) throws (1:LostConnection lc, 2:LostConnectionDuringCommit lcdc, 3:BadToken bt),
 
-	bool global_eof(1:string filename, 2:string token) throws (1:LostConnection lc),
-	i64 global_size(1:string filename, 2:string token) throws (1:LostConnection lc),
+	bool global_eof(1:string filename, 2:string token) throws (1:LostConnection lc, 2:LostConnectionDuringCommit lcdc, 3:BadToken bt),
+	i64 global_size(1:string filename, 2:string token) throws (1:LostConnection lc, 2:LostConnectionDuringCommit lcdc, 3:BadToken bt),
 
 	bool nop()
 }

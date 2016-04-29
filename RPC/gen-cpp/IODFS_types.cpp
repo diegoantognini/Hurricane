@@ -208,3 +208,76 @@ const char* LostConnectionDuringCommit::what() const throw() {
 }
 
 
+BadToken::~BadToken() throw() {
+}
+
+
+uint32_t BadToken::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    xfer += iprot->skip(ftype);
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t BadToken::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("BadToken");
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(BadToken &a, BadToken &b) {
+  using ::std::swap;
+  (void) a;
+  (void) b;
+}
+
+BadToken::BadToken(const BadToken& other4) : TException() {
+  (void) other4;
+}
+BadToken& BadToken::operator=(const BadToken& other5) {
+  (void) other5;
+  return *this;
+}
+void BadToken::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "BadToken(";
+  out << ")";
+}
+
+const char* BadToken::what() const throw() {
+  try {
+    std::stringstream ss;
+    ss << "TException - service has thrown: " << *this;
+    this->thriftTExceptionMessageHolder_ = ss.str();
+    return this->thriftTExceptionMessageHolder_.c_str();
+  } catch (const std::exception&) {
+    return "TException - service has thrown: BadToken";
+  }
+}
+
+

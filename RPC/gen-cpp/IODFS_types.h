@@ -23,6 +23,8 @@ class LostConnection;
 
 class LostConnectionDuringCommit;
 
+class BadToken;
+
 typedef struct _LostConnection__isset {
   _LostConnection__isset() : name_node_lost(false) {}
   bool name_node_lost :1;
@@ -114,6 +116,43 @@ class LostConnectionDuringCommit : public ::apache::thrift::TException {
 void swap(LostConnectionDuringCommit &a, LostConnectionDuringCommit &b);
 
 inline std::ostream& operator<<(std::ostream& out, const LostConnectionDuringCommit& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+
+class BadToken : public ::apache::thrift::TException {
+ public:
+
+  BadToken(const BadToken&);
+  BadToken& operator=(const BadToken&);
+  BadToken() {
+  }
+
+  virtual ~BadToken() throw();
+
+  bool operator == (const BadToken & /* rhs */) const
+  {
+    return true;
+  }
+  bool operator != (const BadToken &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const BadToken & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+  mutable std::string thriftTExceptionMessageHolder_;
+  const char* what() const throw();
+};
+
+void swap(BadToken &a, BadToken &b);
+
+inline std::ostream& operator<<(std::ostream& out, const BadToken& obj)
 {
   obj.printTo(out);
   return out;
