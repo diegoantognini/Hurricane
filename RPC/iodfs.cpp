@@ -540,8 +540,11 @@ class IODFSHandler : virtual public IODFSIf {
 
   // Close the connection with the client corresponding to the token. The token is erased.
   bool leave(const std::string& token) {
-    if (tokens.find(token) == tokens.end())
+    if (tokens.find(token) == tokens.end() || client_fills.find(token) == client_fills.end() || client_drains.find(token) == client_drains.end())
       return false;
+
+    client_drains[token]->teardown_conn();
+    client_fills[token]->teardown_conn();
 
     delete client_drains[token];
     delete client_fills[token];
@@ -555,7 +558,7 @@ class IODFSHandler : virtual public IODFSIf {
   void join(std::vector<network_interface> & _return, const std::string& name, const std::string& iface) {
 
   }
-  
+
   void add_node(const std::string& name, const std::string& iface) {
 
   }
@@ -581,9 +584,8 @@ private:
   }
 
   void helper_delete(unordered_map<string, slipstore::io*>::iterator& it) {
-    const char* filename = it->first.c_str();
     delete it->second;
-    unlink_file(((char*)filename));
+    unlink_file(((char*)it->first.c_str()));
   }
 
   void init_req() {
