@@ -554,9 +554,10 @@ void testing_local_requests(IODFSClient& client) {
 	}
 }
 
-/*void testing_deconnection_reconnection(IODFSClient& client, const std::string& token) {
-	try {
-	    bool result = false;
+bool testing_deconnection_reconnection(IODFSClient& client, const std::string& token) {
+	bool result = false;
+
+	try {    
 	    while(!result) {
 		    try {
 		    	result = client.global_create("test", token);
@@ -575,7 +576,9 @@ void testing_local_requests(IODFSClient& client) {
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
 	}
-}*/
+
+	return result;
+}
 
 void testing_global_requests(IODFSClient& client) {
 	try {
@@ -585,6 +588,7 @@ void testing_global_requests(IODFSClient& client) {
 	    do_test("test_global_create_exists_delete_size_eof_one_file", &test_global_create_exists_delete_size_eof_one_file, client, token);
 	    do_test("test_global_create_exists_delete_size_eof_two_files", &test_global_create_exists_delete_size_eof_two_files, client, token);
 	    do_test("test_global_drain_fill", &test_global_drain_fill, client, token);
+	    do_test("testing_deconnection_reconnection", &testing_deconnection_reconnection, client, token);
 	    client.leave(token);
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
@@ -604,7 +608,6 @@ int main(int argc, char **argv) {
 	transport->open();
 
 	testing_local_requests(client);
-	//testing_deconnection_reconnection(client);
 	testing_global_requests(client);
 
 	transport->close();
