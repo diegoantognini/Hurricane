@@ -529,7 +529,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // Create a connection with a client, given a generated token
   bool connect(const std::string& token) {
-    if (tokens.find(token) != tokens.end())
+    if (tokens.find(token) == tokens.end())
       return false;
 
     client_drains[token] = new slipstore::client_drain();
