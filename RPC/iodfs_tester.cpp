@@ -30,7 +30,7 @@ using std::string;
 
 
   
-bool test_local_create_exists_delete_one_file(IODFSClient& client) {
+bool test_local_create_exists_delete_one_file(IODFSClient& client, const std::string& token = "") {
 	bool result = true;
 	string file1 = "file1.txt";
 
@@ -59,7 +59,7 @@ bool test_local_create_exists_delete_one_file(IODFSClient& client) {
 	return result;
 }
 
-bool test_local_create_exists_delete_two_files(IODFSClient& client) {
+bool test_local_create_exists_delete_two_files(IODFSClient& client, const std::string& token = "") {
 	bool result = true;
 	string file1 = "file1.txt";
 	string file2 = "file2.txt";
@@ -90,7 +90,7 @@ bool test_local_create_exists_delete_two_files(IODFSClient& client) {
 	return result;
 }
 
-bool helper_test_local_drain_fill_eof_size_trunc_left(IODFSClient& client, int64_t SLIPCHUNCK, int64_t LENGTH) {
+bool helper_test_local_drain_fill_eof_size_trunc_left(IODFSClient& client, int64_t SLIPCHUNCK, int64_t LENGTH, const std::string& token = "") {
 	string filename = "testing_local_drain_fill";
 	string buffer(SLIPCHUNCK, 0);
 	string write_results;
@@ -197,7 +197,7 @@ bool helper_test_local_drain_fill_eof_size_trunc_left(IODFSClient& client, int64
 	return result;
 }
 
-bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
+bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client, const std::string& token = "") {
 	string filename = "testing_local_drain_fill";
 	unsigned long SLIPCHUNCK = 4*1024*1024; // 4 Mo
 	unsigned long LENGTH = 8*SLIPCHUNCK;
@@ -211,7 +211,7 @@ bool test_local_drain_fill_eof_size_trunc_left(IODFSClient& client) {
 	return result;
 }
 
-bool test_local_seek_and_fill(IODFSClient& client) {
+bool test_local_seek_and_fill(IODFSClient& client, const std::string& token = "") {
 	string filename = "testing_local_seek_and_fill";
 	const unsigned long SLIPCHUNCK = 4*1024; // 4 Ko
 	const unsigned long LENGTH = 32*SLIPCHUNCK;
@@ -311,118 +311,118 @@ bool test_local_seek_and_fill(IODFSClient& client) {
 
 
 
-bool test_global_create_exists_delete_size_eof_one_file(IODFSClient& client) {
+bool test_global_create_exists_delete_size_eof_one_file(IODFSClient& client, const std::string& token) {
 	bool result = true;
 	string file1 = "file1.txt";
 
 	// Non-existing file
-	result = result && !client.global_exists(file1);
-	result = result && !client.global_delete(file1);
-	result = result && (client.global_size(file1) == -1);
-	result = result && client.global_eof(file1);
+	result = result && !client.global_exists(file1, token);
+	result = result && !client.global_delete(file1, token);
+	result = result && (client.global_size(file1, token) == -1);
+	result = result && client.global_eof(file1, token);
 
 	// Creation file
-	result = result && client.global_create(file1);
-	result = result && !client.global_create(file1); 
-	result = result && (client.global_size(file1) == 0);
-	result = result && client.global_eof(file1);
+	result = result && client.global_create(file1, token);
+	result = result && !client.global_create(file1, token); 
+	result = result && (client.global_size(file1, token) == 0);
+	result = result && client.global_eof(file1, token);
 
 	// Existence
-	result = result && client.global_exists(file1);
-	result = result && (client.global_size(file1) == 0);
-	result = result && client.global_eof(file1);
+	result = result && client.global_exists(file1, token);
+	result = result && (client.global_size(file1, token) == 0);
+	result = result && client.global_eof(file1, token);
 
 	// Deletion file
-	result = result && client.global_delete(file1);
-	result = result && (client.global_size(file1) == -1);
-	result = result && !client.global_delete(file1);
-	result = result && !client.global_exists(file1);
-	result = result && (client.global_size(file1) == -1);
-	result = result && client.global_eof(file1);
+	result = result && client.global_delete(file1, token);
+	result = result && (client.global_size(file1, token) == -1);
+	result = result && !client.global_delete(file1, token);
+	result = result && !client.global_exists(file1, token);
+	result = result && (client.global_size(file1, token) == -1);
+	result = result && client.global_eof(file1, token);
 
 	// Recreation file
-	result = result && client.global_create(file1);
-	result = result && client.global_exists(file1);
-	result = result && (client.global_size(file1) == 0);
-	result = result && client.global_eof(file1);
+	result = result && client.global_create(file1, token);
+	result = result && client.global_exists(file1, token);
+	result = result && (client.global_size(file1, token) == 0);
+	result = result && client.global_eof(file1, token);
 
-	result = result && client.global_delete(file1);
-	result = result && (client.global_size(file1) == -1);
-	result = result && client.global_eof(file1);
+	result = result && client.global_delete(file1, token);
+	result = result && (client.global_size(file1, token) == -1);
+	result = result && client.global_eof(file1, token);
 
 	return result;
 }
 
-bool test_global_create_exists_delete_size_eof_two_files(IODFSClient& client) {
+bool test_global_create_exists_delete_size_eof_two_files(IODFSClient& client, const std::string& token) {
 	bool result = true;
 	string file1 = "file1.txt";
 	string file2 = "file2.txt";
 
 	// Creation file1
-	result = result && client.global_create(file1);
-	result = result && !client.global_create(file1); 
-	result = result && (client.global_size(file1) == 0);
-	result = result && (client.global_size(file2) == -1);
-	result = result && client.global_eof(file1);
-	result = result && client.global_eof(file2);
+	result = result && client.global_create(file1, token);
+	result = result && !client.global_create(file1, token); 
+	result = result && (client.global_size(file1, token) == 0);
+	result = result && (client.global_size(file2, token) == -1);
+	result = result && client.global_eof(file1, token);
+	result = result && client.global_eof(file2, token);
 
 	// Existence
-	result = result && client.global_exists(file1);
-	result = result && !client.global_exists(file2);
-	result = result && (client.global_size(file1) == 0);
-	result = result && (client.global_size(file2) == -1);
-	result = result && client.global_eof(file1);
-	result = result && client.global_eof(file2);
+	result = result && client.global_exists(file1, token);
+	result = result && !client.global_exists(file2, token);
+	result = result && (client.global_size(file1, token) == 0);
+	result = result && (client.global_size(file2, token) == -1);
+	result = result && client.global_eof(file1, token);
+	result = result && client.global_eof(file2, token);
 
 	// Creation file2
-	result = result && client.global_create(file2);
-	result = result && client.global_exists(file1);
-	result = result && client.global_exists(file2);
-	result = result && (client.global_size(file1) == 0);
-	result = result && (client.global_size(file2) == 0);
-	result = result && client.global_eof(file1);
-	result = result && client.global_eof(file2);
+	result = result && client.global_create(file2, token);
+	result = result && client.global_exists(file1, token);
+	result = result && client.global_exists(file2, token);
+	result = result && (client.global_size(file1, token) == 0);
+	result = result && (client.global_size(file2, token) == 0);
+	result = result && client.global_eof(file1, token);
+	result = result && client.global_eof(file2, token);
 
 	// Deletion file1
-	result = result && client.global_delete(file1);
-	result = result && !client.global_delete(file1);
-	result = result && !client.global_exists(file1);
-	result = result && client.global_exists(file2);
-	result = result && (client.global_size(file1) == -1);
-	result = result && (client.global_size(file2) == 0);
-	result = result && client.global_eof(file1);
-	result = result && client.global_eof(file2);
+	result = result && client.global_delete(file1, token);
+	result = result && !client.global_delete(file1, token);
+	result = result && !client.global_exists(file1, token);
+	result = result && client.global_exists(file2, token);
+	result = result && (client.global_size(file1, token) == -1);
+	result = result && (client.global_size(file2, token) == 0);
+	result = result && client.global_eof(file1, token);
+	result = result && client.global_eof(file2, token);
 
 	// Deletion file2
-	result = result && client.global_delete(file2);
-	result = result && !client.global_delete(file2);
-	result = result && (client.global_size(file1) == -1);
-	result = result && (client.global_size(file2) == -1);
-	result = result && client.global_eof(file1);
-	result = result && client.global_eof(file2);
+	result = result && client.global_delete(file2, token);
+	result = result && !client.global_delete(file2, token);
+	result = result && (client.global_size(file1, token) == -1);
+	result = result && (client.global_size(file2, token) == -1);
+	result = result && client.global_eof(file1, token);
+	result = result && client.global_eof(file2, token);
 
 	return result;
 }
 
-bool helper_test_global_drain_fill(IODFSClient& client, unsigned long SLIPCHUNCK, int64_t LENGTH, int64_t LENGTH2) {
+bool helper_test_global_drain_fill(IODFSClient& client, unsigned long SLIPCHUNCK, int64_t LENGTH, int64_t LENGTH2, const std::string& token) {
 	string filename = "testing_global_drain_fill";
 	string buffer(LENGTH, 0);
 	bool result = true;
 
 	//Basic empty tests
-	result = result && !client.global_drain(filename, buffer);
+	result = result && !client.global_drain(filename, buffer, token);
 	string dummy_buffer;
-	client.global_fill(dummy_buffer, filename, LENGTH);
+	client.global_fill(dummy_buffer, filename, LENGTH, token);
 	result = result && dummy_buffer.size() == 0;
-	result = result && (client.global_size(filename) == -1);
-	result = result && client.global_eof(filename);
-	result = result && !client.global_rewind(filename);
+	result = result && (client.global_size(filename, token) == -1);
+	result = result && client.global_eof(filename, token);
+	result = result && !client.global_rewind(filename, token);
 
-	result = result && client.global_create(filename);
-	result = result && client.global_exists(filename);
+	result = result && client.global_create(filename, token);
+	result = result && client.global_exists(filename, token);
 	
 	// Size
-	result = result && (client.global_size(filename) == 0);
+	result = result && (client.global_size(filename, token) == 0);
 
 	// Drain
 	char var = 0;
@@ -431,22 +431,22 @@ bool helper_test_global_drain_fill(IODFSClient& client, unsigned long SLIPCHUNCK
 		buffer[i] = var;
 	}
 
-	result = result && client.global_drain(filename, buffer);
+	result = result && client.global_drain(filename, buffer, token);
 
 	usleep(5*1000*1000); // As a "cyclic barrier"
 
-	result = result && (client.global_size(filename) == LENGTH);
+	result = result && (client.global_size(filename, token) == LENGTH);
 
 	// Fill all the file
-	result = result && client.global_rewind(filename);
-	result = result && (client.global_size(filename) == LENGTH);
+	result = result && client.global_rewind(filename, token);
+	result = result && (client.global_size(filename, token) == LENGTH);
 	
 	std::string read_buffer(LENGTH2, 0);
-	client.global_fill(read_buffer, filename, LENGTH2);
+	client.global_fill(read_buffer, filename, LENGTH2, token);
 
 	result = result && (LENGTH == ((int64_t) read_buffer.size()));
-	result = result && (client.global_size(filename) == LENGTH);
-	result = result && client.global_eof(filename);
+	result = result && (client.global_size(filename, token) == LENGTH);
+	result = result && client.global_eof(filename, token);
 
 	std::sort(read_buffer.begin(), read_buffer.end());
 	std::string buffer_old(buffer);
@@ -455,23 +455,23 @@ bool helper_test_global_drain_fill(IODFSClient& client, unsigned long SLIPCHUNCK
 	result = result && (read_buffer == buffer);
 
 	// Trunc
-	result = result && client.global_trunc(filename);
+	result = result && client.global_trunc(filename, token);
 
-	result = result && client.global_size(filename) == 0;
+	result = result && client.global_size(filename, token) == 0;
 
 	// Delete
-	result = result && client.global_delete(filename);
+	result = result && client.global_delete(filename, token);
 
 	return result;
 }
 
-bool helper_chunk_test_global_drain_fill(IODFSClient& client, unsigned long SLIPCHUNCK, int64_t LENGTH, int64_t LENGTH2) {
+bool helper_chunk_test_global_drain_fill(IODFSClient& client, unsigned long SLIPCHUNCK, int64_t LENGTH, int64_t LENGTH2, const std::string& token) {
 	string filename = "testing_global_drain_fill";
 	string buffer(LENGTH, 0);
 	bool result = true;
 	
-	result = result && client.global_create(filename);
-	result = result && client.global_exists(filename);
+	result = result && client.global_create(filename, token);
+	result = result && client.global_exists(filename, token);
 
 	// Drain
 	char var = 0;
@@ -480,24 +480,24 @@ bool helper_chunk_test_global_drain_fill(IODFSClient& client, unsigned long SLIP
 		buffer[i] = var;
 	}
 
-	result = result && client.global_drain(filename, buffer);
+	result = result && client.global_drain(filename, buffer, token);
 
 	usleep(5*1000*1000); // As a "cyclic barrier"
 
-	result = result && (client.global_size(filename) == LENGTH);
+	result = result && (client.global_size(filename, token) == LENGTH);
 
 	// Fill only a part of the file
-	result = result && client.global_rewind(filename);
-	result = result && (client.global_size(filename) == LENGTH);
+	result = result && client.global_rewind(filename, token);
+	result = result && (client.global_size(filename, token) == LENGTH);
 
 	std::string res = "";
 	std::string read_buffer(LENGTH2, 0);
 	do{
-		client.global_fill(read_buffer, filename, LENGTH2);
+		client.global_fill(read_buffer, filename, LENGTH2, token);
 		res += read_buffer;
 
 		result = result && (LENGTH2 == ((int64_t) read_buffer.size()));
-		result = result && (client.global_size(filename) == LENGTH);
+		result = result && (client.global_size(filename, token) == LENGTH);
 	}while(res.size() != buffer.size());
 
 	std::sort(res.begin(), res.end());
@@ -506,41 +506,41 @@ bool helper_chunk_test_global_drain_fill(IODFSClient& client, unsigned long SLIP
 	result = result && (res == buffer);
 	
 	// Trunc
-	result = result && client.global_trunc(filename);
+	result = result && client.global_trunc(filename, token);
 
-	result = result && client.global_size(filename) == 0;
+	result = result && client.global_size(filename, token) == 0;
 
 	// Delete
-	result = result && client.global_delete(filename);
+	result = result && client.global_delete(filename, token);
 
 	return result;
 }
 
-bool test_global_drain_fill(IODFSClient& client) {
+bool test_global_drain_fill(IODFSClient& client, const std::string& token) {
 	bool result = true;
 	
 	// first case, we read all the file which is a multiple of slipchunk
 	int64_t SLIPCHUNCK = 4*1024*1024; // 4 Mb
 	int64_t LENGTH = 32*SLIPCHUNCK;
 	int64_t LENGTH2 = LENGTH;
-	result = result && helper_test_global_drain_fill(client, SLIPCHUNCK, LENGTH, LENGTH2);
+	result = result && helper_test_global_drain_fill(client, SLIPCHUNCK, LENGTH, LENGTH2, token);
 	
 	// second case : we write an non-multiple of slipchunk and want to read the whole file (the length must be a multiple of slipchunk, but the buffer will be smaller at the end)	
 	LENGTH = 133*1024*1024;
 	LENGTH2 = 140*1024*1024; //Read more than our 135Mb
-	result = result && helper_test_global_drain_fill(client, SLIPCHUNCK, LENGTH, LENGTH2);
+	result = result && helper_test_global_drain_fill(client, SLIPCHUNCK, LENGTH, LENGTH2, token);
 	
 	// third case : same as first but only a chunk
 	LENGTH = 32*SLIPCHUNCK;
 	LENGTH2 = 4*SLIPCHUNCK;
-	result = result && helper_chunk_test_global_drain_fill(client, SLIPCHUNCK, LENGTH, LENGTH2);
+	result = result && helper_chunk_test_global_drain_fill(client, SLIPCHUNCK, LENGTH, LENGTH2, token);
 	
 	return result;
 }
 
-void do_test(const char* name, bool (*fct)(IODFSClient&), IODFSClient& client) {
+void do_test(const char* name, bool (*fct)(IODFSClient&, const std::string&), IODFSClient& client, const std::string& token = "") {
 	cout << name << " : ";
-	cout << " -> " << (fct(client) ? "PASSED" : "FAILED") << endl;
+	cout << " -> " << (fct(client, token) ? "PASSED" : "FAILED") << endl;
 }
 
 void testing_local_requests(IODFSClient& client) {
@@ -554,12 +554,12 @@ void testing_local_requests(IODFSClient& client) {
 	}
 }
 
-void testing_deconnection_reconnection(IODFSClient& client) {
+/*void testing_deconnection_reconnection(IODFSClient& client, const std::string& token) {
 	try {
 	    bool result = false;
 	    while(!result) {
 		    try {
-		    	result = client.global_create("test");
+		    	result = client.global_create("test", token);
 		    	//You should deconnect a machine right know
 		    	int a = 0;
 		    	for(int i = 0; i < 1000000000; ++i) {
@@ -571,17 +571,21 @@ void testing_deconnection_reconnection(IODFSClient& client) {
 		    	cout << "INCONSISTENCE STATE : Lost connection with : " << lcdc.name_node_lost << " DURING COMMIT PHASE!" << endl;
 		    }
 		}
-		result = client.global_delete("test");
+		result = client.global_delete("test", token);
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
 	}
-}
+}*/
 
 void testing_global_requests(IODFSClient& client) {
 	try {
-	    do_test("test_global_create_exists_delete_size_eof_one_file", &test_global_create_exists_delete_size_eof_one_file, client);
-	    do_test("test_global_create_exists_delete_size_eof_two_files", &test_global_create_exists_delete_size_eof_two_files, client);
-	    do_test("test_global_drain_fill", &test_global_drain_fill, client);
+		std::string token = "";
+		client.generate_token(token);
+		client.connect(token);
+	    do_test("test_global_create_exists_delete_size_eof_one_file", &test_global_create_exists_delete_size_eof_one_file, client, token);
+	    do_test("test_global_create_exists_delete_size_eof_two_files", &test_global_create_exists_delete_size_eof_two_files, client, token);
+	    do_test("test_global_drain_fill", &test_global_drain_fill, client, token);
+	    client.leave(token);
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
 	}
@@ -600,7 +604,7 @@ int main(int argc, char **argv) {
 	transport->open();
 
 	testing_local_requests(client);
-	testing_deconnection_reconnection(client);
+	//testing_deconnection_reconnection(client);
 	testing_global_requests(client);
 
 	transport->close();

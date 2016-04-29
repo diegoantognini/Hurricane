@@ -32,15 +32,18 @@ class IODFSIf {
   virtual bool local_eof(const std::string& filename) = 0;
   virtual int64_t local_size(const std::string& filename) = 0;
   virtual int64_t local_left(const std::string& filename) = 0;
-  virtual bool global_create(const std::string& filename) = 0;
-  virtual bool global_exists(const std::string& filename) = 0;
-  virtual bool global_delete(const std::string& filename) = 0;
-  virtual void global_fill(std::string& _return, const std::string& filename, const int64_t size) = 0;
-  virtual bool global_drain(const std::string& filename, const std::string& buffer) = 0;
-  virtual bool global_rewind(const std::string& filename) = 0;
-  virtual bool global_trunc(const std::string& filename) = 0;
-  virtual bool global_eof(const std::string& filename) = 0;
-  virtual int64_t global_size(const std::string& filename) = 0;
+  virtual void generate_token(std::string& _return) = 0;
+  virtual bool connect(const std::string& token) = 0;
+  virtual bool leave(const std::string& token) = 0;
+  virtual bool global_create(const std::string& filename, const std::string& token) = 0;
+  virtual bool global_exists(const std::string& filename, const std::string& token) = 0;
+  virtual bool global_delete(const std::string& filename, const std::string& token) = 0;
+  virtual void global_fill(std::string& _return, const std::string& filename, const int64_t size, const std::string& token) = 0;
+  virtual bool global_drain(const std::string& filename, const std::string& buffer, const std::string& token) = 0;
+  virtual bool global_rewind(const std::string& filename, const std::string& token) = 0;
+  virtual bool global_trunc(const std::string& filename, const std::string& token) = 0;
+  virtual bool global_eof(const std::string& filename, const std::string& token) = 0;
+  virtual int64_t global_size(const std::string& filename, const std::string& token) = 0;
   virtual bool nop() = 0;
 };
 
@@ -113,38 +116,49 @@ class IODFSNull : virtual public IODFSIf {
     int64_t _return = 0;
     return _return;
   }
-  bool global_create(const std::string& /* filename */) {
-    bool _return = false;
-    return _return;
-  }
-  bool global_exists(const std::string& /* filename */) {
-    bool _return = false;
-    return _return;
-  }
-  bool global_delete(const std::string& /* filename */) {
-    bool _return = false;
-    return _return;
-  }
-  void global_fill(std::string& /* _return */, const std::string& /* filename */, const int64_t /* size */) {
+  void generate_token(std::string& /* _return */) {
     return;
   }
-  bool global_drain(const std::string& /* filename */, const std::string& /* buffer */) {
+  bool connect(const std::string& /* token */) {
     bool _return = false;
     return _return;
   }
-  bool global_rewind(const std::string& /* filename */) {
+  bool leave(const std::string& /* token */) {
     bool _return = false;
     return _return;
   }
-  bool global_trunc(const std::string& /* filename */) {
+  bool global_create(const std::string& /* filename */, const std::string& /* token */) {
     bool _return = false;
     return _return;
   }
-  bool global_eof(const std::string& /* filename */) {
+  bool global_exists(const std::string& /* filename */, const std::string& /* token */) {
     bool _return = false;
     return _return;
   }
-  int64_t global_size(const std::string& /* filename */) {
+  bool global_delete(const std::string& /* filename */, const std::string& /* token */) {
+    bool _return = false;
+    return _return;
+  }
+  void global_fill(std::string& /* _return */, const std::string& /* filename */, const int64_t /* size */, const std::string& /* token */) {
+    return;
+  }
+  bool global_drain(const std::string& /* filename */, const std::string& /* buffer */, const std::string& /* token */) {
+    bool _return = false;
+    return _return;
+  }
+  bool global_rewind(const std::string& /* filename */, const std::string& /* token */) {
+    bool _return = false;
+    return _return;
+  }
+  bool global_trunc(const std::string& /* filename */, const std::string& /* token */) {
+    bool _return = false;
+    return _return;
+  }
+  bool global_eof(const std::string& /* filename */, const std::string& /* token */) {
+    bool _return = false;
+    return _return;
+  }
+  int64_t global_size(const std::string& /* filename */, const std::string& /* token */) {
     int64_t _return = 0;
     return _return;
   }
@@ -1326,9 +1340,310 @@ class IODFS_local_left_presult {
 
 };
 
+
+class IODFS_generate_token_args {
+ public:
+
+  IODFS_generate_token_args(const IODFS_generate_token_args&);
+  IODFS_generate_token_args& operator=(const IODFS_generate_token_args&);
+  IODFS_generate_token_args() {
+  }
+
+  virtual ~IODFS_generate_token_args() throw();
+
+  bool operator == (const IODFS_generate_token_args & /* rhs */) const
+  {
+    return true;
+  }
+  bool operator != (const IODFS_generate_token_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const IODFS_generate_token_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class IODFS_generate_token_pargs {
+ public:
+
+
+  virtual ~IODFS_generate_token_pargs() throw();
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _IODFS_generate_token_result__isset {
+  _IODFS_generate_token_result__isset() : success(false) {}
+  bool success :1;
+} _IODFS_generate_token_result__isset;
+
+class IODFS_generate_token_result {
+ public:
+
+  IODFS_generate_token_result(const IODFS_generate_token_result&);
+  IODFS_generate_token_result& operator=(const IODFS_generate_token_result&);
+  IODFS_generate_token_result() : success() {
+  }
+
+  virtual ~IODFS_generate_token_result() throw();
+  std::string success;
+
+  _IODFS_generate_token_result__isset __isset;
+
+  void __set_success(const std::string& val);
+
+  bool operator == (const IODFS_generate_token_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const IODFS_generate_token_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const IODFS_generate_token_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _IODFS_generate_token_presult__isset {
+  _IODFS_generate_token_presult__isset() : success(false) {}
+  bool success :1;
+} _IODFS_generate_token_presult__isset;
+
+class IODFS_generate_token_presult {
+ public:
+
+
+  virtual ~IODFS_generate_token_presult() throw();
+  std::string* success;
+
+  _IODFS_generate_token_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _IODFS_connect_args__isset {
+  _IODFS_connect_args__isset() : token(false) {}
+  bool token :1;
+} _IODFS_connect_args__isset;
+
+class IODFS_connect_args {
+ public:
+
+  IODFS_connect_args(const IODFS_connect_args&);
+  IODFS_connect_args& operator=(const IODFS_connect_args&);
+  IODFS_connect_args() : token() {
+  }
+
+  virtual ~IODFS_connect_args() throw();
+  std::string token;
+
+  _IODFS_connect_args__isset __isset;
+
+  void __set_token(const std::string& val);
+
+  bool operator == (const IODFS_connect_args & rhs) const
+  {
+    if (!(token == rhs.token))
+      return false;
+    return true;
+  }
+  bool operator != (const IODFS_connect_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const IODFS_connect_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class IODFS_connect_pargs {
+ public:
+
+
+  virtual ~IODFS_connect_pargs() throw();
+  const std::string* token;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _IODFS_connect_result__isset {
+  _IODFS_connect_result__isset() : success(false) {}
+  bool success :1;
+} _IODFS_connect_result__isset;
+
+class IODFS_connect_result {
+ public:
+
+  IODFS_connect_result(const IODFS_connect_result&);
+  IODFS_connect_result& operator=(const IODFS_connect_result&);
+  IODFS_connect_result() : success(0) {
+  }
+
+  virtual ~IODFS_connect_result() throw();
+  bool success;
+
+  _IODFS_connect_result__isset __isset;
+
+  void __set_success(const bool val);
+
+  bool operator == (const IODFS_connect_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const IODFS_connect_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const IODFS_connect_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _IODFS_connect_presult__isset {
+  _IODFS_connect_presult__isset() : success(false) {}
+  bool success :1;
+} _IODFS_connect_presult__isset;
+
+class IODFS_connect_presult {
+ public:
+
+
+  virtual ~IODFS_connect_presult() throw();
+  bool* success;
+
+  _IODFS_connect_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _IODFS_leave_args__isset {
+  _IODFS_leave_args__isset() : token(false) {}
+  bool token :1;
+} _IODFS_leave_args__isset;
+
+class IODFS_leave_args {
+ public:
+
+  IODFS_leave_args(const IODFS_leave_args&);
+  IODFS_leave_args& operator=(const IODFS_leave_args&);
+  IODFS_leave_args() : token() {
+  }
+
+  virtual ~IODFS_leave_args() throw();
+  std::string token;
+
+  _IODFS_leave_args__isset __isset;
+
+  void __set_token(const std::string& val);
+
+  bool operator == (const IODFS_leave_args & rhs) const
+  {
+    if (!(token == rhs.token))
+      return false;
+    return true;
+  }
+  bool operator != (const IODFS_leave_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const IODFS_leave_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class IODFS_leave_pargs {
+ public:
+
+
+  virtual ~IODFS_leave_pargs() throw();
+  const std::string* token;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _IODFS_leave_result__isset {
+  _IODFS_leave_result__isset() : success(false) {}
+  bool success :1;
+} _IODFS_leave_result__isset;
+
+class IODFS_leave_result {
+ public:
+
+  IODFS_leave_result(const IODFS_leave_result&);
+  IODFS_leave_result& operator=(const IODFS_leave_result&);
+  IODFS_leave_result() : success(0) {
+  }
+
+  virtual ~IODFS_leave_result() throw();
+  bool success;
+
+  _IODFS_leave_result__isset __isset;
+
+  void __set_success(const bool val);
+
+  bool operator == (const IODFS_leave_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const IODFS_leave_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const IODFS_leave_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _IODFS_leave_presult__isset {
+  _IODFS_leave_presult__isset() : success(false) {}
+  bool success :1;
+} _IODFS_leave_presult__isset;
+
+class IODFS_leave_presult {
+ public:
+
+
+  virtual ~IODFS_leave_presult() throw();
+  bool* success;
+
+  _IODFS_leave_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _IODFS_global_create_args__isset {
-  _IODFS_global_create_args__isset() : filename(false) {}
+  _IODFS_global_create_args__isset() : filename(false), token(false) {}
   bool filename :1;
+  bool token :1;
 } _IODFS_global_create_args__isset;
 
 class IODFS_global_create_args {
@@ -1336,19 +1651,24 @@ class IODFS_global_create_args {
 
   IODFS_global_create_args(const IODFS_global_create_args&);
   IODFS_global_create_args& operator=(const IODFS_global_create_args&);
-  IODFS_global_create_args() : filename() {
+  IODFS_global_create_args() : filename(), token() {
   }
 
   virtual ~IODFS_global_create_args() throw();
   std::string filename;
+  std::string token;
 
   _IODFS_global_create_args__isset __isset;
 
   void __set_filename(const std::string& val);
 
+  void __set_token(const std::string& val);
+
   bool operator == (const IODFS_global_create_args & rhs) const
   {
     if (!(filename == rhs.filename))
+      return false;
+    if (!(token == rhs.token))
       return false;
     return true;
   }
@@ -1370,6 +1690,7 @@ class IODFS_global_create_pargs {
 
   virtual ~IODFS_global_create_pargs() throw();
   const std::string* filename;
+  const std::string* token;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -1439,8 +1760,9 @@ class IODFS_global_create_presult {
 };
 
 typedef struct _IODFS_global_exists_args__isset {
-  _IODFS_global_exists_args__isset() : filename(false) {}
+  _IODFS_global_exists_args__isset() : filename(false), token(false) {}
   bool filename :1;
+  bool token :1;
 } _IODFS_global_exists_args__isset;
 
 class IODFS_global_exists_args {
@@ -1448,19 +1770,24 @@ class IODFS_global_exists_args {
 
   IODFS_global_exists_args(const IODFS_global_exists_args&);
   IODFS_global_exists_args& operator=(const IODFS_global_exists_args&);
-  IODFS_global_exists_args() : filename() {
+  IODFS_global_exists_args() : filename(), token() {
   }
 
   virtual ~IODFS_global_exists_args() throw();
   std::string filename;
+  std::string token;
 
   _IODFS_global_exists_args__isset __isset;
 
   void __set_filename(const std::string& val);
 
+  void __set_token(const std::string& val);
+
   bool operator == (const IODFS_global_exists_args & rhs) const
   {
     if (!(filename == rhs.filename))
+      return false;
+    if (!(token == rhs.token))
       return false;
     return true;
   }
@@ -1482,6 +1809,7 @@ class IODFS_global_exists_pargs {
 
   virtual ~IODFS_global_exists_pargs() throw();
   const std::string* filename;
+  const std::string* token;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -1551,8 +1879,9 @@ class IODFS_global_exists_presult {
 };
 
 typedef struct _IODFS_global_delete_args__isset {
-  _IODFS_global_delete_args__isset() : filename(false) {}
+  _IODFS_global_delete_args__isset() : filename(false), token(false) {}
   bool filename :1;
+  bool token :1;
 } _IODFS_global_delete_args__isset;
 
 class IODFS_global_delete_args {
@@ -1560,19 +1889,24 @@ class IODFS_global_delete_args {
 
   IODFS_global_delete_args(const IODFS_global_delete_args&);
   IODFS_global_delete_args& operator=(const IODFS_global_delete_args&);
-  IODFS_global_delete_args() : filename() {
+  IODFS_global_delete_args() : filename(), token() {
   }
 
   virtual ~IODFS_global_delete_args() throw();
   std::string filename;
+  std::string token;
 
   _IODFS_global_delete_args__isset __isset;
 
   void __set_filename(const std::string& val);
 
+  void __set_token(const std::string& val);
+
   bool operator == (const IODFS_global_delete_args & rhs) const
   {
     if (!(filename == rhs.filename))
+      return false;
+    if (!(token == rhs.token))
       return false;
     return true;
   }
@@ -1594,6 +1928,7 @@ class IODFS_global_delete_pargs {
 
   virtual ~IODFS_global_delete_pargs() throw();
   const std::string* filename;
+  const std::string* token;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -1663,9 +1998,10 @@ class IODFS_global_delete_presult {
 };
 
 typedef struct _IODFS_global_fill_args__isset {
-  _IODFS_global_fill_args__isset() : filename(false), size(false) {}
+  _IODFS_global_fill_args__isset() : filename(false), size(false), token(false) {}
   bool filename :1;
   bool size :1;
+  bool token :1;
 } _IODFS_global_fill_args__isset;
 
 class IODFS_global_fill_args {
@@ -1673,12 +2009,13 @@ class IODFS_global_fill_args {
 
   IODFS_global_fill_args(const IODFS_global_fill_args&);
   IODFS_global_fill_args& operator=(const IODFS_global_fill_args&);
-  IODFS_global_fill_args() : filename(), size(0) {
+  IODFS_global_fill_args() : filename(), size(0), token() {
   }
 
   virtual ~IODFS_global_fill_args() throw();
   std::string filename;
   int64_t size;
+  std::string token;
 
   _IODFS_global_fill_args__isset __isset;
 
@@ -1686,11 +2023,15 @@ class IODFS_global_fill_args {
 
   void __set_size(const int64_t val);
 
+  void __set_token(const std::string& val);
+
   bool operator == (const IODFS_global_fill_args & rhs) const
   {
     if (!(filename == rhs.filename))
       return false;
     if (!(size == rhs.size))
+      return false;
+    if (!(token == rhs.token))
       return false;
     return true;
   }
@@ -1713,6 +2054,7 @@ class IODFS_global_fill_pargs {
   virtual ~IODFS_global_fill_pargs() throw();
   const std::string* filename;
   const int64_t* size;
+  const std::string* token;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -1782,9 +2124,10 @@ class IODFS_global_fill_presult {
 };
 
 typedef struct _IODFS_global_drain_args__isset {
-  _IODFS_global_drain_args__isset() : filename(false), buffer(false) {}
+  _IODFS_global_drain_args__isset() : filename(false), buffer(false), token(false) {}
   bool filename :1;
   bool buffer :1;
+  bool token :1;
 } _IODFS_global_drain_args__isset;
 
 class IODFS_global_drain_args {
@@ -1792,12 +2135,13 @@ class IODFS_global_drain_args {
 
   IODFS_global_drain_args(const IODFS_global_drain_args&);
   IODFS_global_drain_args& operator=(const IODFS_global_drain_args&);
-  IODFS_global_drain_args() : filename(), buffer() {
+  IODFS_global_drain_args() : filename(), buffer(), token() {
   }
 
   virtual ~IODFS_global_drain_args() throw();
   std::string filename;
   std::string buffer;
+  std::string token;
 
   _IODFS_global_drain_args__isset __isset;
 
@@ -1805,11 +2149,15 @@ class IODFS_global_drain_args {
 
   void __set_buffer(const std::string& val);
 
+  void __set_token(const std::string& val);
+
   bool operator == (const IODFS_global_drain_args & rhs) const
   {
     if (!(filename == rhs.filename))
       return false;
     if (!(buffer == rhs.buffer))
+      return false;
+    if (!(token == rhs.token))
       return false;
     return true;
   }
@@ -1832,6 +2180,7 @@ class IODFS_global_drain_pargs {
   virtual ~IODFS_global_drain_pargs() throw();
   const std::string* filename;
   const std::string* buffer;
+  const std::string* token;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -1901,8 +2250,9 @@ class IODFS_global_drain_presult {
 };
 
 typedef struct _IODFS_global_rewind_args__isset {
-  _IODFS_global_rewind_args__isset() : filename(false) {}
+  _IODFS_global_rewind_args__isset() : filename(false), token(false) {}
   bool filename :1;
+  bool token :1;
 } _IODFS_global_rewind_args__isset;
 
 class IODFS_global_rewind_args {
@@ -1910,19 +2260,24 @@ class IODFS_global_rewind_args {
 
   IODFS_global_rewind_args(const IODFS_global_rewind_args&);
   IODFS_global_rewind_args& operator=(const IODFS_global_rewind_args&);
-  IODFS_global_rewind_args() : filename() {
+  IODFS_global_rewind_args() : filename(), token() {
   }
 
   virtual ~IODFS_global_rewind_args() throw();
   std::string filename;
+  std::string token;
 
   _IODFS_global_rewind_args__isset __isset;
 
   void __set_filename(const std::string& val);
 
+  void __set_token(const std::string& val);
+
   bool operator == (const IODFS_global_rewind_args & rhs) const
   {
     if (!(filename == rhs.filename))
+      return false;
+    if (!(token == rhs.token))
       return false;
     return true;
   }
@@ -1944,6 +2299,7 @@ class IODFS_global_rewind_pargs {
 
   virtual ~IODFS_global_rewind_pargs() throw();
   const std::string* filename;
+  const std::string* token;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2013,8 +2369,9 @@ class IODFS_global_rewind_presult {
 };
 
 typedef struct _IODFS_global_trunc_args__isset {
-  _IODFS_global_trunc_args__isset() : filename(false) {}
+  _IODFS_global_trunc_args__isset() : filename(false), token(false) {}
   bool filename :1;
+  bool token :1;
 } _IODFS_global_trunc_args__isset;
 
 class IODFS_global_trunc_args {
@@ -2022,19 +2379,24 @@ class IODFS_global_trunc_args {
 
   IODFS_global_trunc_args(const IODFS_global_trunc_args&);
   IODFS_global_trunc_args& operator=(const IODFS_global_trunc_args&);
-  IODFS_global_trunc_args() : filename() {
+  IODFS_global_trunc_args() : filename(), token() {
   }
 
   virtual ~IODFS_global_trunc_args() throw();
   std::string filename;
+  std::string token;
 
   _IODFS_global_trunc_args__isset __isset;
 
   void __set_filename(const std::string& val);
 
+  void __set_token(const std::string& val);
+
   bool operator == (const IODFS_global_trunc_args & rhs) const
   {
     if (!(filename == rhs.filename))
+      return false;
+    if (!(token == rhs.token))
       return false;
     return true;
   }
@@ -2056,6 +2418,7 @@ class IODFS_global_trunc_pargs {
 
   virtual ~IODFS_global_trunc_pargs() throw();
   const std::string* filename;
+  const std::string* token;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2125,8 +2488,9 @@ class IODFS_global_trunc_presult {
 };
 
 typedef struct _IODFS_global_eof_args__isset {
-  _IODFS_global_eof_args__isset() : filename(false) {}
+  _IODFS_global_eof_args__isset() : filename(false), token(false) {}
   bool filename :1;
+  bool token :1;
 } _IODFS_global_eof_args__isset;
 
 class IODFS_global_eof_args {
@@ -2134,19 +2498,24 @@ class IODFS_global_eof_args {
 
   IODFS_global_eof_args(const IODFS_global_eof_args&);
   IODFS_global_eof_args& operator=(const IODFS_global_eof_args&);
-  IODFS_global_eof_args() : filename() {
+  IODFS_global_eof_args() : filename(), token() {
   }
 
   virtual ~IODFS_global_eof_args() throw();
   std::string filename;
+  std::string token;
 
   _IODFS_global_eof_args__isset __isset;
 
   void __set_filename(const std::string& val);
 
+  void __set_token(const std::string& val);
+
   bool operator == (const IODFS_global_eof_args & rhs) const
   {
     if (!(filename == rhs.filename))
+      return false;
+    if (!(token == rhs.token))
       return false;
     return true;
   }
@@ -2168,6 +2537,7 @@ class IODFS_global_eof_pargs {
 
   virtual ~IODFS_global_eof_pargs() throw();
   const std::string* filename;
+  const std::string* token;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2237,8 +2607,9 @@ class IODFS_global_eof_presult {
 };
 
 typedef struct _IODFS_global_size_args__isset {
-  _IODFS_global_size_args__isset() : filename(false) {}
+  _IODFS_global_size_args__isset() : filename(false), token(false) {}
   bool filename :1;
+  bool token :1;
 } _IODFS_global_size_args__isset;
 
 class IODFS_global_size_args {
@@ -2246,19 +2617,24 @@ class IODFS_global_size_args {
 
   IODFS_global_size_args(const IODFS_global_size_args&);
   IODFS_global_size_args& operator=(const IODFS_global_size_args&);
-  IODFS_global_size_args() : filename() {
+  IODFS_global_size_args() : filename(), token() {
   }
 
   virtual ~IODFS_global_size_args() throw();
   std::string filename;
+  std::string token;
 
   _IODFS_global_size_args__isset __isset;
 
   void __set_filename(const std::string& val);
 
+  void __set_token(const std::string& val);
+
   bool operator == (const IODFS_global_size_args & rhs) const
   {
     if (!(filename == rhs.filename))
+      return false;
+    if (!(token == rhs.token))
       return false;
     return true;
   }
@@ -2280,6 +2656,7 @@ class IODFS_global_size_pargs {
 
   virtual ~IODFS_global_size_pargs() throw();
   const std::string* filename;
+  const std::string* token;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2498,32 +2875,41 @@ class IODFSClient : virtual public IODFSIf {
   int64_t local_left(const std::string& filename);
   void send_local_left(const std::string& filename);
   int64_t recv_local_left();
-  bool global_create(const std::string& filename);
-  void send_global_create(const std::string& filename);
+  void generate_token(std::string& _return);
+  void send_generate_token();
+  void recv_generate_token(std::string& _return);
+  bool connect(const std::string& token);
+  void send_connect(const std::string& token);
+  bool recv_connect();
+  bool leave(const std::string& token);
+  void send_leave(const std::string& token);
+  bool recv_leave();
+  bool global_create(const std::string& filename, const std::string& token);
+  void send_global_create(const std::string& filename, const std::string& token);
   bool recv_global_create();
-  bool global_exists(const std::string& filename);
-  void send_global_exists(const std::string& filename);
+  bool global_exists(const std::string& filename, const std::string& token);
+  void send_global_exists(const std::string& filename, const std::string& token);
   bool recv_global_exists();
-  bool global_delete(const std::string& filename);
-  void send_global_delete(const std::string& filename);
+  bool global_delete(const std::string& filename, const std::string& token);
+  void send_global_delete(const std::string& filename, const std::string& token);
   bool recv_global_delete();
-  void global_fill(std::string& _return, const std::string& filename, const int64_t size);
-  void send_global_fill(const std::string& filename, const int64_t size);
+  void global_fill(std::string& _return, const std::string& filename, const int64_t size, const std::string& token);
+  void send_global_fill(const std::string& filename, const int64_t size, const std::string& token);
   void recv_global_fill(std::string& _return);
-  bool global_drain(const std::string& filename, const std::string& buffer);
-  void send_global_drain(const std::string& filename, const std::string& buffer);
+  bool global_drain(const std::string& filename, const std::string& buffer, const std::string& token);
+  void send_global_drain(const std::string& filename, const std::string& buffer, const std::string& token);
   bool recv_global_drain();
-  bool global_rewind(const std::string& filename);
-  void send_global_rewind(const std::string& filename);
+  bool global_rewind(const std::string& filename, const std::string& token);
+  void send_global_rewind(const std::string& filename, const std::string& token);
   bool recv_global_rewind();
-  bool global_trunc(const std::string& filename);
-  void send_global_trunc(const std::string& filename);
+  bool global_trunc(const std::string& filename, const std::string& token);
+  void send_global_trunc(const std::string& filename, const std::string& token);
   bool recv_global_trunc();
-  bool global_eof(const std::string& filename);
-  void send_global_eof(const std::string& filename);
+  bool global_eof(const std::string& filename, const std::string& token);
+  void send_global_eof(const std::string& filename, const std::string& token);
   bool recv_global_eof();
-  int64_t global_size(const std::string& filename);
-  void send_global_size(const std::string& filename);
+  int64_t global_size(const std::string& filename, const std::string& token);
+  void send_global_size(const std::string& filename, const std::string& token);
   int64_t recv_global_size();
   bool nop();
   void send_nop();
@@ -2554,6 +2940,9 @@ class IODFSProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_local_eof(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_local_size(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_local_left(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_generate_token(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_connect(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_leave(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_create(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_exists(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_delete(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -2578,6 +2967,9 @@ class IODFSProcessor : public ::apache::thrift::TDispatchProcessor {
     processMap_["local_eof"] = &IODFSProcessor::process_local_eof;
     processMap_["local_size"] = &IODFSProcessor::process_local_size;
     processMap_["local_left"] = &IODFSProcessor::process_local_left;
+    processMap_["generate_token"] = &IODFSProcessor::process_generate_token;
+    processMap_["connect"] = &IODFSProcessor::process_connect;
+    processMap_["leave"] = &IODFSProcessor::process_leave;
     processMap_["global_create"] = &IODFSProcessor::process_global_create;
     processMap_["global_exists"] = &IODFSProcessor::process_global_exists;
     processMap_["global_delete"] = &IODFSProcessor::process_global_delete;
@@ -2717,86 +3109,114 @@ class IODFSMultiface : virtual public IODFSIf {
     return ifaces_[i]->local_left(filename);
   }
 
-  bool global_create(const std::string& filename) {
+  void generate_token(std::string& _return) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->global_create(filename);
+      ifaces_[i]->generate_token(_return);
     }
-    return ifaces_[i]->global_create(filename);
-  }
-
-  bool global_exists(const std::string& filename) {
-    size_t sz = ifaces_.size();
-    size_t i = 0;
-    for (; i < (sz - 1); ++i) {
-      ifaces_[i]->global_exists(filename);
-    }
-    return ifaces_[i]->global_exists(filename);
-  }
-
-  bool global_delete(const std::string& filename) {
-    size_t sz = ifaces_.size();
-    size_t i = 0;
-    for (; i < (sz - 1); ++i) {
-      ifaces_[i]->global_delete(filename);
-    }
-    return ifaces_[i]->global_delete(filename);
-  }
-
-  void global_fill(std::string& _return, const std::string& filename, const int64_t size) {
-    size_t sz = ifaces_.size();
-    size_t i = 0;
-    for (; i < (sz - 1); ++i) {
-      ifaces_[i]->global_fill(_return, filename, size);
-    }
-    ifaces_[i]->global_fill(_return, filename, size);
+    ifaces_[i]->generate_token(_return);
     return;
   }
 
-  bool global_drain(const std::string& filename, const std::string& buffer) {
+  bool connect(const std::string& token) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->global_drain(filename, buffer);
+      ifaces_[i]->connect(token);
     }
-    return ifaces_[i]->global_drain(filename, buffer);
+    return ifaces_[i]->connect(token);
   }
 
-  bool global_rewind(const std::string& filename) {
+  bool leave(const std::string& token) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->global_rewind(filename);
+      ifaces_[i]->leave(token);
     }
-    return ifaces_[i]->global_rewind(filename);
+    return ifaces_[i]->leave(token);
   }
 
-  bool global_trunc(const std::string& filename) {
+  bool global_create(const std::string& filename, const std::string& token) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->global_trunc(filename);
+      ifaces_[i]->global_create(filename, token);
     }
-    return ifaces_[i]->global_trunc(filename);
+    return ifaces_[i]->global_create(filename, token);
   }
 
-  bool global_eof(const std::string& filename) {
+  bool global_exists(const std::string& filename, const std::string& token) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->global_eof(filename);
+      ifaces_[i]->global_exists(filename, token);
     }
-    return ifaces_[i]->global_eof(filename);
+    return ifaces_[i]->global_exists(filename, token);
   }
 
-  int64_t global_size(const std::string& filename) {
+  bool global_delete(const std::string& filename, const std::string& token) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->global_size(filename);
+      ifaces_[i]->global_delete(filename, token);
     }
-    return ifaces_[i]->global_size(filename);
+    return ifaces_[i]->global_delete(filename, token);
+  }
+
+  void global_fill(std::string& _return, const std::string& filename, const int64_t size, const std::string& token) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->global_fill(_return, filename, size, token);
+    }
+    ifaces_[i]->global_fill(_return, filename, size, token);
+    return;
+  }
+
+  bool global_drain(const std::string& filename, const std::string& buffer, const std::string& token) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->global_drain(filename, buffer, token);
+    }
+    return ifaces_[i]->global_drain(filename, buffer, token);
+  }
+
+  bool global_rewind(const std::string& filename, const std::string& token) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->global_rewind(filename, token);
+    }
+    return ifaces_[i]->global_rewind(filename, token);
+  }
+
+  bool global_trunc(const std::string& filename, const std::string& token) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->global_trunc(filename, token);
+    }
+    return ifaces_[i]->global_trunc(filename, token);
+  }
+
+  bool global_eof(const std::string& filename, const std::string& token) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->global_eof(filename, token);
+    }
+    return ifaces_[i]->global_eof(filename, token);
+  }
+
+  int64_t global_size(const std::string& filename, const std::string& token) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->global_size(filename, token);
+    }
+    return ifaces_[i]->global_size(filename, token);
   }
 
   bool nop() {
@@ -2871,32 +3291,41 @@ class IODFSConcurrentClient : virtual public IODFSIf {
   int64_t local_left(const std::string& filename);
   int32_t send_local_left(const std::string& filename);
   int64_t recv_local_left(const int32_t seqid);
-  bool global_create(const std::string& filename);
-  int32_t send_global_create(const std::string& filename);
+  void generate_token(std::string& _return);
+  int32_t send_generate_token();
+  void recv_generate_token(std::string& _return, const int32_t seqid);
+  bool connect(const std::string& token);
+  int32_t send_connect(const std::string& token);
+  bool recv_connect(const int32_t seqid);
+  bool leave(const std::string& token);
+  int32_t send_leave(const std::string& token);
+  bool recv_leave(const int32_t seqid);
+  bool global_create(const std::string& filename, const std::string& token);
+  int32_t send_global_create(const std::string& filename, const std::string& token);
   bool recv_global_create(const int32_t seqid);
-  bool global_exists(const std::string& filename);
-  int32_t send_global_exists(const std::string& filename);
+  bool global_exists(const std::string& filename, const std::string& token);
+  int32_t send_global_exists(const std::string& filename, const std::string& token);
   bool recv_global_exists(const int32_t seqid);
-  bool global_delete(const std::string& filename);
-  int32_t send_global_delete(const std::string& filename);
+  bool global_delete(const std::string& filename, const std::string& token);
+  int32_t send_global_delete(const std::string& filename, const std::string& token);
   bool recv_global_delete(const int32_t seqid);
-  void global_fill(std::string& _return, const std::string& filename, const int64_t size);
-  int32_t send_global_fill(const std::string& filename, const int64_t size);
+  void global_fill(std::string& _return, const std::string& filename, const int64_t size, const std::string& token);
+  int32_t send_global_fill(const std::string& filename, const int64_t size, const std::string& token);
   void recv_global_fill(std::string& _return, const int32_t seqid);
-  bool global_drain(const std::string& filename, const std::string& buffer);
-  int32_t send_global_drain(const std::string& filename, const std::string& buffer);
+  bool global_drain(const std::string& filename, const std::string& buffer, const std::string& token);
+  int32_t send_global_drain(const std::string& filename, const std::string& buffer, const std::string& token);
   bool recv_global_drain(const int32_t seqid);
-  bool global_rewind(const std::string& filename);
-  int32_t send_global_rewind(const std::string& filename);
+  bool global_rewind(const std::string& filename, const std::string& token);
+  int32_t send_global_rewind(const std::string& filename, const std::string& token);
   bool recv_global_rewind(const int32_t seqid);
-  bool global_trunc(const std::string& filename);
-  int32_t send_global_trunc(const std::string& filename);
+  bool global_trunc(const std::string& filename, const std::string& token);
+  int32_t send_global_trunc(const std::string& filename, const std::string& token);
   bool recv_global_trunc(const int32_t seqid);
-  bool global_eof(const std::string& filename);
-  int32_t send_global_eof(const std::string& filename);
+  bool global_eof(const std::string& filename, const std::string& token);
+  int32_t send_global_eof(const std::string& filename, const std::string& token);
   bool recv_global_eof(const int32_t seqid);
-  int64_t global_size(const std::string& filename);
-  int32_t send_global_size(const std::string& filename);
+  int64_t global_size(const std::string& filename, const std::string& token);
+  int32_t send_global_size(const std::string& filename, const std::string& token);
   int64_t recv_global_size(const int32_t seqid);
   bool nop();
   int32_t send_nop();

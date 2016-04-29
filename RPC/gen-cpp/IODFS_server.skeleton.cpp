@@ -75,47 +75,62 @@ class IODFSHandler : virtual public IODFSIf {
     printf("local_left\n");
   }
 
-  bool global_create(const std::string& filename) {
+  void generate_token(std::string& _return) {
+    // Your implementation goes here
+    printf("generate_token\n");
+  }
+
+  bool connect(const std::string& token) {
+    // Your implementation goes here
+    printf("connect\n");
+  }
+
+  bool leave(const std::string& token) {
+    // Your implementation goes here
+    printf("leave\n");
+  }
+
+  bool global_create(const std::string& filename, const std::string& token) {
     // Your implementation goes here
     printf("global_create\n");
   }
 
-  bool global_exists(const std::string& filename) {
+  bool global_exists(const std::string& filename, const std::string& token) {
     // Your implementation goes here
     printf("global_exists\n");
   }
 
-  bool global_delete(const std::string& filename) {
+  bool global_delete(const std::string& filename, const std::string& token) {
     // Your implementation goes here
     printf("global_delete\n");
   }
 
-  void global_fill(std::string& _return, const std::string& filename, const int64_t size) {
+  void global_fill(std::string& _return, const std::string& filename, const int64_t size, const std::string& token) {
     // Your implementation goes here
     printf("global_fill\n");
   }
 
-  bool global_drain(const std::string& filename, const std::string& buffer) {
+  bool global_drain(const std::string& filename, const std::string& buffer, const std::string& token) {
     // Your implementation goes here
     printf("global_drain\n");
   }
 
-  bool global_rewind(const std::string& filename) {
+  bool global_rewind(const std::string& filename, const std::string& token) {
     // Your implementation goes here
     printf("global_rewind\n");
   }
 
-  bool global_trunc(const std::string& filename) {
+  bool global_trunc(const std::string& filename, const std::string& token) {
     // Your implementation goes here
     printf("global_trunc\n");
   }
 
-  bool global_eof(const std::string& filename) {
+  bool global_eof(const std::string& filename, const std::string& token) {
     // Your implementation goes here
     printf("global_eof\n");
   }
 
-  int64_t global_size(const std::string& filename) {
+  int64_t global_size(const std::string& filename, const std::string& token) {
     // Your implementation goes here
     printf("global_size\n");
   }

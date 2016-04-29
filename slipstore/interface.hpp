@@ -63,7 +63,7 @@ namespace slipstore {
   extern boost::thread *server_thread;
 
   static
-  void init(unordered_map<string, slipstore::io*>* disks) {
+  void init(unordered_map<string, slipstore::io*>* disks, bool RPC = false) {
     unsigned long zmq_threads = vm["zmq_threads"].as < unsigned long > ();
     BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::ZMQ_THREADS " << zmq_threads;
     zmq_context = zmq_init(zmq_threads);
@@ -71,11 +71,13 @@ namespace slipstore {
     zmq_context_data_in = zmq_init(zmq_threads);
     baseport = vm["baseport"].as < unsigned long > ();
 
-    slipstore_client_fill = new client_fill();
-    slipstore_client_drain = new client_drain();
-    slipstore_client_barrier = new client_barrier();
+    if(!RPC) {
+      slipstore_client_fill = new client_fill();
+      slipstore_client_drain = new client_drain();
+      slipstore_client_barrier = new client_barrier();
+    }
     have_outstanding_request = new busy_counter();
-    
+
     if (vm.count("use_async_server") > 0) {
       slipstore_server = new server_async(disks);
       BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER ASYNC";
@@ -86,9 +88,11 @@ namespace slipstore {
 
    // Launch server thread
     server_thread = new boost::thread(boost::ref(*slipstore_server));
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::MACHINES " << slipstore_client_fill->get_machines();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::ME " << slipstore_client_fill->get_me();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SLIPCHUNK " << slipstore_client_barrier->get_slipchunk();
+    if(!RPC) {
+      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::MACHINES " << slipstore_client_fill->get_machines();
+      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::ME " << slipstore_client_fill->get_me();
+      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SLIPCHUNK " << slipstore_client_barrier->get_slipchunk();
+    }
     BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::QUOTA " << quota;
 
     // Launch async client thread
@@ -109,7 +113,7 @@ namespace slipstore {
   }
 
   static
-  void shutdown() {
+  void shutdown(bool RPC = false) {
     // Shut down async client service
     ioService.stop();
     threadpool.join_all();
@@ -118,28 +122,34 @@ namespace slipstore {
       dioService.stop();
       diopool.join_all();
     }
-    // Terminate server
-    slipstore_req_t req;
-    req.cmd = CMD_TERMINATE;
-    slipstore_client_drain->access_store(&req,
-                                         NULL,
-                                         slipstore_client_drain->get_me());
+    if(!RPC){
+      // Terminate server
+      slipstore_req_t req;
+      req.cmd = CMD_TERMINATE;
+      slipstore_client_drain->access_store(&req,
+                                           NULL,
+                                           slipstore_client_drain->get_me());
+    }
     server_thread->join();
-    // Teardown sockets
-    slipstore_client_drain->teardown_conn();
-    slipstore_client_fill->teardown_conn();
-    slipstore_client_barrier->teardown_conn();
+    if(!RPC) {
+      // Teardown sockets
+      slipstore_client_drain->teardown_conn();
+      slipstore_client_fill->teardown_conn();
+      slipstore_client_barrier->teardown_conn();
+    }
     // Terminate context
     zmq_term(zmq_context);
     zmq_term(zmq_context_data_out);
     zmq_term(zmq_context_data_in);
-    slipstore_client_fill->print_times();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::CLIENT::DISK_BYTES_READ " <<
-    slipstore_client_fill->get_disk_bytes_read();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::CLIENT::MEM_BYTES_READ " <<
-    slipstore_client_fill->get_mem_bytes_read();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::CLIENT::BYTES_WRITTEN " <<
-    slipstore_client_drain->get_bytes_written();
+    if(!RPC) {
+      slipstore_client_fill->print_times();
+      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::CLIENT::DISK_BYTES_READ " <<
+      slipstore_client_fill->get_disk_bytes_read();
+      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::CLIENT::MEM_BYTES_READ " <<
+      slipstore_client_fill->get_mem_bytes_read();
+      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::CLIENT::BYTES_WRITTEN " <<
+      slipstore_client_drain->get_bytes_written();
+    }
     have_outstanding_request->counter.print("SLIPSTORE::CLIENT_BUSY ");
   }
 }
