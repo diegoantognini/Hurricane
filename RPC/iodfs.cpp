@@ -55,7 +55,7 @@ class IODFSHandler : virtual public IODFSIf {
   unsigned long slipchunk;
 
   // Network part
-  vector<pair<string, string>> machines;
+  vector<network_interface> machines; //Struct defined in IODFS_types.h
   unordered_map<string, double*> tokens; //Same tricks as global_buffers
   unordered_map<string, slipstore::client_drain*> client_drains;
   unordered_map<string, slipstore::client_fill*> client_fills;
@@ -95,15 +95,15 @@ class IODFSHandler : virtual public IODFSIf {
     slipstore::init(&local_buffers, true);
 
     // Shuffling the machine in order that every machine have ~ the same amount of requests
-    string me_name = machines[me].first;
+    string me_name = machines[me].name;
     random_shuffle(machines.begin(), machines.end());
     me = machines.size()+1;
     for(unsigned int i = 0; me > machines.size() && i < machines.size(); ++i)
-      if(machines[i].first == me_name)
+      if(machines[i].name == me_name)
         me = i;
 
     for(auto& machine : machines)
-      add_new_machine_network(machine.first.c_str());
+      add_new_machine_network(machine.name.c_str());
 
     // Necessary if we want to reuse our thread
     reconnect_woker = new boost::asio::io_service::work(reconnect_thread);
@@ -307,7 +307,7 @@ class IODFSHandler : virtual public IODFSIf {
         result = result && clients[first_known_lost_node]->local_create(filename);
     } catch(TException& tx) {
       LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].first;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
       throw lcdc;
     }
 
@@ -329,7 +329,7 @@ class IODFSHandler : virtual public IODFSIf {
         result = result && clients[first_known_lost_node]->local_exists(filename);
     } catch(TException& tx) {
       LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].first;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
       throw lcdc;
     }
 
@@ -353,7 +353,7 @@ class IODFSHandler : virtual public IODFSIf {
         result = result && clients[first_known_lost_node]->local_delete(filename);
     } catch(TException& tx) {
       LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].first;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
       throw lcdc;
     }
 
@@ -423,7 +423,7 @@ class IODFSHandler : virtual public IODFSIf {
         result = result && clients[first_known_lost_node]->local_rewind(filename);
     } catch(TException& tx) {
       LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].first;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
       throw lcdc;
     }
 
@@ -447,7 +447,7 @@ class IODFSHandler : virtual public IODFSIf {
         result = result && clients[first_known_lost_node]->local_trunc(filename);
     } catch(TException& tx) {
       LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].first;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
       throw lcdc;
     }
 
@@ -470,7 +470,7 @@ class IODFSHandler : virtual public IODFSIf {
         result = result && clients[first_known_lost_node]->local_eof(filename);
     } catch(TException& tx) {
       LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].first;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
       throw lcdc;
     }
 
@@ -500,7 +500,7 @@ class IODFSHandler : virtual public IODFSIf {
       }
     } catch(TException& tx) {
       LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].first;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
       throw lcdc;
     }
 
@@ -556,10 +556,21 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
   void join(std::vector<network_interface> & _return, const std::string& name, const std::string& iface) {
+    add_node(name, iface);
 
+
+    _return = machines;
   }
 
   void add_node(const std::string& name, const std::string& iface) {
+    bool exists = false;
+
+    for(unsigned int i = 0; !exists && i < machines.size(); ++i)
+      exists = machines[i].name == name;
+
+    if(!exists) {
+
+    }
 
   }
 
@@ -599,14 +610,14 @@ private:
       for(auto& transport : transports) {
         if(!transport->isOpen()) {
           transport->open();
-          BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].first << " SUCCESS !";
+          BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].name << " SUCCESS !";
         }
         ++i;
       }
       connection_to_server_done = true;
     } catch (TException& tx){
       transports[i]->close();
-      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].first << " FAILED : " << tx.what();
+      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].name << " FAILED : " << tx.what();
       reconnect_timer->expires_at(reconnect_timer->expires_at() + boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
       reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
     }
@@ -630,7 +641,7 @@ private:
       first_known_lost_node = machines.size()+1;
     } catch (TException& tx){
       transports[first_known_lost_node]->close();
-      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[first_known_lost_node].first << " FAILED : " << tx.what();
+      BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[first_known_lost_node].name << " FAILED : " << tx.what();
       result = false;
     }
 
@@ -646,7 +657,7 @@ private:
   void handle_connection_to_server_done(bool with_are_all_connection_open = false) {
      if(!connection_to_server_done || (with_are_all_connection_open && !are_all_connection_open())) {
       LostConnection lc;
-      lc.name_node_lost = first_known_lost_node < machines.size() ? machines[first_known_lost_node].first : "Server hasn't been initialised";
+      lc.name_node_lost = first_known_lost_node < machines.size() ? machines[first_known_lost_node].name : "Server hasn't been initialised";
       throw lc;
     }
   }
@@ -659,7 +670,11 @@ private:
   }
 
   void add_new_machine_in_machines(const char* name, const char* iface) {
-    machines.push_back(make_pair(pt_slipstore.get<std::string>(name), pt_slipstore.get<std::string>(iface)));
+    network_interface ni;
+    ni.name = pt_slipstore.get<std::string>(name);
+    ni.iface = pt_slipstore.get<std::string>(iface);
+    
+    machines.push_back(ni);
   }
 
   void add_new_machine_network(const char* name) {
