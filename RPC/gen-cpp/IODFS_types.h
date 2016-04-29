@@ -25,6 +25,8 @@ class LostConnectionDuringCommit;
 
 class BadToken;
 
+class network_interface;
+
 typedef struct _LostConnection__isset {
   _LostConnection__isset() : name_node_lost(false) {}
   bool name_node_lost :1;
@@ -153,6 +155,58 @@ class BadToken : public ::apache::thrift::TException {
 void swap(BadToken &a, BadToken &b);
 
 inline std::ostream& operator<<(std::ostream& out, const BadToken& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _network_interface__isset {
+  _network_interface__isset() : name(false), iface(false) {}
+  bool name :1;
+  bool iface :1;
+} _network_interface__isset;
+
+class network_interface {
+ public:
+
+  network_interface(const network_interface&);
+  network_interface& operator=(const network_interface&);
+  network_interface() : name(), iface() {
+  }
+
+  virtual ~network_interface() throw();
+  std::string name;
+  std::string iface;
+
+  _network_interface__isset __isset;
+
+  void __set_name(const std::string& val);
+
+  void __set_iface(const std::string& val);
+
+  bool operator == (const network_interface & rhs) const
+  {
+    if (!(name == rhs.name))
+      return false;
+    if (!(iface == rhs.iface))
+      return false;
+    return true;
+  }
+  bool operator != (const network_interface &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const network_interface & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(network_interface &a, network_interface &b);
+
+inline std::ostream& operator<<(std::ostream& out, const network_interface& obj)
 {
   obj.printTo(out);
   return out;

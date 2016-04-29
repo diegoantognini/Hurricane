@@ -9,6 +9,11 @@ exception LostConnectionDuringCommit {
 exception BadToken {
 }
 
+struct network_interface {
+	1: string name,
+	2: string iface,
+}
+
 service IODFS {
 	// Local IO
 	bool local_create(1:string filename),
@@ -30,7 +35,9 @@ service IODFS {
 	string generate_token(),
 	bool connect(1:string token),
 	bool leave(1:string token),
-
+	list<network_interface> join(1:string name, 2:string iface),
+	void add_node(1:string name, 2:string iface),
+	
 	// Global IO
 	bool global_create(1:string filename, 2:string token) throws (1:LostConnection lc, 2:LostConnectionDuringCommit lcdc, 3:BadToken bt),
 	bool global_exists(1:string filename, 2:string token) throws (1:LostConnection lc, 2:LostConnectionDuringCommit lcdc, 3:BadToken bt),

@@ -540,7 +540,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // Close the connection with the client corresponding to the token. The token is erased.
   bool leave(const std::string& token) {
-    if (tokens.find(token) != tokens.end())
+    if (tokens.find(token) == tokens.end())
       return false;
 
     delete client_drains[token];
@@ -551,6 +551,13 @@ class IODFSHandler : virtual public IODFSIf {
     tokens.erase(token);
 
     return true;
+  }
+  void join(std::vector<network_interface> & _return, const std::string& name, const std::string& iface) {
+
+  }
+  
+  void add_node(const std::string& name, const std::string& iface) {
+
   }
 
 

@@ -281,3 +281,109 @@ const char* BadToken::what() const throw() {
 }
 
 
+network_interface::~network_interface() throw() {
+}
+
+
+void network_interface::__set_name(const std::string& val) {
+  this->name = val;
+}
+
+void network_interface::__set_iface(const std::string& val) {
+  this->iface = val;
+}
+
+uint32_t network_interface::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->name);
+          this->__isset.name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->iface);
+          this->__isset.iface = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t network_interface::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("network_interface");
+
+  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->name);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("iface", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->iface);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(network_interface &a, network_interface &b) {
+  using ::std::swap;
+  swap(a.name, b.name);
+  swap(a.iface, b.iface);
+  swap(a.__isset, b.__isset);
+}
+
+network_interface::network_interface(const network_interface& other6) {
+  name = other6.name;
+  iface = other6.iface;
+  __isset = other6.__isset;
+}
+network_interface& network_interface::operator=(const network_interface& other7) {
+  name = other7.name;
+  iface = other7.iface;
+  __isset = other7.__isset;
+  return *this;
+}
+void network_interface::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "network_interface(";
+  out << "name=" << to_string(name);
+  out << ", " << "iface=" << to_string(iface);
+  out << ")";
+}
+
+

@@ -90,6 +90,16 @@ class IODFSHandler : virtual public IODFSIf {
     printf("leave\n");
   }
 
+  void join(std::vector<network_interface> & _return, const std::string& name, const std::string& iface) {
+    // Your implementation goes here
+    printf("join\n");
+  }
+
+  void add_node(const std::string& name, const std::string& iface) {
+    // Your implementation goes here
+    printf("add_node\n");
+  }
+
   bool global_create(const std::string& filename, const std::string& token) {
     // Your implementation goes here
     printf("global_create\n");

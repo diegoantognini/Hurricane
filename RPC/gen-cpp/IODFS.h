@@ -35,6 +35,8 @@ class IODFSIf {
   virtual void generate_token(std::string& _return) = 0;
   virtual bool connect(const std::string& token) = 0;
   virtual bool leave(const std::string& token) = 0;
+  virtual void join(std::vector<network_interface> & _return, const std::string& name, const std::string& iface) = 0;
+  virtual void add_node(const std::string& name, const std::string& iface) = 0;
   virtual bool global_create(const std::string& filename, const std::string& token) = 0;
   virtual bool global_exists(const std::string& filename, const std::string& token) = 0;
   virtual bool global_delete(const std::string& filename, const std::string& token) = 0;
@@ -126,6 +128,12 @@ class IODFSNull : virtual public IODFSIf {
   bool leave(const std::string& /* token */) {
     bool _return = false;
     return _return;
+  }
+  void join(std::vector<network_interface> & /* _return */, const std::string& /* name */, const std::string& /* iface */) {
+    return;
+  }
+  void add_node(const std::string& /* name */, const std::string& /* iface */) {
+    return;
   }
   bool global_create(const std::string& /* filename */, const std::string& /* token */) {
     bool _return = false;
@@ -1640,6 +1648,210 @@ class IODFS_leave_presult {
 
 };
 
+typedef struct _IODFS_join_args__isset {
+  _IODFS_join_args__isset() : name(false), iface(false) {}
+  bool name :1;
+  bool iface :1;
+} _IODFS_join_args__isset;
+
+class IODFS_join_args {
+ public:
+
+  IODFS_join_args(const IODFS_join_args&);
+  IODFS_join_args& operator=(const IODFS_join_args&);
+  IODFS_join_args() : name(), iface() {
+  }
+
+  virtual ~IODFS_join_args() throw();
+  std::string name;
+  std::string iface;
+
+  _IODFS_join_args__isset __isset;
+
+  void __set_name(const std::string& val);
+
+  void __set_iface(const std::string& val);
+
+  bool operator == (const IODFS_join_args & rhs) const
+  {
+    if (!(name == rhs.name))
+      return false;
+    if (!(iface == rhs.iface))
+      return false;
+    return true;
+  }
+  bool operator != (const IODFS_join_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const IODFS_join_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class IODFS_join_pargs {
+ public:
+
+
+  virtual ~IODFS_join_pargs() throw();
+  const std::string* name;
+  const std::string* iface;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _IODFS_join_result__isset {
+  _IODFS_join_result__isset() : success(false) {}
+  bool success :1;
+} _IODFS_join_result__isset;
+
+class IODFS_join_result {
+ public:
+
+  IODFS_join_result(const IODFS_join_result&);
+  IODFS_join_result& operator=(const IODFS_join_result&);
+  IODFS_join_result() {
+  }
+
+  virtual ~IODFS_join_result() throw();
+  std::vector<network_interface>  success;
+
+  _IODFS_join_result__isset __isset;
+
+  void __set_success(const std::vector<network_interface> & val);
+
+  bool operator == (const IODFS_join_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const IODFS_join_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const IODFS_join_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _IODFS_join_presult__isset {
+  _IODFS_join_presult__isset() : success(false) {}
+  bool success :1;
+} _IODFS_join_presult__isset;
+
+class IODFS_join_presult {
+ public:
+
+
+  virtual ~IODFS_join_presult() throw();
+  std::vector<network_interface> * success;
+
+  _IODFS_join_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _IODFS_add_node_args__isset {
+  _IODFS_add_node_args__isset() : name(false), iface(false) {}
+  bool name :1;
+  bool iface :1;
+} _IODFS_add_node_args__isset;
+
+class IODFS_add_node_args {
+ public:
+
+  IODFS_add_node_args(const IODFS_add_node_args&);
+  IODFS_add_node_args& operator=(const IODFS_add_node_args&);
+  IODFS_add_node_args() : name(), iface() {
+  }
+
+  virtual ~IODFS_add_node_args() throw();
+  std::string name;
+  std::string iface;
+
+  _IODFS_add_node_args__isset __isset;
+
+  void __set_name(const std::string& val);
+
+  void __set_iface(const std::string& val);
+
+  bool operator == (const IODFS_add_node_args & rhs) const
+  {
+    if (!(name == rhs.name))
+      return false;
+    if (!(iface == rhs.iface))
+      return false;
+    return true;
+  }
+  bool operator != (const IODFS_add_node_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const IODFS_add_node_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class IODFS_add_node_pargs {
+ public:
+
+
+  virtual ~IODFS_add_node_pargs() throw();
+  const std::string* name;
+  const std::string* iface;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class IODFS_add_node_result {
+ public:
+
+  IODFS_add_node_result(const IODFS_add_node_result&);
+  IODFS_add_node_result& operator=(const IODFS_add_node_result&);
+  IODFS_add_node_result() {
+  }
+
+  virtual ~IODFS_add_node_result() throw();
+
+  bool operator == (const IODFS_add_node_result & /* rhs */) const
+  {
+    return true;
+  }
+  bool operator != (const IODFS_add_node_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const IODFS_add_node_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class IODFS_add_node_presult {
+ public:
+
+
+  virtual ~IODFS_add_node_presult() throw();
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _IODFS_global_create_args__isset {
   _IODFS_global_create_args__isset() : filename(false), token(false) {}
   bool filename :1;
@@ -3012,6 +3224,12 @@ class IODFSClient : virtual public IODFSIf {
   bool leave(const std::string& token);
   void send_leave(const std::string& token);
   bool recv_leave();
+  void join(std::vector<network_interface> & _return, const std::string& name, const std::string& iface);
+  void send_join(const std::string& name, const std::string& iface);
+  void recv_join(std::vector<network_interface> & _return);
+  void add_node(const std::string& name, const std::string& iface);
+  void send_add_node(const std::string& name, const std::string& iface);
+  void recv_add_node();
   bool global_create(const std::string& filename, const std::string& token);
   void send_global_create(const std::string& filename, const std::string& token);
   bool recv_global_create();
@@ -3071,6 +3289,8 @@ class IODFSProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_generate_token(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_connect(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_leave(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_join(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_add_node(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_create(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_exists(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_global_delete(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -3098,6 +3318,8 @@ class IODFSProcessor : public ::apache::thrift::TDispatchProcessor {
     processMap_["generate_token"] = &IODFSProcessor::process_generate_token;
     processMap_["connect"] = &IODFSProcessor::process_connect;
     processMap_["leave"] = &IODFSProcessor::process_leave;
+    processMap_["join"] = &IODFSProcessor::process_join;
+    processMap_["add_node"] = &IODFSProcessor::process_add_node;
     processMap_["global_create"] = &IODFSProcessor::process_global_create;
     processMap_["global_exists"] = &IODFSProcessor::process_global_exists;
     processMap_["global_delete"] = &IODFSProcessor::process_global_delete;
@@ -3265,6 +3487,25 @@ class IODFSMultiface : virtual public IODFSIf {
     return ifaces_[i]->leave(token);
   }
 
+  void join(std::vector<network_interface> & _return, const std::string& name, const std::string& iface) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->join(_return, name, iface);
+    }
+    ifaces_[i]->join(_return, name, iface);
+    return;
+  }
+
+  void add_node(const std::string& name, const std::string& iface) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->add_node(name, iface);
+    }
+    ifaces_[i]->add_node(name, iface);
+  }
+
   bool global_create(const std::string& filename, const std::string& token) {
     size_t sz = ifaces_.size();
     size_t i = 0;
@@ -3428,6 +3669,12 @@ class IODFSConcurrentClient : virtual public IODFSIf {
   bool leave(const std::string& token);
   int32_t send_leave(const std::string& token);
   bool recv_leave(const int32_t seqid);
+  void join(std::vector<network_interface> & _return, const std::string& name, const std::string& iface);
+  int32_t send_join(const std::string& name, const std::string& iface);
+  void recv_join(std::vector<network_interface> & _return, const int32_t seqid);
+  void add_node(const std::string& name, const std::string& iface);
+  int32_t send_add_node(const std::string& name, const std::string& iface);
+  void recv_add_node(const int32_t seqid);
   bool global_create(const std::string& filename, const std::string& token);
   int32_t send_global_create(const std::string& filename, const std::string& token);
   bool recv_global_create(const int32_t seqid);
