@@ -616,13 +616,12 @@ private:
         ++i;
       }
 
-      if(!already_connect_at_least_one) {
+      // To do the join, we assume that we only know ONE server (+ us)
+      if(!already_connect_at_least_one && machines.size() == 2) {
         already_connect_at_least_one = true;
       
         // Find the index of the master (which musn't be "me" !)
-        unsigned int master = 0;
-        while(master != me)
-          ++master;
+        unsigned int master = 1-me;
 
         std::vector<network_interface> servers;
         try {
@@ -635,17 +634,12 @@ private:
         }
 
         // Connect to all the server node
-        for(auto& machine : servers) {
-          bool exists = false;
-          for(unsigned int j = 0; !exists && j < machines.size(); ++j)
-            exists = machines[j].name == machine.name;
-
+        for(auto& machine : servers)
           // Avoid to add again to a server node if already did it (or knew it when launching the server)
-          if (!exists) {
+          if (machine.name != machines[master].name) {
             add_new_machine(machine.name, machine.iface);
             clients.back()->add_node(machine.name, machine.iface);
           }
-        }
 
         // Now connect to all the server but without joining them again
         reconnect();
