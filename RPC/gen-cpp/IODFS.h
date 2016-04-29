@@ -1705,8 +1705,9 @@ class IODFS_join_pargs {
 };
 
 typedef struct _IODFS_join_result__isset {
-  _IODFS_join_result__isset() : success(false) {}
+  _IODFS_join_result__isset() : success(false), lc(false) {}
   bool success :1;
+  bool lc :1;
 } _IODFS_join_result__isset;
 
 class IODFS_join_result {
@@ -1719,14 +1720,19 @@ class IODFS_join_result {
 
   virtual ~IODFS_join_result() throw();
   std::vector<network_interface>  success;
+  LostConnection lc;
 
   _IODFS_join_result__isset __isset;
 
   void __set_success(const std::vector<network_interface> & val);
 
+  void __set_lc(const LostConnection& val);
+
   bool operator == (const IODFS_join_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(lc == rhs.lc))
       return false;
     return true;
   }
@@ -1742,8 +1748,9 @@ class IODFS_join_result {
 };
 
 typedef struct _IODFS_join_presult__isset {
-  _IODFS_join_presult__isset() : success(false) {}
+  _IODFS_join_presult__isset() : success(false), lc(false) {}
   bool success :1;
+  bool lc :1;
 } _IODFS_join_presult__isset;
 
 class IODFS_join_presult {
@@ -1752,6 +1759,7 @@ class IODFS_join_presult {
 
   virtual ~IODFS_join_presult() throw();
   std::vector<network_interface> * success;
+  LostConnection lc;
 
   _IODFS_join_presult__isset __isset;
 

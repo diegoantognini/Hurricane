@@ -2810,6 +2810,14 @@ uint32_t IODFS_join_result::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -2839,6 +2847,10 @@ uint32_t IODFS_join_result::write(::apache::thrift::protocol::TProtocol* oprot) 
       }
       xfer += oprot->writeListEnd();
     }
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.lc) {
+    xfer += oprot->writeFieldBegin("lc", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->lc.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -2888,6 +2900,14 @@ uint32_t IODFS_join_presult::read(::apache::thrift::protocol::TProtocol* iprot) 
             xfer += iprot->readListEnd();
           }
           this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->lc.read(iprot);
+          this->__isset.lc = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -6472,6 +6492,9 @@ void IODFSClient::recv_join(std::vector<network_interface> & _return)
     // _return pointer has now been filled
     return;
   }
+  if (result.__isset.lc) {
+    throw result.lc;
+  }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "join failed: unknown result");
 }
 
@@ -7994,6 +8017,9 @@ void IODFSProcessor::process_join(int32_t seqid, ::apache::thrift::protocol::TPr
   try {
     iface_->join(result.success, args.name, args.iface);
     result.__isset.success = true;
+  } catch (LostConnection &lc) {
+    result.lc = lc;
+    result.__isset.lc = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
       this->eventHandler_->handlerError(ctx, "IODFS.join");
@@ -9950,6 +9976,10 @@ void IODFSConcurrentClient::recv_join(std::vector<network_interface> & _return, 
         // _return pointer has now been filled
         sentry.commit();
         return;
+      }
+      if (result.__isset.lc) {
+        sentry.commit();
+        throw result.lc;
       }
       // in a bad state, don't commit
       throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "join failed: unknown result");

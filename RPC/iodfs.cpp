@@ -30,6 +30,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <mutex>
 
 #define NB_SECONDS_BETWEEN_RECONNECTION 1
 #define LENGTH_TOKEN  32
@@ -45,6 +46,7 @@ using std::vector;
 using std::pair;
 using boost::shared_ptr;
 using std::random_shuffle;
+using std::mutex;
 
 class IODFSHandler : virtual public IODFSIf {
   private:
@@ -56,6 +58,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // Network part
   vector<network_interface> machines; //Struct defined in IODFS_types.h
+  mutex add_machines;
   unordered_map<string, double*> tokens; //Same tricks as global_buffers
   unordered_map<string, slipstore::client_drain*> client_drains;
   unordered_map<string, slipstore::client_fill*> client_fills;
@@ -63,6 +66,7 @@ class IODFSHandler : virtual public IODFSIf {
   unsigned long me;
   unsigned int port;
   bool connection_to_server_done;
+  bool already_connect_at_least_one; // Allow to "join" a network in reconnect method when this value is false
   unsigned int first_known_lost_node;
 
   vector<boost::shared_ptr<TTransport>> transports;
@@ -77,7 +81,8 @@ class IODFSHandler : virtual public IODFSIf {
   : slipchunk(_slipchunk), 
     me(_me), 
     port(_port), 
-    connection_to_server_done(false)  {
+    connection_to_server_done(false),
+    already_connect_at_least_one(false)  {
 
     // Copy all the server from slipstore.ini
     for(unsigned int i = 0; i < pt_slipstore.get < unsigned long > ("machines.count"); ++i){
@@ -85,7 +90,7 @@ class IODFSHandler : virtual public IODFSIf {
       std::stringstream iface;
       name << "machines.name" << i;
       iface << "machines.iface" << i;
-      add_new_machine_in_machines(name.str().c_str(), iface.str().c_str());
+      add_new_machine_in_machines(name.str(), iface.str());
     } 
 
     first_known_lost_node = machines.size();
@@ -103,7 +108,7 @@ class IODFSHandler : virtual public IODFSIf {
         me = i;
 
     for(auto& machine : machines)
-      add_new_machine_network(machine.name.c_str());
+      add_new_machine_network(machine.name);
 
     // Necessary if we want to reuse our thread
     reconnect_woker = new boost::asio::io_service::work(reconnect_thread);
@@ -555,23 +560,19 @@ class IODFSHandler : virtual public IODFSIf {
 
     return true;
   }
+
+  // Return the list of known servers. The new server needs to call add_node on each server
   void join(std::vector<network_interface> & _return, const std::string& name, const std::string& iface) {
-    add_node(name, iface);
+    handle_connection_to_server_done(true);
 
-
+    // Return the list of servers (excluded the new one)
     _return = machines;
   }
 
   void add_node(const std::string& name, const std::string& iface) {
-    bool exists = false;
-
-    for(unsigned int i = 0; !exists && i < machines.size(); ++i)
-      exists = machines[i].name == name;
-
-    if(!exists) {
-
-    }
-
+    add_machines.lock();
+    add_new_machine(name, iface);
+    add_machines.unlock();
   }
 
 
@@ -614,7 +615,43 @@ private:
         }
         ++i;
       }
-      connection_to_server_done = true;
+
+      if(!already_connect_at_least_one) {
+        already_connect_at_least_one = true;
+      
+        // Find the index of the master (which musn't be "me" !)
+        unsigned int master = 0;
+        while(master != me)
+          ++master;
+
+        std::vector<network_interface> servers;
+        try {
+          // We assume that in the case where a client wants to join a network, it knows only 1 server
+          // If the whole network isn't safe, don't join it !
+          clients[master]->join(servers, machines[master].name, machines[master].iface); 
+        } catch (LostConnection& lc) {
+          BOOST_LOG_TRIVIAL(fatal) << "The network isn't safe !";
+          exit(-1);
+        }
+
+        // Connect to all the server node
+        for(auto& machine : servers) {
+          bool exists = false;
+          for(unsigned int j = 0; !exists && j < machines.size(); ++j)
+            exists = machines[j].name == machine.name;
+
+          // Avoid to add again to a server node if already did it (or knew it when launching the server)
+          if (!exists) {
+            add_new_machine(machine.name, machine.iface);
+            clients.back()->add_node(machine.name, machine.iface);
+          }
+        }
+
+        // Now connect to all the server but without joining them again
+        reconnect();
+      }
+      else
+        connection_to_server_done = true;
     } catch (TException& tx){
       transports[i]->close();
       BOOST_LOG_TRIVIAL(info) << "Connection to " << machines[i].name << " FAILED : " << tx.what();
@@ -669,17 +706,17 @@ private:
     }
   }
 
-  void add_new_machine_in_machines(const char* name, const char* iface) {
+  void add_new_machine_in_machines(const std::string& name, const std::string& iface) {
     network_interface ni;
-    ni.name = pt_slipstore.get<std::string>(name);
-    ni.iface = pt_slipstore.get<std::string>(iface);
-    
+    ni.name = pt_slipstore.get<std::string>(name.c_str());
+    ni.iface = pt_slipstore.get<std::string>(iface.c_str());
+
     machines.push_back(ni);
   }
 
-  void add_new_machine_network(const char* name) {
+  void add_new_machine_network(const std::string& name) {
     // Init the network part
-    boost::shared_ptr<TTransport> socket(new TSocket(name, port));
+    boost::shared_ptr<TTransport> socket(new TSocket(name.c_str(), port));
     boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
     boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
     IODFSClient* client = new IODFSClient(protocol);
@@ -688,9 +725,30 @@ private:
     clients.push_back(client);
   }
 
-  void add_new_machine(const char* name, const char* iface) {
-    add_new_machine_in_machines(name, iface);
-    add_new_machine_network(name);
+  bool add_new_machine(const std::string& name, const std::string& iface) {
+    bool exists = false;
+    for(unsigned int i = 0; !exists && i < machines.size(); ++i)
+      exists = machines[i].name == name;
+
+    if(!exists) {
+      add_new_machine_in_pt_slipstore(name, iface);
+      add_new_machine_in_machines(name, iface);
+      add_new_machine_network(name);
+    }
+
+    return !exists;
+  }
+
+  void add_new_machine_in_pt_slipstore(const std::string& _name, const std::string& _iface) {
+    std::stringstream name;
+    std::stringstream iface;
+    size_t i = machines.size()-1;
+    name << "machines.name" << i;
+    iface << "machines.iface" << i;
+
+    pt_slipstore.put("machines.count", i+1);
+    pt_slipstore.put(name.str().c_str(), _name);
+    pt_slipstore.put(iface.str().c_str(), _iface);
   }
 
 };
