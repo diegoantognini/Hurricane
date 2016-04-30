@@ -5,7 +5,7 @@ LIBS= $(addprefix $(OBJECT_DIR)/, $(LIBS_SRC))
 UTILS= $(addprefix $(OBJECT_DIR)/, $(UTILS_SRC))
 PROGS_SRC= 
 PROGS= $(addprefix $(OBJECT_DIR)/, $(PROGS_SRC))
-TARGETS= bin/slipbench bin/iodfs bin/iodfs_tester
+TARGETS= bin/slipbench bin/iodfs bin/iodfs_tester_static bin/iodfs_tester_dynamic
 
 
 all: $(LIBS) $(TARGETS)
@@ -62,9 +62,13 @@ $(OBJECT_DIR)/iodfs.o:RPC/iodfs.cpp
 	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
 	$(CXX) -std=c++11 -MM -MT '$(OBJECT_DIR)/iodfs.o' $< > $(@:.o=.d)
 
-$(OBJECT_DIR)/iodfs_tester.o:RPC/iodfs_tester.cpp 
+$(OBJECT_DIR)/iodfs_tester_static.o:RPC/iodfs_tester_static.cpp 
 	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
-	$(CXX) -std=c++11 -MM -MT '$(OBJECT_DIR)/iodfs_tester.o' $< > $(@:.o=.d)
+	$(CXX) -std=c++11 -MM -MT '$(OBJECT_DIR)/iodfs_tester_static.o' $< > $(@:.o=.d)
+
+$(OBJECT_DIR)/iodfs_tester_dynamic.o:RPC/iodfs_tester_dynamic.cpp 
+	$(CXX) $(CXXFLAGS) $(EXTRA_INCLUDES) -c -o $@ $<
+	$(CXX) -std=c++11 -MM -MT '$(OBJECT_DIR)/iodfs_tester_dynamic.o' $< > $(@:.o=.d)
 
 bin/slipbench:$(OBJECT_DIR)/slipbench.o 
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
@@ -72,7 +76,10 @@ bin/slipbench:$(OBJECT_DIR)/slipbench.o
 bin/iodfs:$(OBJECT_DIR)/iodfs.o 
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
 
-bin/iodfs_tester:$(OBJECT_DIR)/iodfs_tester.o 
+bin/iodfs_tester_static:$(OBJECT_DIR)/iodfs_tester_static.o 
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
+
+bin/iodfs_tester_dynamic:$(OBJECT_DIR)/iodfs_tester_dynamic.o 
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) $(SYSLIBS)
 
 clean:

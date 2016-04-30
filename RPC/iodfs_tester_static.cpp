@@ -554,32 +554,6 @@ void testing_local_requests(IODFSClient& client) {
 	}
 }
 
-bool testing_deconnection_reconnection(IODFSClient& client, const std::string& token) {
-	bool result = false;
-
-	try {    
-	    while(!result) {
-		    try {
-		    	result = client.global_create("test", token);
-		    	//You should deconnect a machine right know
-		    	int a = 0;
-		    	for(int i = 0; i < 1000000000; ++i) {
-		    		a+=i;
-		    	}
-		    } catch (LostConnection& lc) {
-		    	cout << "Lost connection with : " << lc.name_node_lost << " !" << endl;
-		    } catch (LostConnectionDuringCommit& lcdc) {
-		    	cout << "INCONSISTENCE STATE : Lost connection with : " << lcdc.name_node_lost << " DURING COMMIT PHASE!" << endl;
-		    }
-		}
-		result = client.global_delete("test", token);
-	} catch (TException& tx) {
-		cout << "Global Error: " << tx.what() << endl;
-	}
-
-	return result;
-}
-
 void testing_global_requests(IODFSClient& client) {
 	try {
 		std::string token = "";
@@ -588,7 +562,6 @@ void testing_global_requests(IODFSClient& client) {
 	    do_test("test_global_create_exists_delete_size_eof_one_file", &test_global_create_exists_delete_size_eof_one_file, client, token);
 	    do_test("test_global_create_exists_delete_size_eof_two_files", &test_global_create_exists_delete_size_eof_two_files, client, token);
 	    do_test("test_global_drain_fill", &test_global_drain_fill, client, token);
-	    do_test("testing_deconnection_reconnection", &testing_deconnection_reconnection, client, token);
 	    client.leave(token);
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
