@@ -643,7 +643,7 @@ private:
           if (machine.name != machines[master].name) {
             add_new_machine(machine.name, machine.iface);
             transports.back()->open();
-            clients.back()->join(machine.name, machine.iface);
+            clients.back()->join(machines[me].name, machines[me].iface);
           }
           else
             clients[master]->join(machine.name, machine.iface); //Notify the master that he has joined the network
@@ -752,8 +752,8 @@ private:
     stringstream name;
     stringstream iface;
     size_t i = machines.size();
-    name << "machines.name" << (i-1);
-    iface << "machines.iface" << (i-1);
+    name << "machines.name" << i;
+    iface << "machines.iface" << i;
     key_name = name.str();
     key_iface = iface.str();
 
