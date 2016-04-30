@@ -77,7 +77,7 @@ bool testing_join(IODFSClient& client) {
 
 		client.global_create("file_after", token_after);
 
-		usleep(1200*1000*1000); 
+		usleep(120*1000*1000); 
 		// Should check manually that file_before is ONLY in the subset of servers at te begining 
 		// and file_after is in the subset of servers at the beginning + the new server which has joined
 

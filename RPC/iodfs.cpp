@@ -571,6 +571,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   void join(const string& name, const string& iface) {
+    std::cout << "JOIN" << std::endl;
     add_machines.lock();
     add_new_machine(name, iface);
     add_machines.unlock();
@@ -636,11 +637,14 @@ private:
 
         // Connect to all the server node
         for(auto& machine : servers)
+          std::cout << machine.name << " " << machine.iface << std::endl;
+
           // Avoid to add again to a server node if already did it (or knew it when launching the server)
           if (machine.name != machines[master].name) {
             add_new_machine(machine.name, machine.iface);
             clients.back()->join(machine.name, machine.iface);
           }
+          BOOST_LOG_TRIVIAL(info) << "Join to " << machines[master].name << " DONE !";
 
         // Now connect to all the server but without joining them again
         reconnect();
@@ -724,7 +728,7 @@ private:
     bool exists = false;
     for(unsigned int i = 0; !exists && i < machines.size(); ++i)
       exists = machines[i].name == name;
-
+    std::cout << "value of exists : " << exists << std::endl;
     if(!exists) {
       string key_name, key_iface;
       add_new_machine_in_pt_hurricane(name, iface, key_name, key_iface);
