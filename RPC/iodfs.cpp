@@ -60,7 +60,7 @@ class IODFSHandler : virtual public IODFSIf {
   // Network part
   vector<network_interface> machines; //Struct defined in IODFS_types.h
   mutex add_machines;
-  unordered_map<string, double*> tokens; //Same tricks as global_buffers
+  unordered_map<string, unsigned long> tokens; //Same tricks as global_buffers
   unordered_map<string, hurricane::client_drain*> client_drains;
   unordered_map<string, hurricane::client_fill*> client_fills;
 
@@ -286,237 +286,6 @@ class IODFSHandler : virtual public IODFSIf {
 
 
   ////////////////////////////////////////////
-  //////////// GLOBAL PART ///////////////////
-  ////////////////////////////////////////////
-
-
-
-  // Needed in order to know if a connected machine is still available
-  bool nop() {
-    return true;
-  }
-
-  // False implie that the file already exist on this machine
-  // Throw LostConnection if the server is blocked (loosing a node or initializing) or we lost a node during the voting phase
-  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
-  // Throw BadToken if the token is not recognized
-  bool global_create(const string& filename, const string& token) {
-    handle_connection_to_server_done(true);
-    handle_token(token);
-
-    if(global_exists(filename, token) || helper_exists(filename, global_buffers))
-      return false;
-
-    bool result = true;
-    try {
-      for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
-        result = result && clients[first_known_lost_node]->local_create(filename);
-    } catch(TException& tx) {
-      LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].name;
-      throw lcdc;
-    }
-
-    global_buffers[filename] = NULL;
-
-    return result;
-  }
-
-  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
-  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
-  // Throw BadToken if the token is not recognized
-  bool global_exists(const string& filename, const string& token) {
-    handle_connection_to_server_done(true);
-    handle_token(token);
-
-    bool result = true;
-    try {
-      for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
-        result = result && clients[first_known_lost_node]->local_exists(filename);
-    } catch(TException& tx) {
-      LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].name;
-      throw lcdc;
-    }
-
-    return result;
-  }
-
-  // False implie that the file doesn't exist on this machine or on another machine
-  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
-  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
-  // Throw BadToken if the token is not recognized
-  bool global_delete(const string& filename, const string& token) {
-    handle_connection_to_server_done(true);
-    handle_token(token);
-
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
-      return false;
-
-    bool result = true;
-    try {
-      for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
-        result = result && clients[first_known_lost_node]->local_delete(filename);
-    } catch(TException& tx) {
-      LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].name;
-      throw lcdc;
-    }
-
-    return result;
-  }
-
-  // An empty buffer implies that either the file doesn't exisir or the size is not a multiple of slipchunk !
-  // Throw LostConnection if the server is blocked (initializing)
-  // Throw BadToken if the token is not recognized
-  void global_fill(string& _return, const string& filename, const int64_t size, const string& token) {
-    handle_connection_to_server_done(false);
-    handle_token(token, true, false);
-
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || (size%slipchunk != 0))
-      _return = "";
-    else {
-      init_req();
-      strcpy(req.filename, filename.c_str());
-      req.cmd = hurricane::CMD_FILL;
-      req.size = size;
-
-      _return = string(size, 0);
-      int64_t filled_bytes = client_fills[token]->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
-
-      // EOF, should return a string smaller and so, its size is modified
-      if(filled_bytes < size) 
-          _return = _return.data();
-    }
-  }
-
-  // Throw LostConnection if the server is blocked (initializing)
-  // Throw BadToken if the token is not recognized
-  bool global_drain(const string& filename, const string& buffer, const string& token) {
-    handle_connection_to_server_done(false);
-    handle_token(token, false, true);
-
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
-      return false;
-
-    init_req();
-    strcpy(req.filename, filename.c_str());
-    req.cmd = hurricane::CMD_DRAIN;
-    req.size = buffer.size();
-
-    if (client_drains[token]->batch_access_store(&req, (unsigned char*) buffer.c_str(), slipchunk, buffer.size())) {
-      BOOST_LOG_TRIVIAL(fatal) << "Unable to write to hurricane";
-      return false;
-    }
-
-    return true;
-  }
-
-  // False implie that the file doesn't exist on this machine or on another machine
-  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
-  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
-  // Throw BadToken if the token is not recognized
-  bool global_rewind(const string& filename, const string& token) {
-    handle_connection_to_server_done();
-    handle_token(token);
-
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
-      return false;
-
-    bool result = true;
-    try {
-      for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
-        result = result && clients[first_known_lost_node]->local_rewind(filename);
-    } catch(TException& tx) {
-      LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].name;
-      throw lcdc;
-    }
-
-    return result;
-  }
-
-  // False implie that the file doesn't exist on this machine or on another machine
-  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
-  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
-  // Throw BadToken if the token is not recognized
-  bool global_trunc(const string& filename, const string& token) {
-    handle_connection_to_server_done();
-    handle_token(token);
-
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
-      return false;
-
-    bool result = true;
-    try {
-      for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
-        result = result && clients[first_known_lost_node]->local_trunc(filename);
-    } catch(TException& tx) {
-      LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].name;
-      throw lcdc;
-    }
-
-    return result;
-  }
-
-  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
-  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
-  // Throw BadToken if the token is not recognized
-  bool global_eof(const string& filename, const string& token) {
-    handle_connection_to_server_done();
-    handle_token(token);
-
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
-      return true;
-
-    bool result = true;
-    try {
-      for(first_known_lost_node = 0; result && first_known_lost_node < clients.size(); ++first_known_lost_node)
-        result = result && clients[first_known_lost_node]->local_eof(filename);
-    } catch(TException& tx) {
-      LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].name;
-      throw lcdc;
-    }
-
-    return result;
-  }
-
-  // -1 indicate that on a machine, the file doesn't exist
-  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
-  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
-  // Throw BadToken if the token is not recognized
-  int64_t global_size(const string& filename, const string& token) {
-    handle_connection_to_server_done();
-    handle_token(token);
-
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
-      return -1;
-
-    int64_t result = 0;
-    try {
-      int64_t size;
-      for(first_known_lost_node = 0; result >= 0 && first_known_lost_node < clients.size(); ++first_known_lost_node) {
-        size = clients[first_known_lost_node]->local_size(filename);
-        if(size < 0)
-          result = -1;
-        else
-          result += size;
-      }
-    } catch(TException& tx) {
-      LostConnectionDuringCommit lcdc;
-      lcdc.name_node_lost = machines[first_known_lost_node].name;
-      throw lcdc;
-    }
-
-    return result;
-  }
-
-
-
-
-  ////////////////////////////////////////////
   //////////// JOIN PART    //////////////////
   ////////////////////////////////////////////
 
@@ -530,7 +299,7 @@ class IODFSHandler : virtual public IODFSIf {
     for(int i = 0; i < LENGTH_TOKEN; ++i)
       _return += characters[rand() % (characters.size() -1)];
 
-    tokens[_return] = NULL;
+    tokens[_return] = 0;
   }
 
   // Create a connection with a client, given a generated token
@@ -540,6 +309,7 @@ class IODFSHandler : virtual public IODFSIf {
 
     client_drains[token] = new hurricane::client_drain();
     client_fills[token] = new hurricane::client_fill();
+    tokens[token] = machines.size();
 
     return true;
   }
@@ -564,10 +334,12 @@ class IODFSHandler : virtual public IODFSIf {
 
   // Return the list of known servers. The new server needs to call join on each server
   void get_list_server_nodes(vector<network_interface> & _return) {
-    handle_connection_to_server_done(true);
+    add_machines.lock();
 
-    // Return the list of servers (excluded the new one)
+    // Return the current list of servers
     _return = machines;
+
+    add_machines.unlock();
   }
 
   void join(const string& name, const string& iface) {
@@ -577,6 +349,237 @@ class IODFSHandler : virtual public IODFSIf {
     add_machines.unlock();
   }
 
+
+
+
+
+  ////////////////////////////////////////////
+  //////////// GLOBAL PART ///////////////////
+  ////////////////////////////////////////////
+
+
+
+  // Needed in order to know if a connected machine is still available
+  bool nop() {
+    return true;
+  }
+
+  // False implie that the file already exist on this machine
+  // Throw LostConnection if the server is blocked (loosing a node or initializing) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
+  bool global_create(const string& filename, const string& token) {
+    handle_token(token);
+    handle_connection_to_server_done(token, true);
+
+    if(global_exists(filename, token) || helper_exists(filename, global_buffers))
+      return false;
+
+    bool result = true;
+    try {
+      for(first_known_lost_node = 0; result && first_known_lost_node < tokens[token]; ++first_known_lost_node)
+        result = result && clients[first_known_lost_node]->local_create(filename);
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
+      throw lcdc;
+    }
+
+    global_buffers[filename] = NULL;
+
+    return result;
+  }
+
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
+  bool global_exists(const string& filename, const string& token) {
+    handle_token(token);
+    handle_connection_to_server_done(token, true);
+
+    bool result = true;
+    try {
+      for(first_known_lost_node = 0; result && first_known_lost_node < tokens[token]; ++first_known_lost_node)
+        result = result && clients[first_known_lost_node]->local_exists(filename);
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
+      throw lcdc;
+    }
+
+    return result;
+  }
+
+  // False implie that the file doesn't exist on this machine or on another machine
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
+  bool global_delete(const string& filename, const string& token) {
+    handle_token(token);
+    handle_connection_to_server_done(token, true);
+
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
+      return false;
+
+    bool result = true;
+    try {
+      for(first_known_lost_node = 0; result && first_known_lost_node < tokens[token]; ++first_known_lost_node)
+        result = result && clients[first_known_lost_node]->local_delete(filename);
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
+      throw lcdc;
+    }
+
+    return result;
+  }
+
+  // An empty buffer implies that either the file doesn't exisir or the size is not a multiple of slipchunk !
+  // Throw LostConnection if the server is blocked (initializing)
+  // Throw BadToken if the token is not recognized
+  void global_fill(string& _return, const string& filename, const int64_t size, const string& token) {
+    handle_token(token, true, false);
+    handle_connection_to_server_done(token, false);
+
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || (size%slipchunk != 0))
+      _return = "";
+    else {
+      init_req();
+      strcpy(req.filename, filename.c_str());
+      req.cmd = hurricane::CMD_FILL;
+      req.size = size;
+
+      _return = string(size, 0);
+      int64_t filled_bytes = client_fills[token]->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
+
+      // EOF, should return a string smaller and so, its size is modified
+      if(filled_bytes < size) 
+          _return = _return.data();
+    }
+  }
+
+  // Throw LostConnection if the server is blocked (initializing)
+  // Throw BadToken if the token is not recognized
+  bool global_drain(const string& filename, const string& buffer, const string& token) {
+    handle_token(token, false, true);
+    handle_connection_to_server_done(token, false);
+
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
+      return false;
+
+    init_req();
+    strcpy(req.filename, filename.c_str());
+    req.cmd = hurricane::CMD_DRAIN;
+    req.size = buffer.size();
+
+    if (client_drains[token]->batch_access_store(&req, (unsigned char*) buffer.c_str(), slipchunk, buffer.size())) {
+      BOOST_LOG_TRIVIAL(fatal) << "Unable to write to hurricane";
+      return false;
+    }
+
+    return true;
+  }
+
+  // False implie that the file doesn't exist on this machine or on another machine
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
+  bool global_rewind(const string& filename, const string& token) {
+    handle_token(token);
+    handle_connection_to_server_done(token);
+
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
+      return false;
+
+    bool result = true;
+    try {
+      for(first_known_lost_node = 0; result && first_known_lost_node < tokens[token]; ++first_known_lost_node)
+        result = result && clients[first_known_lost_node]->local_rewind(filename);
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
+      throw lcdc;
+    }
+
+    return result;
+  }
+
+  // False implie that the file doesn't exist on this machine or on another machine
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
+  bool global_trunc(const string& filename, const string& token) {
+    handle_token(token);
+    handle_connection_to_server_done(token);
+
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
+      return false;
+
+    bool result = true;
+    try {
+      for(first_known_lost_node = 0; result && first_known_lost_node < tokens[token]; ++first_known_lost_node)
+        result = result && clients[first_known_lost_node]->local_trunc(filename);
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
+      throw lcdc;
+    }
+
+    return result;
+  }
+
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
+  bool global_eof(const string& filename, const string& token) {
+    handle_token(token);
+    handle_connection_to_server_done(token);
+
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
+      return true;
+
+    bool result = true;
+    try {
+      for(first_known_lost_node = 0; result && first_known_lost_node < tokens[token]; ++first_known_lost_node)
+        result = result && clients[first_known_lost_node]->local_eof(filename);
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
+      throw lcdc;
+    }
+
+    return result;
+  }
+
+  // -1 indicate that on a machine, the file doesn't exist
+  // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
+  // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
+  // Throw BadToken if the token is not recognized
+  int64_t global_size(const string& filename, const string& token) {
+    handle_token(token);
+    handle_connection_to_server_done(token);
+
+    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
+      return -1;
+
+    int64_t result = 0;
+    try {
+      int64_t size;
+      for(first_known_lost_node = 0; result >= 0 && first_known_lost_node < tokens[token]; ++first_known_lost_node) {
+        size = clients[first_known_lost_node]->local_size(filename);
+        if(size < 0)
+          result = -1;
+        else
+          result += size;
+      }
+    } catch(TException& tx) {
+      LostConnectionDuringCommit lcdc;
+      lcdc.name_node_lost = machines[first_known_lost_node].name;
+      throw lcdc;
+    }
+
+    return result;
+  }
 
 
 
@@ -606,6 +609,7 @@ private:
     req.source_mc = req.cmd = req.size = req.offset = 0;
   }
 
+  // When we reconnect, we do it with all the machines ! Not only the machines associated with a token
   void reconnect() {
     connection_to_server_done = false;
     unsigned int i = 0;
@@ -670,15 +674,21 @@ private:
     hurricane::threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
   }
 
-  bool are_all_connection_open() {
+  // We test only the connection to the servers associated with a given token
+  bool are_all_connection_open(const string& token) {
+    handle_token(token);
+
     bool result = true;
 
     first_known_lost_node = 0;
     try {
-     for(auto& machine : clients) {
-        result = result && machine->nop();
+      for(unsigned int i = 0; i < tokens[token]; ++i) {
+        if(!transports[i]->isOpen())
+          transports[i]->open();
+        result = result && clients[i]->nop();
         ++first_known_lost_node;
       }
+
       first_known_lost_node = machines.size()+1;
     } catch (TException& tx){
       transports[first_known_lost_node]->close();
@@ -695,8 +705,8 @@ private:
   }
 
   // true implies doing a voting phase
-  void handle_connection_to_server_done(bool with_are_all_connection_open = false) {
-     if(!connection_to_server_done || (with_are_all_connection_open && !are_all_connection_open())) {
+  void handle_connection_to_server_done(const string& token, bool with_are_all_connection_open = false) {
+     if(!connection_to_server_done || (with_are_all_connection_open && !are_all_connection_open(token))) {
       LostConnection lc;
       lc.name_node_lost = first_known_lost_node < machines.size() ? machines[first_known_lost_node].name : "Server hasn't been initialised";
       throw lc;
