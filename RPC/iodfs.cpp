@@ -701,10 +701,10 @@ private:
     }
   }
 
-  void add_new_machine_in_machines(const string& name, const string& iface) {
+  void add_new_machine_in_machines(const string& key_name, const string& key_iface) {
     network_interface ni;
-    ni.name = pt_hurricane.get<string>(name.c_str());
-    ni.iface = pt_hurricane.get<string>(iface.c_str());
+    ni.name = pt_hurricane.get<string>(key_name.c_str());
+    ni.iface = pt_hurricane.get<string>(key_iface.c_str());
 
     machines.push_back(ni);
   }
@@ -726,30 +726,34 @@ private:
       exists = machines[i].name == name;
 
     if(!exists) {
-      add_new_machine_in_pt_hurricane(name, iface);
-      add_new_machine_in_machines(name, iface);
+      string key_name, key_iface;
+      add_new_machine_in_pt_hurricane(name, iface, key_name, key_iface);
+      add_new_machine_in_machines(key_name, key_iface);
       add_new_machine_network(name);
     }
 
     return !exists;
   }
 
-  void add_new_machine_in_pt_hurricane(const string& _name, const string& _iface) {
+  void add_new_machine_in_pt_hurricane(const string& _name, const string& _iface, string& key_name, string& key_iface) {
     stringstream name;
     stringstream iface;
     size_t i = machines.size()-1;
     name << "machines.name" << i;
     iface << "machines.iface" << i;
+    key_name = name.str();
+    key_iface = iface.str();
 
     pt_hurricane.put("machines.count", i+1);
-    pt_hurricane.put(name.str().c_str(), _name);
-    pt_hurricane.put(iface.str().c_str(), _iface);
+    pt_hurricane.put(key_name.c_str(), _name);
+    pt_hurricane.put(key_iface.c_str(), _iface);
 
     for(unsigned int i = 0; i < pt_hurricane.get < unsigned long > ("machines.count"); ++i){
       stringstream name;
       stringstream iface;
       name << "machines.name" << i;
       iface << "machines.iface" << i;
+
       std::cout << pt_hurricane.get < unsigned long > ("machines.count") << "\t" << pt_hurricane.get<string>(name.str().c_str()) << " " << pt_hurricane.get<string>(iface.str().c_str()) << std::endl;
     } 
   }
