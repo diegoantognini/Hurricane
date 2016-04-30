@@ -29,8 +29,8 @@
 #include "async_direct_io.hpp"
 #include "dummy_io.hpp"
 
-namespace slipstore {
-  // Requests to slipstore service
+namespace hurricane {
+  // Requests to hurricane service
   static const unsigned long CMD_FILL = 0;
   static const unsigned long CMD_SEEK_AND_FILL = 1;
   static const unsigned long CMD_DRAIN = 2;
@@ -38,11 +38,11 @@ namespace slipstore {
   static const unsigned long CMD_NOP = 4;
   static const unsigned long CMD_TERMINATE = 7;
   static const unsigned long CMD_RESET = 9;
-  // Responses from slipstore service
+  // Responses from hurricane service
   static const unsigned long RESP_ACK = 0;
   static const unsigned long RESP_NACK = 1;
 
-  struct slipstore_req_t {
+  struct hurricane_req_t {
       unsigned long source_mc;
       unsigned long cmd;
       unsigned long size;
@@ -51,19 +51,19 @@ namespace slipstore {
   };
 
   class io {
-      slipstore_io* buffer;
+      hurricane_io* buffer;
       char name[100];
       fsnap *fsnaps;
       unsigned char *membuffer;
-      rtc_clock slipstore_io_time;
-      rtc_clock slipstore_snap_time;
+      rtc_clock hurricane_io_time;
+      rtc_clock hurricane_snap_time;
 
   public:
       io(const char* filename, unsigned char *membuffer_in)
           : fsnaps(NULL),
             membuffer(membuffer_in) {
         strcpy(name, filename);
-        //unsigned long me = pt_slipstore.get < unsigned long > ("machines.me");
+        //unsigned long me = pt_hurricane.get < unsigned long > ("machines.me");
 
         if (vm.count("use_direct_io") > 0)
           buffer = new async_direct_io(filename, vm["dio_unit"].as < unsigned long > ());
@@ -81,24 +81,24 @@ namespace slipstore {
         return buffer->eof();
       }
 
-      unsigned long fill(unsigned char *buffer_in, slipstore_req_t *req) {
+      unsigned long fill(unsigned char *buffer_in, hurricane_req_t *req) {
           unsigned long size;
-          slipstore_io_time.start();
+          hurricane_io_time.start();
           size = buffer->fill(buffer_in, req->size);
-          slipstore_io_time.stop();
+          hurricane_io_time.stop();
           return size;
       }
 
-      unsigned long seek_and_fill(unsigned char *buffer_in, slipstore_req_t *req) {
+      unsigned long seek_and_fill(unsigned char *buffer_in, hurricane_req_t *req) {
         unsigned long size;
-        slipstore_io_time.start();
+        hurricane_io_time.start();
         size = buffer->seek_and_fill(buffer_in, req->offset, req->size);
-        slipstore_io_time.stop();
+        hurricane_io_time.stop();
         return size;
       }
 
       // This is how Amitabha writes code
-      bool have_drain_space(slipstore_req_t *req) {
+      bool have_drain_space(hurricane_req_t *req) {
         if ((usage + req->size) <= quota) {
           return true;
         }
@@ -112,16 +112,16 @@ namespace slipstore {
         return usage + additional_size <= quota;
       }
 
-      void drain(unsigned char *buffer_in, slipstore_req_t *req) {
-        slipstore_io_time.start();
+      void drain(unsigned char *buffer_in, hurricane_req_t *req) {
+        hurricane_io_time.start();
         buffer->drain(buffer_in, req->size);
-        slipstore_io_time.stop();
+        hurricane_io_time.stop();
       }
 
       void rewind() {
-        slipstore_io_time.start();
+        hurricane_io_time.start();
         buffer->rewind();
-        slipstore_io_time.stop();
+        hurricane_io_time.stop();
       }
 
       unsigned long get_size() {
@@ -133,9 +133,9 @@ namespace slipstore {
       }
 
       void trunc() {
-        slipstore_io_time.start();
+        hurricane_io_time.start();
         buffer->trunc();
-        slipstore_io_time.stop();
+        hurricane_io_time.stop();
       }
 
       // For running fill speed test
@@ -154,9 +154,9 @@ namespace slipstore {
       }
 
       ~io() {
-        slipstore_io_time.print("SLIPSTORE::IO::TIME");
-        slipstore_snap_time.print("SLIPSTORE::SNAP::TIME");
-        BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::MAX_DISK_USAGE_BYTES "<< max_quota_usage;
+        hurricane_io_time.print("HURRICANE::IO::TIME");
+        hurricane_snap_time.print("HURRICANE::SNAP::TIME");
+        BOOST_LOG_TRIVIAL(info) << "HURRICANE::MAX_DISK_USAGE_BYTES "<< max_quota_usage;
         delete buffer;
       }
   };

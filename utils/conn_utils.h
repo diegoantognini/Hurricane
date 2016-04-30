@@ -1,7 +1,7 @@
 #ifndef _CONN_UTILS_
 #define _CONN_UTILS_
 
-namespace slipstore {
+namespace hurricane {
 extern unsigned long baseport;
 
   static const std::string protocol = "tcp";
@@ -25,8 +25,8 @@ extern unsigned long baseport;
       addr << "ipc://server";
     } else {
       addr << protocol << "://";
-      addr << pt_slipstore.get<std::string>(name.str().c_str());
-      unsigned long machines = pt_slipstore.get < unsigned
+      addr << pt_hurricane.get<std::string>(name.str().c_str());
+      unsigned long machines = pt_hurricane.get < unsigned
       long > ("machines.count");
       unsigned long port = baseport + endpoint_count(machines) * mc_target +
                            mc_source;
@@ -44,8 +44,8 @@ extern unsigned long baseport;
       addr << "ipc://server";
     } else {
       addr << protocol << "://";
-      addr << pt_slipstore.get<std::string>(name.str().c_str());
-      unsigned long machines = pt_slipstore.get < unsigned
+      addr << pt_hurricane.get<std::string>(name.str().c_str());
+      unsigned long machines = pt_hurricane.get < unsigned
       long > ("machines.count");
       unsigned long port = baseport + endpoint_count(machines) * mc_target +
                            mc_source;
@@ -63,8 +63,8 @@ extern unsigned long baseport;
       addr << "ipc://client";
     } else {
       addr << protocol << "://";
-      addr << pt_slipstore.get<std::string>(name.str().c_str());
-      unsigned long machines = pt_slipstore.get < unsigned
+      addr << pt_hurricane.get<std::string>(name.str().c_str());
+      unsigned long machines = pt_hurricane.get < unsigned
       long > ("machines.count");
       unsigned long port = baseport + endpoint_count(machines) * mc_target +
                            machines + mc_source;
@@ -82,8 +82,8 @@ extern unsigned long baseport;
       addr << "ipc://client";
     } else {
       addr << protocol << "://";
-      addr << pt_slipstore.get<std::string>(name.str().c_str());
-      unsigned long machines = pt_slipstore.get < unsigned
+      addr << pt_hurricane.get<std::string>(name.str().c_str());
+      unsigned long machines = pt_hurricane.get < unsigned
       long > ("machines.count");
       unsigned long port = baseport + endpoint_count(machines) * mc_target +
                            machines + mc_source;
@@ -97,8 +97,8 @@ extern unsigned long baseport;
     std::stringstream addr;
     name << "machines.name" << mc_target;
     addr << protocol << "://";
-    addr << pt_slipstore.get<std::string>(name.str().c_str());
-    unsigned long machines = pt_slipstore.get < unsigned
+    addr << pt_hurricane.get<std::string>(name.str().c_str());
+    unsigned long machines = pt_hurricane.get < unsigned
     long > ("machines.count");
     unsigned long port = baseport + endpoint_count(machines) * mc_target +
                          2 * machines;
@@ -111,8 +111,8 @@ extern unsigned long baseport;
     std::stringstream addr;
     name << "machines.iface" << mc_target;
     addr << protocol << "://";
-    addr << pt_slipstore.get<std::string>(name.str().c_str());
-    unsigned long machines = pt_slipstore.get < unsigned
+    addr << pt_hurricane.get<std::string>(name.str().c_str());
+    unsigned long machines = pt_hurricane.get < unsigned
     long > ("machines.count");
     unsigned long port = baseport + endpoint_count(machines) * mc_target +
                          2 * machines;
@@ -125,8 +125,8 @@ extern unsigned long baseport;
     std::stringstream addr;
     name << "machines.name" << mc_target;
     addr << protocol << "://";
-    addr << pt_slipstore.get<std::string>(name.str().c_str());
-    unsigned long machines = pt_slipstore.get < unsigned
+    addr << pt_hurricane.get<std::string>(name.str().c_str());
+    unsigned long machines = pt_hurricane.get < unsigned
     long > ("machines.count");
     unsigned long port = baseport + endpoint_count(machines) * mc_target +
                          2 * machines + 1;
@@ -139,8 +139,8 @@ extern unsigned long baseport;
     std::stringstream addr;
     name << "machines.iface" << mc_target;
     addr << protocol << "://";
-    addr << pt_slipstore.get<std::string>(name.str().c_str());
-    unsigned long machines = pt_slipstore.get < unsigned
+    addr << pt_hurricane.get<std::string>(name.str().c_str());
+    unsigned long machines = pt_hurricane.get < unsigned
     long > ("machines.count");
     unsigned long port = baseport + endpoint_count(machines) * mc_target +
                          2 * machines + 1;

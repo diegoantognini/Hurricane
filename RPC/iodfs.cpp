@@ -1,15 +1,15 @@
 #include "gen-cpp/IODFS.h"
 #include "gen-cpp/IODFS_types.h"
 
-#include "../slipstore/interface.hpp"
-#include "../slipstore/config.hpp"
-#include "../slipstore/io/io.hpp"
+#include "../hurricane/interface.hpp"
+#include "../hurricane/config.hpp"
+#include "../hurricane/io/io.hpp"
 
-#include "../slipstore/server/server_async.hpp"
-#include "../slipstore/server/server_sync.hpp"
+#include "../hurricane/server/server_async.hpp"
+#include "../hurricane/server/server_sync.hpp"
 
-#include "../slipstore/client/client_fill.hpp"
-#include "../slipstore/client/client_drain.hpp"
+#include "../hurricane/client/client_fill.hpp"
+#include "../hurricane/client/client_drain.hpp"
 
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocket.h>
@@ -52,17 +52,17 @@ using std::mutex;
 class IODFSHandler : virtual public IODFSIf {
   private:
   // IO part
-  unordered_map<string, slipstore::io*> local_buffers;
-  unordered_map<string, slipstore::io*> global_buffers; //the value is null, but we can use the hash table to find in O(1) :)
-  slipstore::slipstore_req_t req;
+  unordered_map<string, hurricane::io*> local_buffers;
+  unordered_map<string, hurricane::io*> global_buffers; //the value is null, but we can use the hash table to find in O(1) :)
+  hurricane::hurricane_req_t req;
   unsigned long slipchunk;
 
   // Network part
   vector<network_interface> machines; //Struct defined in IODFS_types.h
   mutex add_machines;
   unordered_map<string, double*> tokens; //Same tricks as global_buffers
-  unordered_map<string, slipstore::client_drain*> client_drains;
-  unordered_map<string, slipstore::client_fill*> client_fills;
+  unordered_map<string, hurricane::client_drain*> client_drains;
+  unordered_map<string, hurricane::client_fill*> client_fills;
 
   unsigned long me;
   unsigned int port;
@@ -85,8 +85,8 @@ class IODFSHandler : virtual public IODFSIf {
     connection_to_server_done(false),
     already_connect_at_least_one(false)  {
 
-    // Copy all the server from slipstore.ini
-    for(unsigned int i = 0; i < pt_slipstore.get < unsigned long > ("machines.count"); ++i){
+    // Copy all the server from hurricane.ini
+    for(unsigned int i = 0; i < pt_hurricane.get < unsigned long > ("machines.count"); ++i){
       stringstream name;
       stringstream iface;
       name << "machines.name" << i;
@@ -98,7 +98,7 @@ class IODFSHandler : virtual public IODFSIf {
 
     init_req();  
 
-    slipstore::init(&local_buffers, true);
+    hurricane::init(&local_buffers, true);
 
     // Shuffling the machine in order that every machine have ~ the same amount of requests
     string me_name = machines[me].name;
@@ -117,15 +117,15 @@ class IODFSHandler : virtual public IODFSIf {
     // Do the connection later
     reconnect_timer = new boost::asio::deadline_timer(reconnect_thread, boost::posix_time::seconds(NB_SECONDS_BETWEEN_RECONNECTION));
     reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
-    slipstore::threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
+    hurricane::threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
   }
 
   ~IODFSHandler() {
-    slipstore::shutdown(true);
+    hurricane::shutdown(true);
 
     reconnect_thread.stop();
 
-    for(unordered_map<string, slipstore::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
+    for(unordered_map<string, hurricane::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
       helper_delete(it);
   
     for(auto& it : client_fills) {
@@ -164,7 +164,7 @@ class IODFSHandler : virtual public IODFSIf {
     if(local_exists(filename))
       return false;
 
-    local_buffers[filename] = new slipstore::io(filename.c_str(), NULL);
+    local_buffers[filename] = new hurricane::io(filename.c_str(), NULL);
     return true;
   }
 
@@ -174,7 +174,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // False indicates that the file already exists
   bool local_delete(const string& filename) {
-    unordered_map<string, slipstore::io*>::iterator it;
+    unordered_map<string, hurricane::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return false;
 
@@ -190,7 +190,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // An empty buffer implies either the file already exists or we are at the EOF
   void local_fill(string& _return, const string& filename, const int64_t size) {
-    unordered_map<string, slipstore::io*>::iterator it;
+    unordered_map<string, hurricane::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       _return = "";
     else {
@@ -207,7 +207,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // An empty buffer implies either the file already exists or we are at the EOF
   void local_seek_and_fill(string& _return, const string& filename, const int64_t size, const int64_t offset) {
-    unordered_map<string, slipstore::io*>::iterator it;
+    unordered_map<string, hurricane::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       _return = "";
     else {
@@ -225,7 +225,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // False indicate that the file doesn't exist
   bool local_drain(const string& filename, const string& buffer) {
-    unordered_map<string, slipstore::io*>::iterator it;
+    unordered_map<string, hurricane::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return false;
 
@@ -237,7 +237,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // False indicate that the file doesn't exist
   bool local_rewind(const string& filename) {
-    unordered_map<string, slipstore::io*>::iterator it;
+    unordered_map<string, hurricane::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return false;
 
@@ -247,7 +247,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // False indicate that the file doesn't exist
   bool local_trunc(const string& filename) {
-    unordered_map<string, slipstore::io*>::iterator it;
+    unordered_map<string, hurricane::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return false;
 
@@ -257,7 +257,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // True indicate that the file doesn't exist of we are EOF
   bool local_eof(const string& filename) {
-    unordered_map<string, slipstore::io*>::iterator it;
+    unordered_map<string, hurricane::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return true;
 
@@ -266,7 +266,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // -1 indicate that the file doesn't exist
   int64_t local_size(const string& filename) {
-    unordered_map<string, slipstore::io*>::iterator it;
+    unordered_map<string, hurricane::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return -1;
 
@@ -275,7 +275,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // -1 indicate that the file doesn't exist
   int64_t local_left(const string& filename) {
-    unordered_map<string, slipstore::io*>::iterator it;
+    unordered_map<string, hurricane::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return -1;
 
@@ -378,7 +378,7 @@ class IODFSHandler : virtual public IODFSIf {
     else {
       init_req();
       strcpy(req.filename, filename.c_str());
-      req.cmd = slipstore::CMD_FILL;
+      req.cmd = hurricane::CMD_FILL;
       req.size = size;
 
       _return = string(size, 0);
@@ -401,11 +401,11 @@ class IODFSHandler : virtual public IODFSIf {
 
     init_req();
     strcpy(req.filename, filename.c_str());
-    req.cmd = slipstore::CMD_DRAIN;
+    req.cmd = hurricane::CMD_DRAIN;
     req.size = buffer.size();
 
     if (client_drains[token]->batch_access_store(&req, (unsigned char*) buffer.c_str(), slipchunk, buffer.size())) {
-      BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
+      BOOST_LOG_TRIVIAL(fatal) << "Unable to write to hurricane";
       return false;
     }
 
@@ -538,8 +538,8 @@ class IODFSHandler : virtual public IODFSIf {
     if (tokens.find(token) == tokens.end())
       return false;
 
-    client_drains[token] = new slipstore::client_drain();
-    client_fills[token] = new slipstore::client_fill();
+    client_drains[token] = new hurricane::client_drain();
+    client_fills[token] = new hurricane::client_fill();
 
     return true;
   }
@@ -587,16 +587,16 @@ class IODFSHandler : virtual public IODFSIf {
 
   
 private:
-  bool helper_exists(const string& filename, unordered_map<string, slipstore::io*>::iterator& it, unordered_map<string, slipstore::io*>& buffers) {
+  bool helper_exists(const string& filename, unordered_map<string, hurricane::io*>::iterator& it, unordered_map<string, hurricane::io*>& buffers) {
     it = buffers.find(filename);
     return it != buffers.end();
   }
 
-  bool helper_exists(const string& filename, unordered_map<string, slipstore::io*>& buffers) {
+  bool helper_exists(const string& filename, unordered_map<string, hurricane::io*>& buffers) {
     return buffers.find(filename) != buffers.end();
   }
 
-  void helper_delete(unordered_map<string, slipstore::io*>::iterator& it) {
+  void helper_delete(unordered_map<string, hurricane::io*>::iterator& it) {
     delete it->second;
     unlink_file(((char*)it->first.c_str()));
   }
@@ -658,7 +658,7 @@ private:
   void try_to_reconnect() {
     connection_to_server_done = false;
     reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
-    slipstore::threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
+    hurricane::threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &reconnect_thread));
   }
 
   bool are_all_connection_open() {
@@ -703,8 +703,8 @@ private:
 
   void add_new_machine_in_machines(const string& name, const string& iface) {
     network_interface ni;
-    ni.name = pt_slipstore.get<string>(name.c_str());
-    ni.iface = pt_slipstore.get<string>(iface.c_str());
+    ni.name = pt_hurricane.get<string>(name.c_str());
+    ni.iface = pt_hurricane.get<string>(iface.c_str());
 
     machines.push_back(ni);
   }
@@ -726,7 +726,7 @@ private:
       exists = machines[i].name == name;
 
     if(!exists) {
-      add_new_machine_in_pt_slipstore(name, iface);
+      add_new_machine_in_pt_hurricane(name, iface);
       add_new_machine_in_machines(name, iface);
       add_new_machine_network(name);
     }
@@ -734,16 +734,16 @@ private:
     return !exists;
   }
 
-  void add_new_machine_in_pt_slipstore(const string& _name, const string& _iface) {
+  void add_new_machine_in_pt_hurricane(const string& _name, const string& _iface) {
     stringstream name;
     stringstream iface;
     size_t i = machines.size()-1;
     name << "machines.name" << i;
     iface << "machines.iface" << i;
 
-    pt_slipstore.put("machines.count", i+1);
-    pt_slipstore.put(name.str().c_str(), _name);
-    pt_slipstore.put(iface.str().c_str(), _iface);
+    pt_hurricane.put("machines.count", i+1);
+    pt_hurricane.put(name.str().c_str(), _name);
+    pt_hurricane.put(iface.str().c_str(), _iface);
   }
 
 };
@@ -765,8 +765,8 @@ int main(int argc, const char **argv) {
   srand (time(NULL));
   setup_options(argc, argv);
   
-  init_slipstore_desc();
-  unsigned long me = pt_slipstore.get < unsigned long > ("machines.me");
+  init_hurricane_desc();
+  unsigned long me = pt_hurricane.get < unsigned long > ("machines.me");
 
   unsigned long slipchunk = vm["slipchunk"].as < unsigned long > ();
   unsigned long align = vm["slipbench_align"].as < unsigned long > ();

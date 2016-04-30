@@ -16,15 +16,15 @@
  * limitations under the License.
  */
 
-#include "../slipstore/interface.hpp"
-#include "../slipstore/config.hpp"
+#include "../hurricane/interface.hpp"
+#include "../hurricane/config.hpp"
 #include <string>
 #include <unordered_map>
 
 using std::unordered_map;
 using std::string;
 
-class null_barrier_work : public slipstore::barrier_work {
+class null_barrier_work : public hurricane::barrier_work {
   public:
       virtual void operator()() {
       }
@@ -32,12 +32,12 @@ class null_barrier_work : public slipstore::barrier_work {
 
 void control_barrier() {
   null_barrier_work null_obj;
-  slipstore::slipstore_client_barrier->in_progress = true;
-  slipstore::ioService.post
-      (boost::bind(&slipstore::client_barrier::work_barrier,
-                   slipstore::slipstore_client_barrier,
+  hurricane::hurricane_client_barrier->in_progress = true;
+  hurricane::ioService.post
+      (boost::bind(&hurricane::client_barrier::work_barrier,
+                   hurricane::hurricane_client_barrier,
                    &null_obj));
-  while (slipstore::slipstore_client_barrier->in_progress);
+  while (hurricane::hurricane_client_barrier->in_progress);
 }
 
 volatile unsigned long bthread_running = 0;
@@ -61,12 +61,12 @@ public:
 
 
 int main(int argc, const char **argv) {
-  slipstore::io *streams;
+  hurricane::io *streams;
   rtc_clock fill_clock;
   rtc_clock drain_clock;
-  slipstore::slipstore_req_t req;
+  hurricane::hurricane_req_t req;
   bool silent;
-  unordered_map<string, slipstore::io*>* disks = new unordered_map<string, slipstore::io*>;
+  unordered_map<string, hurricane::io*>* disks = new unordered_map<string, hurricane::io*>;
 
   /* Get options */
   setup_options(argc, argv);
@@ -78,15 +78,15 @@ int main(int argc, const char **argv) {
   unsigned long align = vm["slipbench_align"].as < unsigned long > ();
   slipchunk = (slipchunk / align) * align;
   unsigned long blockmem = vm["blocked_memory"].as < unsigned long > ();
-  /* Read in slipstore information */
-  init_slipstore_desc();
+  /* Read in hurricane information */
+  init_hurricane_desc();
   bool run_drain_test = (vm.count("drain_test") > 0);
   bool run_fill_test = (vm.count("fill_test") > 0);
   const char* filename = "fill_data";
   string sFilename(filename);
-  streams = new slipstore::io(filename, NULL);
+  streams = new hurricane::io(filename, NULL);
   (*disks)[sFilename] = streams;
-  slipstore::init(disks); // tilesize does not matter
+  hurricane::init(disks); // tilesize does not matter
   unsigned char *buffer = new unsigned char[slipchunk];
   unsigned long fill_bytes = 0;
   unsigned char *big_buffer;
@@ -108,7 +108,7 @@ int main(int argc, const char **argv) {
 
   unsigned long silenced_clients = vm["slipbench_silence"].as < unsigned long > ();
   if (silenced_clients != ULONG_MAX &&
-      slipstore::slipstore_client_drain->get_me() < silenced_clients) {
+      hurricane::hurricane_client_drain->get_me() < silenced_clients) {
     silent = true;
   }
   else {
@@ -133,16 +133,16 @@ int main(int argc, const char **argv) {
       unsigned long drain_bytes = slipfile_size;
       if (batching) {
         while (drain_bytes) {
-          req.cmd = slipstore::CMD_DRAIN;
+          req.cmd = hurricane::CMD_DRAIN;
           unsigned long bytes_to_drain = drain_bytes;
           if (bytes_to_drain > big_bufsize) {
             bytes_to_drain = big_bufsize;
           }
-          if (slipstore::slipstore_client_drain->batch_access_store(&req,
+          if (hurricane::hurricane_client_drain->batch_access_store(&req,
                                                                     big_buffer,
                                                                     slipchunk,
                                                                     bytes_to_drain)) {
-            BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
+            BOOST_LOG_TRIVIAL(fatal) << "Unable to write to hurricane";
             exit(-1);
           }
           drain_bytes -= bytes_to_drain;
@@ -153,10 +153,10 @@ int main(int argc, const char **argv) {
           unsigned long bytes;
           bytes = (drain_bytes > slipchunk) ?
                   slipchunk : drain_bytes;
-          req.cmd = slipstore::CMD_DRAIN;
+          req.cmd = hurricane::CMD_DRAIN;
           req.size = bytes;
-          if (!slipstore::slipstore_client_drain->access_store(&req, buffer)) {
-            BOOST_LOG_TRIVIAL(fatal) << "Unable to write to slipstore";
+          if (!hurricane::hurricane_client_drain->access_store(&req, buffer)) {
+            BOOST_LOG_TRIVIAL(fatal) << "Unable to write to hurricane";
             exit(-1);
           }
           drain_bytes -= bytes;
@@ -186,9 +186,9 @@ int main(int argc, const char **argv) {
       if (batching) {
         unsigned long filled_bytes;
         do {
-          req.cmd = slipstore::CMD_FILL;
+          req.cmd = hurricane::CMD_FILL;
           filled_bytes =
-              slipstore::slipstore_client_fill->batch_access_store(&req,
+              hurricane::hurricane_client_fill->batch_access_store(&req,
                                                                    big_buffer,
                                                                    slipchunk,
                                                                    big_bufsize);
@@ -197,9 +197,9 @@ int main(int argc, const char **argv) {
       }
       else {
         do {
-          req.cmd = slipstore::CMD_FILL;
+          req.cmd = hurricane::CMD_FILL;
           req.size = slipchunk;
-          if (!slipstore::slipstore_client_fill->access_store(&req, buffer)) {
+          if (!hurricane::hurricane_client_fill->access_store(&req, buffer)) {
             break;
           }
           fill_bytes += req.size;
@@ -213,7 +213,7 @@ int main(int argc, const char **argv) {
     }
   }
   control_barrier(); // everyone done
-  slipstore::shutdown();
+  hurricane::shutdown();
   delete disks;
   delete buffer;
   delete streams;

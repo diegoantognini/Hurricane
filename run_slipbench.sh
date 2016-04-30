@@ -45,7 +45,7 @@ ifaces="${ifaces}iface$j=${MACHINE[$j]}
 done
 for (( j=0; j<$i; j++ )); do
 ssh $USER@${MACHINE[$j]} "echo $j > $ROOT_DIR/id"
-ssh $USER@${MACHINE[$j]} "cat << EOF > $ROOT_DIR/slipstore.ini
+ssh $USER@${MACHINE[$j]} "cat << EOF > $ROOT_DIR/hurricane.ini
 [machines]
 count=$i
 me=$j
@@ -85,7 +85,7 @@ if [[ "$input" == rmat* ]]; then
 clush -w ${GROUP[$i]} -l $USER "$SUDO rm -f $ROOT_DIR/rmat-*"
 fi;
 
-clush -w ${GROUP[$i]} -l $USER "$SUDO rm -f $ROOT_DIR/id && $SUDO rm -f $ROOT_DIR/slipstore.ini && $SUDO rm -f $ROOT_DIR/global.sh"
+clush -w ${GROUP[$i]} -l $USER "$SUDO rm -f $ROOT_DIR/id && $SUDO rm -f $ROOT_DIR/hurricane.ini && $SUDO rm -f $ROOT_DIR/global.sh"
 clush -w ${GROUP[$i]} -l $USER "$SUDO rm -f $ROOT_DIR/fill_data"
 clush -w ${GROUP[$i]} -l $USER "$SUDO rm -f $ROOT_DIR/fill_test_data"
 clush -w ${GROUP[$i]} -l $USER "$SUDO rm -f $ROOT_DIR/chkp* && $SUDO rm -f $ROOT_DIR/snap*"

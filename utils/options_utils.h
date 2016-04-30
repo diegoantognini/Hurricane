@@ -81,7 +81,7 @@ static void setup_options(int argc, const char *argv[]) {
   long > ()->default_value(21474836480UL),
       "Prefill amount for fanout test");
 
-  // Slipstore options
+  // Hurricane options
   desc.add_options()
       ("baseport",
        boost::program_options::value < unsigned
@@ -90,12 +90,12 @@ static void setup_options(int argc, const char *argv[]) {
   ("slipchunk",
       boost::program_options::value < unsigned
   long > ()->default_value(4194304),
-      "I/O chunk size for slipstore")
-  ("slipstore_servers",
+      "I/O chunk size for hurricane")
+  ("hurricane_servers",
       boost::program_options::value
       < unsigned
   long > ()->default_value(ULONG_MAX),
-      "Number of slipstore servers to use")
+      "Number of hurricane servers to use")
   ("policy_help_all",
       "Indiscriminately help all tiles")
       ("policy_help_none", "Indiscriminately help no tiles")

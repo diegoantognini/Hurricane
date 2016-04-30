@@ -20,14 +20,14 @@
 #define _ASYNC_DIRECT_IO_
 
 #include <boost/asio/io_service.hpp>
-#include "slipstore_io.hpp"
+#include "hurricane_io.hpp"
 #include "dio_buffer.hpp"
 
-namespace slipstore {
+namespace hurricane {
   extern boost::asio::io_service dioService;
   extern boost::thread_group diopool;
 
-  class async_direct_io : public slipstore_io {
+  class async_direct_io : public hurricane_io {
 
       unsigned long seen_bytes;
       unsigned long data_bytes;
@@ -63,7 +63,7 @@ namespace slipstore {
         seen_bytes += size;
         while (iobuf->get_busy());
         iobuf->set_busy();
-        slipstore::dioService.post(boost::bind(&dio_buffer::read,
+        hurricane::dioService.post(boost::bind(&dio_buffer::read,
                                                iobuf,
                                                buffer,
                                                size));
@@ -77,7 +77,7 @@ namespace slipstore {
         unsigned long remaining_bytes;
         while (iobuf->get_busy());
         iobuf->set_busy();
-        slipstore::dioService.post(boost::bind(&dio_buffer::seek,
+        hurricane::dioService.post(boost::bind(&dio_buffer::seek,
                                                iobuf,
                                                offset));
         while (iobuf->get_busy());
@@ -88,7 +88,7 @@ namespace slipstore {
         }
         seen_bytes += size;
         iobuf->set_busy();
-        slipstore::dioService.post(boost::bind(&dio_buffer::read,
+        hurricane::dioService.post(boost::bind(&dio_buffer::read,
                                                iobuf,
                                                buffer,
                                                size));
@@ -101,7 +101,7 @@ namespace slipstore {
         seen_bytes += size;
         while (iobuf->get_busy());
         iobuf->set_busy();
-        slipstore::dioService.post(boost::bind(&dio_buffer::write,
+        hurricane::dioService.post(boost::bind(&dio_buffer::write,
                                                iobuf,
                                                buffer,
                                                size));
@@ -128,7 +128,7 @@ namespace slipstore {
       virtual void rewind() {
         while (iobuf->get_busy());
         iobuf->set_busy();
-        slipstore::dioService.post(boost::bind(&dio_buffer::flush,
+        hurricane::dioService.post(boost::bind(&dio_buffer::flush,
                                                iobuf));
         while (iobuf->get_busy());
         rewind_file(fd);
@@ -138,7 +138,7 @@ namespace slipstore {
       virtual void trunc() {
         while (iobuf->get_busy());
         iobuf->set_busy();
-        slipstore::dioService.post(boost::bind(&dio_buffer::flush,
+        hurricane::dioService.post(boost::bind(&dio_buffer::flush,
                                                iobuf));
         while (iobuf->get_busy());
         if (!snapped) {

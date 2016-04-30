@@ -24,14 +24,14 @@
 #include "boost_log_wrapper.h"
 
 extern boost::property_tree::ptree pt;
-extern boost::property_tree::ptree pt_slipstore;
+extern boost::property_tree::ptree pt_hurricane;
 
-static void init_slipstore_desc() {
+static void init_hurricane_desc() {
   try {
-    boost::property_tree::ini_parser::read_ini("slipstore.ini", pt_slipstore);
+    boost::property_tree::ini_parser::read_ini("hurricane.ini", pt_hurricane);
   }
   catch (...) {
-    BOOST_LOG_TRIVIAL(fatal) << "Unable to read slipstore property file";
+    BOOST_LOG_TRIVIAL(fatal) << "Unable to read hurricane property file";
     exit(-1);
   }
 }
