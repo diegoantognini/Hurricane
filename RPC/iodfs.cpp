@@ -41,6 +41,7 @@ using namespace ::apache::thrift::protocol;
 using namespace ::apache::thrift::transport;
 using namespace ::apache::thrift::server;
 using std::unordered_map;
+using std::stringstream;
 using std::string;
 using std::vector;
 using std::pair;
@@ -86,8 +87,8 @@ class IODFSHandler : virtual public IODFSIf {
 
     // Copy all the server from slipstore.ini
     for(unsigned int i = 0; i < pt_slipstore.get < unsigned long > ("machines.count"); ++i){
-      std::stringstream name;
-      std::stringstream iface;
+      stringstream name;
+      stringstream iface;
       name << "machines.name" << i;
       iface << "machines.iface" << i;
       add_new_machine_in_machines(name.str(), iface.str());
@@ -159,7 +160,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   
   // False indicate that the file already exists
-  bool local_create(const std::string& filename) {
+  bool local_create(const string& filename) {
     if(local_exists(filename))
       return false;
 
@@ -167,12 +168,12 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
 
-  bool local_exists(const std::string& filename) {
+  bool local_exists(const string& filename) {
     return helper_exists(filename, local_buffers);
   }
 
   // False indicates that the file already exists
-  bool local_delete(const std::string& filename) {
+  bool local_delete(const string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return false;
@@ -188,7 +189,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // An empty buffer implies either the file already exists or we are at the EOF
-  void local_fill(std::string& _return, const std::string& filename, const int64_t size) {
+  void local_fill(string& _return, const string& filename, const int64_t size) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       _return = "";
@@ -205,7 +206,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // An empty buffer implies either the file already exists or we are at the EOF
-  void local_seek_and_fill(std::string& _return, const std::string& filename, const int64_t size, const int64_t offset) {
+  void local_seek_and_fill(string& _return, const string& filename, const int64_t size, const int64_t offset) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       _return = "";
@@ -223,7 +224,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // False indicate that the file doesn't exist
-  bool local_drain(const std::string& filename, const std::string& buffer) {
+  bool local_drain(const string& filename, const string& buffer) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return false;
@@ -235,7 +236,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // False indicate that the file doesn't exist
-  bool local_rewind(const std::string& filename) {
+  bool local_rewind(const string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return false;
@@ -245,7 +246,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // False indicate that the file doesn't exist
-  bool local_trunc(const std::string& filename) {
+  bool local_trunc(const string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return false;
@@ -255,7 +256,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // True indicate that the file doesn't exist of we are EOF
-  bool local_eof(const std::string& filename) {
+  bool local_eof(const string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return true;
@@ -264,7 +265,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // -1 indicate that the file doesn't exist
-  int64_t local_size(const std::string& filename) {
+  int64_t local_size(const string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return -1;
@@ -273,7 +274,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // -1 indicate that the file doesn't exist
-  int64_t local_left(const std::string& filename) {
+  int64_t local_left(const string& filename) {
     unordered_map<string, slipstore::io*>::iterator it;
     if(!helper_exists(filename, it, local_buffers))
       return -1;
@@ -299,7 +300,7 @@ class IODFSHandler : virtual public IODFSIf {
   // Throw LostConnection if the server is blocked (loosing a node or initializing) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   // Throw BadToken if the token is not recognized
-  bool global_create(const std::string& filename, const std::string& token) {
+  bool global_create(const string& filename, const string& token) {
     handle_connection_to_server_done(true);
     handle_token(token);
 
@@ -324,7 +325,7 @@ class IODFSHandler : virtual public IODFSIf {
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   // Throw BadToken if the token is not recognized
-  bool global_exists(const std::string& filename, const std::string& token) {
+  bool global_exists(const string& filename, const string& token) {
     handle_connection_to_server_done(true);
     handle_token(token);
 
@@ -345,7 +346,7 @@ class IODFSHandler : virtual public IODFSIf {
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   // Throw BadToken if the token is not recognized
-  bool global_delete(const std::string& filename, const std::string& token) {
+  bool global_delete(const string& filename, const string& token) {
     handle_connection_to_server_done(true);
     handle_token(token);
 
@@ -368,7 +369,7 @@ class IODFSHandler : virtual public IODFSIf {
   // An empty buffer implies that either the file doesn't exisir or the size is not a multiple of slipchunk !
   // Throw LostConnection if the server is blocked (initializing)
   // Throw BadToken if the token is not recognized
-  void global_fill(std::string& _return, const std::string& filename, const int64_t size, const std::string& token) {
+  void global_fill(string& _return, const string& filename, const int64_t size, const string& token) {
     handle_connection_to_server_done(false);
     handle_token(token, true, false);
 
@@ -391,7 +392,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // Throw LostConnection if the server is blocked (initializing)
   // Throw BadToken if the token is not recognized
-  bool global_drain(const std::string& filename, const std::string& buffer, const std::string& token) {
+  bool global_drain(const string& filename, const string& buffer, const string& token) {
     handle_connection_to_server_done(false);
     handle_token(token, false, true);
 
@@ -415,7 +416,7 @@ class IODFSHandler : virtual public IODFSIf {
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   // Throw BadToken if the token is not recognized
-  bool global_rewind(const std::string& filename, const std::string& token) {
+  bool global_rewind(const string& filename, const string& token) {
     handle_connection_to_server_done();
     handle_token(token);
 
@@ -439,7 +440,7 @@ class IODFSHandler : virtual public IODFSIf {
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   // Throw BadToken if the token is not recognized
-  bool global_trunc(const std::string& filename, const std::string& token) {
+  bool global_trunc(const string& filename, const string& token) {
     handle_connection_to_server_done();
     handle_token(token);
 
@@ -462,7 +463,7 @@ class IODFSHandler : virtual public IODFSIf {
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   // Throw BadToken if the token is not recognized
-  bool global_eof(const std::string& filename, const std::string& token) {
+  bool global_eof(const string& filename, const string& token) {
     handle_connection_to_server_done();
     handle_token(token);
 
@@ -486,7 +487,7 @@ class IODFSHandler : virtual public IODFSIf {
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   // Throw BadToken if the token is not recognized
-  int64_t global_size(const std::string& filename, const std::string& token) {
+  int64_t global_size(const string& filename, const string& token) {
     handle_connection_to_server_done();
     handle_token(token);
 
@@ -522,8 +523,8 @@ class IODFSHandler : virtual public IODFSIf {
 
 
  
-  void generate_token(std::string& _return) {
-    const std::string characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  void generate_token(string& _return) {
+    const string characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     _return = "";
 
     for(int i = 0; i < LENGTH_TOKEN; ++i)
@@ -533,7 +534,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // Create a connection with a client, given a generated token
-  bool connect(const std::string& token) {
+  bool connect(const string& token) {
     if (tokens.find(token) == tokens.end())
       return false;
 
@@ -544,7 +545,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // Close the connection with the client corresponding to the token. The token is erased.
-  bool leave(const std::string& token) {
+  bool leave(const string& token) {
     if (tokens.find(token) == tokens.end() || client_fills.find(token) == client_fills.end() || client_drains.find(token) == client_drains.end())
       return false;
 
@@ -562,14 +563,14 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // Return the list of known servers. The new server needs to call add_node on each server
-  void join(std::vector<network_interface> & _return, const std::string& name, const std::string& iface) {
+  void join(vector<network_interface> & _return, const string& name, const string& iface) {
     handle_connection_to_server_done(true);
 
     // Return the list of servers (excluded the new one)
     _return = machines;
   }
 
-  void add_node(const std::string& name, const std::string& iface) {
+  void add_node(const string& name, const string& iface) {
     add_machines.lock();
     add_new_machine(name, iface);
     add_machines.unlock();
@@ -586,12 +587,12 @@ class IODFSHandler : virtual public IODFSIf {
 
   
 private:
-  bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>::iterator& it, unordered_map<string, slipstore::io*>& buffers) {
+  bool helper_exists(const string& filename, unordered_map<string, slipstore::io*>::iterator& it, unordered_map<string, slipstore::io*>& buffers) {
     it = buffers.find(filename);
     return it != buffers.end();
   }
 
-  bool helper_exists(const std::string& filename, unordered_map<string, slipstore::io*>& buffers) {
+  bool helper_exists(const string& filename, unordered_map<string, slipstore::io*>& buffers) {
     return buffers.find(filename) != buffers.end();
   }
 
@@ -623,7 +624,7 @@ private:
         // Find the index of the master (which musn't be "me" !)
         unsigned int master = 1-me;
 
-        std::vector<network_interface> servers;
+        vector<network_interface> servers;
         try {
           // We assume that in the case where a client wants to join a network, it knows only 1 server
           // If the whole network isn't safe, don't join it !
@@ -693,22 +694,22 @@ private:
     }
   }
 
-  void handle_token(const std::string& token, bool check_fill = false, bool check_drain = false) {
+  void handle_token(const string& token, bool check_fill = false, bool check_drain = false) {
     if (tokens.find(token) == tokens.end() || (check_fill && (client_fills.find(token) == client_fills.end()))  || (check_drain && (client_drains.find(token) == client_drains.end())) ) {
       BadToken bt;
       throw bt;
     }
   }
 
-  void add_new_machine_in_machines(const std::string& name, const std::string& iface) {
+  void add_new_machine_in_machines(const string& name, const string& iface) {
     network_interface ni;
-    ni.name = pt_slipstore.get<std::string>(name.c_str());
-    ni.iface = pt_slipstore.get<std::string>(iface.c_str());
+    ni.name = pt_slipstore.get<string>(name.c_str());
+    ni.iface = pt_slipstore.get<string>(iface.c_str());
 
     machines.push_back(ni);
   }
 
-  void add_new_machine_network(const std::string& name) {
+  void add_new_machine_network(const string& name) {
     // Init the network part
     boost::shared_ptr<TTransport> socket(new TSocket(name.c_str(), port));
     boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
@@ -719,7 +720,7 @@ private:
     clients.push_back(client);
   }
 
-  bool add_new_machine(const std::string& name, const std::string& iface) {
+  bool add_new_machine(const string& name, const string& iface) {
     bool exists = false;
     for(unsigned int i = 0; !exists && i < machines.size(); ++i)
       exists = machines[i].name == name;
@@ -733,9 +734,9 @@ private:
     return !exists;
   }
 
-  void add_new_machine_in_pt_slipstore(const std::string& _name, const std::string& _iface) {
-    std::stringstream name;
-    std::stringstream iface;
+  void add_new_machine_in_pt_slipstore(const string& _name, const string& _iface) {
+    stringstream name;
+    stringstream iface;
     size_t i = machines.size()-1;
     name << "machines.name" << i;
     iface << "machines.iface" << i;
