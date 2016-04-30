@@ -36,8 +36,8 @@ service IODFS {
 	bool connect(1:string token),
 	bool leave(1:string token),
 
-	list<network_interface> join(1:string name, 2:string iface) throws (1:LostConnection lc),
-	void add_node(1:string name, 2:string iface),
+	list<network_interface> get_list_server_nodes() throws (1:LostConnection lc),
+	void join(1:string name, 2:string iface),
 
 	// Global IO
 	bool global_create(1:string filename, 2:string token) throws (1:LostConnection lc, 2:LostConnectionDuringCommit lcdc, 3:BadToken bt),

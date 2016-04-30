@@ -562,15 +562,15 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
 
-  // Return the list of known servers. The new server needs to call add_node on each server
-  void join(vector<network_interface> & _return, const string& name, const string& iface) {
+  // Return the list of known servers. The new server needs to call join on each server
+  void get_list_server_nodes(vector<network_interface> & _return) {
     handle_connection_to_server_done(true);
 
     // Return the list of servers (excluded the new one)
     _return = machines;
   }
 
-  void add_node(const string& name, const string& iface) {
+  void join(const string& name, const string& iface) {
     add_machines.lock();
     add_new_machine(name, iface);
     add_machines.unlock();
@@ -628,7 +628,7 @@ private:
         try {
           // We assume that in the case where a client wants to join a network, it knows only 1 server
           // If the whole network isn't safe, don't join it !
-          clients[master]->join(servers, machines[master].name, machines[master].iface); 
+          clients[master]->get_list_server_nodes(servers); 
         } catch (LostConnection& lc) {
           BOOST_LOG_TRIVIAL(fatal) << "The network isn't safe !";
           exit(-1);
@@ -639,7 +639,7 @@ private:
           // Avoid to add again to a server node if already did it (or knew it when launching the server)
           if (machine.name != machines[master].name) {
             add_new_machine(machine.name, machine.iface);
-            clients.back()->add_node(machine.name, machine.iface);
+            clients.back()->join(machine.name, machine.iface);
           }
 
         // Now connect to all the server but without joining them again
