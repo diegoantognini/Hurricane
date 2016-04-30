@@ -20,23 +20,24 @@ using std::string;
 
 #define TIME_BEFORE_RUNNING_TEST 30*1000*1000
 
-void do_test(const char* name, bool (*fct)(IODFSClient&, const std::string&), IODFSClient& client, const std::string& token = "") {
+void do_test(const char* name, bool (*fct)(IODFSClient&), IODFSClient& client) {
 	cout << name << " : ";
-	cout << " -> " << (fct(client, token) ? "PASSED" : "FAILED") << endl;
+	cout << " -> " << (fct(client) ? "PASSED" : "FAILED") << endl;
 }
 
-bool testing_deconnection_reconnection(IODFSClient& client, const std::string& token) {
+bool testing_deconnection_reconnection(IODFSClient& client) {
 	bool result = false;
 
 	try {    
+		std::string token = "";
+	    client.generate_token(token);
+		client.connect(token);
+
 	    while(!result) {
 		    try {
 		    	result = client.global_create("test", token);
 		    	//You should deconnect a machine right know
-		    	int a = 0;
-		    	for(int i = 0; i < 1000000000; ++i) {
-		    		a+=i;
-		    	}
+		    	usleep(1*1000*1000);
 		    } catch (LostConnection& lc) {
 		    	cout << "Lost connection with : " << lc.name_node_lost << " !" << endl;
 		    } catch (LostConnectionDuringCommit& lcdc) {
@@ -44,6 +45,47 @@ bool testing_deconnection_reconnection(IODFSClient& client, const std::string& t
 		    }
 		}
 		result = client.global_delete("test", token);
+		client.leave(token);
+	} catch (TException& tx) {
+		cout << "Global Error: " << tx.what() << endl;
+	}
+
+	return result;
+}
+
+bool testing_join(IODFSClient& client) {
+	bool result = true;
+
+	try {    
+		std::string token_before = "";
+	    client.generate_token(token_before);
+		result = result && client.connect(token_before);
+
+		std::vector<network_interface> servers_before;
+		client.get_list_server_nodes(servers_before);
+		std::vector<network_interface> servers_after = servers_before;
+
+		result = result && client.global_create("file_before", token_before);
+		while(servers_before == servers_after) {
+			client.get_list_server_nodes(servers_after);
+			usleep(1*1000*1000);
+		}
+
+		std::string token_after = "";
+	    client.generate_token(token_after);
+		result = result && client.connect(token_after);
+
+		client.global_create("file_after", token_after);
+
+		usleep(1200*1000*1000); 
+		// Should check manually that file_before is ONLY in the subset of servers at te begining 
+		// and file_after is in the subset of servers at the beginning + the new server which has joined
+
+		result = result && client.global_delete("file_after", token_after);
+		result = result && client.global_delete("file_before", token_before);
+
+		result = result && client.leave(token_before);
+		result = result && client.leave(token_after);		
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
 	}
@@ -54,16 +96,11 @@ bool testing_deconnection_reconnection(IODFSClient& client, const std::string& t
 void testing(IODFSClient& client, int test_case) {
 	usleep(30*1000*1000);
 	try {
-		std::string token = "";
-		client.generate_token(token);
-		client.connect(token);
-
 		switch (test_case) {
 	    	case 1:
-	    		do_test("testing_deconnection_reconnection", &testing_deconnection_reconnection, client, token);
+	    		do_test("testing_deconnection_reconnection", &testing_deconnection_reconnection, client);
 	    	break;
 	    }
-	    client.leave(token);
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
 	}
@@ -82,7 +119,8 @@ int main(int argc, char **argv) {
 	transport->open();
 	// Each time, you have TIME_BEFORE_RUNNING_TEST before running the test
 	// Case 1 : When the servers have been initialized, deconnect a node and reconnect it a few moment later. It should work again
-	int test_case = 1;
+	// Case 2 : Run a subset of all the servers (s.t. @labos_4) and then, use another machine to join the network (fifth server for example, joining the first server)
+	int test_case = 2;
 	testing(client, test_case);
 
 	transport->close();

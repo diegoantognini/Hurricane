@@ -744,6 +744,14 @@ private:
     pt_hurricane.put("machines.count", i+1);
     pt_hurricane.put(name.str().c_str(), _name);
     pt_hurricane.put(iface.str().c_str(), _iface);
+
+    for(unsigned int i = 0; i < pt_hurricane.get < unsigned long > ("machines.count"); ++i){
+      stringstream name;
+      stringstream iface;
+      name << "machines.name" << i;
+      iface << "machines.iface" << i;
+      std::cout << pt_hurricane.get < unsigned long > ("machines.count") << "\t" << pt_hurricane.get<string>(name.str().c_str()) << " " << pt_hurricane.get<string>(iface.str().c_str()) << std::endl;
+    } 
   }
 
 };
