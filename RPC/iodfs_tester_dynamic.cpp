@@ -72,7 +72,7 @@ bool testing_join(IODFSClient& client) {
 			usleep(1*1000*1000);
 		}
 		cout << "A server has joined the network !" << endl;
-
+		/* This cannot work because we need extra servers
 		std::string token_after = "";
 	    client.generate_token(token_after);
 		result = result && client.connect(token_after);
@@ -87,7 +87,7 @@ bool testing_join(IODFSClient& client) {
 		result = result && client.global_delete("file_before", token_before);
 
 		result = result && client.leave(token_before);
-		result = result && client.leave(token_after);		
+		result = result && client.leave(token_after);*/		
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
 	}
