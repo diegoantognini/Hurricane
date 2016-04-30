@@ -643,10 +643,11 @@ private:
           if (machine.name != machines[master].name) {
             add_new_machine(machine.name, machine.iface);
             clients.back()->join(machine.name, machine.iface);
+            transports.back()->open();
           }
           BOOST_LOG_TRIVIAL(info) << "Join to " << machines[master].name << " DONE !";
         }
-        
+
         // Now connect to all the server but without joining them again
         reconnect();
       }
