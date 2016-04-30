@@ -636,7 +636,7 @@ private:
         }
 
         // Connect to all the server node
-        for(auto& machine : servers)
+        for(auto& machine : servers) {
           std::cout << machine.name << " " << machine.iface << std::endl;
 
           // Avoid to add again to a server node if already did it (or knew it when launching the server)
@@ -645,7 +645,8 @@ private:
             clients.back()->join(machine.name, machine.iface);
           }
           BOOST_LOG_TRIVIAL(info) << "Join to " << machines[master].name << " DONE !";
-
+        }
+        
         // Now connect to all the server but without joining them again
         reconnect();
       }
