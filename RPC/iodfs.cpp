@@ -571,7 +571,7 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   void join(const string& name, const string& iface) {
-    std::cout << "JOIN" << std::endl;
+    std::cout << "JOIN from " << name << " " << iface << std::endl;
     add_machines.lock();
     add_new_machine(name, iface);
     add_machines.unlock();
@@ -645,7 +645,10 @@ private:
             transports.back()->open();
             clients.back()->join(machine.name, machine.iface);
           }
-          BOOST_LOG_TRIVIAL(info) << "Join to " << machines[master].name << " DONE !";
+          else
+            clients[master]->join(machine.name, machine.iface); //Notify the master that he has joined the network
+
+          BOOST_LOG_TRIVIAL(info) << "Join to " << machine.name << " DONE !";
         }
 
         // Now connect to all the server but without joining them again
@@ -727,9 +730,13 @@ private:
   }
 
   bool add_new_machine(const string& name, const string& iface) {
+    std::cout << "Adding new machine : " << name << " " << iface << std::endl;
     bool exists = false;
-    for(unsigned int i = 0; !exists && i < machines.size(); ++i)
-      exists = machines[i].name == name;
+    for(unsigned int i = 0; !exists && i < machines.size(); ++i) {
+      exists = (machines[i].name == name);
+      if(exists)
+        std::cout << machines[i] << std::endl;
+    }
     std::cout << "value of exists : " << exists << std::endl;
     if(!exists) {
       string key_name, key_iface;
@@ -744,9 +751,9 @@ private:
   void add_new_machine_in_pt_hurricane(const string& _name, const string& _iface, string& key_name, string& key_iface) {
     stringstream name;
     stringstream iface;
-    size_t i = machines.size()-1;
-    name << "machines.name" << i;
-    iface << "machines.iface" << i;
+    size_t i = machines.size();
+    name << "machines.name" << (i-1);
+    iface << "machines.iface" << (i-1);
     key_name = name.str();
     key_iface = iface.str();
 
