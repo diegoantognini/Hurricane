@@ -642,8 +642,8 @@ private:
           // Avoid to add again to a server node if already did it (or knew it when launching the server)
           if (machine.name != machines[master].name) {
             add_new_machine(machine.name, machine.iface);
-            clients.back()->join(machine.name, machine.iface);
             transports.back()->open();
+            clients.back()->join(machine.name, machine.iface);
           }
           BOOST_LOG_TRIVIAL(info) << "Join to " << machines[master].name << " DONE !";
         }
