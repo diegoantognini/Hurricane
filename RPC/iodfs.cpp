@@ -646,7 +646,7 @@ private:
             clients.back()->join(machines[me].name, machines[me].iface);
           }
           else
-            clients[master]->join(machine.name, machine.iface); //Notify the master that he has joined the network
+            clients[master]->join(machines[me].name, machines[me].iface); //Notify the master that he has joined the network
 
           BOOST_LOG_TRIVIAL(info) << "Join to " << machine.name << " DONE !";
         }

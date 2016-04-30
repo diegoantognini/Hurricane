@@ -66,18 +66,20 @@ bool testing_join(IODFSClient& client) {
 		std::vector<network_interface> servers_after = servers_before;
 
 		result = result && client.global_create("file_before", token_before);
-		while(servers_before == servers_after) {
+		while(servers_before.size() == servers_after.size()) {
+			cout << "Waiting a server joining the network : " << servers_before.size() << " ?= " << servers_after.size() << endl;
 			client.get_list_server_nodes(servers_after);
 			usleep(1*1000*1000);
 		}
+		cout << "A server has joined the network !" << endl;
 
 		std::string token_after = "";
 	    client.generate_token(token_after);
 		result = result && client.connect(token_after);
 
 		client.global_create("file_after", token_after);
-
-		usleep(120*1000*1000); 
+		cout << "A server has been created in the new network, please check that file_before is only in the old network and file_after in the new one" << endl;
+		usleep(60*1000*1000); 
 		// Should check manually that file_before is ONLY in the subset of servers at te begining 
 		// and file_after is in the subset of servers at the beginning + the new server which has joined
 
@@ -94,12 +96,17 @@ bool testing_join(IODFSClient& client) {
 }
 
 void testing(IODFSClient& client, int test_case) {
-	usleep(30*1000*1000);
+	cout << "Waiting for the test" << endl;
+	usleep(TIME_BEFORE_RUNNING_TEST);
+	cout << "Run the test" << endl;
 	try {
 		switch (test_case) {
 	    	case 1:
 	    		do_test("testing_deconnection_reconnection", &testing_deconnection_reconnection, client);
-	    	break;
+	    		break;
+	    	case 2:
+	    		do_test("testing_join", &testing_join, client);
+	    		break;
 	    }
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
