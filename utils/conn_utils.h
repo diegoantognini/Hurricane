@@ -71,7 +71,7 @@ extern unsigned long baseport;
       long > ("machines.max");
       unsigned long port = baseport + endpoint_count(machines) * mc_target +
                            machines + mc_source;
-      std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + " << machines << + " + " << mc_source << " = " << port << std::endl;
+      std::cout << "conn_client_data_endpoint " << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + " << machines << + " + " << mc_source << " = " << port << std::endl;
       addr << separator << port;
     }
     return addr.str();
@@ -91,7 +91,7 @@ extern unsigned long baseport;
       long > ("machines.max");
       unsigned long port = baseport + endpoint_count(machines) * mc_target +
                            machines + mc_source;
-      std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + " << machines << + " + " << mc_source << " = " << port << std::endl;
+      std::cout << "conn_client_data_bindpoint " << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + " << machines << + " + " << mc_source << " = " << port << std::endl;
       addr << separator << port;
     }
     return addr.str();
@@ -107,7 +107,7 @@ extern unsigned long baseport;
     long > ("machines.max");
     unsigned long port = baseport + endpoint_count(machines) * mc_target +
                          2 * machines;
-    std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + 2*" << machines << " = " << port << std::endl;
+    std::cout << "conn_server_control_endpoint " << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + 2*" << machines << " = " << port << std::endl;
     addr << separator << port;
     return addr.str();
   }
@@ -122,7 +122,7 @@ extern unsigned long baseport;
     long > ("machines.max");
     unsigned long port = baseport + endpoint_count(machines) * mc_target +
                          2 * machines;
-    std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + 2*" << machines << " = " << port << std::endl;
+    std::cout << "conn_server_control_bindpoint " << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + 2*" << machines << " = " << port << std::endl;
     addr << separator << port;
     return addr.str();
   }
@@ -137,7 +137,7 @@ extern unsigned long baseport;
     long > ("machines.max");
     unsigned long port = baseport + endpoint_count(machines) * mc_target +
                          2 * machines + 1;
-    std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + 2*" << machines << " + 1 = " << port << std::endl;
+    std::cout << "conn_client_barrier_endpoint " << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + 2*" << machines << " + 1 = " << port << std::endl;
     addr << separator << port;
     return addr.str();
   }
@@ -152,7 +152,7 @@ extern unsigned long baseport;
     long > ("machines.max");
     unsigned long port = baseport + endpoint_count(machines) * mc_target +
                          2 * machines + 1;
-    std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + 2*" << machines << " + 1 = " << port << std::endl;
+    std::cout << "conn_client_barrier_bindpoint " << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + 2*" << machines << " + 1 = " << port << std::endl;
     addr << separator << port;
     return addr.str();
   }
