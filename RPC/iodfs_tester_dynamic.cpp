@@ -72,7 +72,7 @@ bool testing_join(IODFSClient& client) {
 			usleep(1*1000*1000);
 		}
 		cout << "A server has joined the network !" << endl;
-		
+		usleep(5*1000*1000);
 		std::string token_after = "";
 	    client.generate_token(token_after);
 		result = result && client.connect(token_after);
