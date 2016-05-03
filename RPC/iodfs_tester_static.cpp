@@ -538,6 +538,98 @@ bool test_global_drain_fill(IODFSClient& client, const std::string& token) {
 	return result;
 }
 
+bool test_global_token(IODFSClient& client, const std::string& not_used_token) {
+	bool result = true;
+	std::vector<std::string> tokens;
+
+	for(auto& token : tokens) {
+		client.generate_token(token);
+		result = result && client.connect(token);
+		result = result && !client.connect(token);
+		result = result && !client.connect("fakeToken");
+	}
+
+	std::string filename1 = "filetest1";
+	std::string filename2 = "filetest2";
+		
+	for(auto& token : tokens) {
+		result = result && client.global_create(filename1, token);
+		try {
+			client.global_create(filename2, "fakeToken");
+			result = result && false;
+		} catch (BadToken& bd) {
+			result = result && true;
+		}
+
+		result = result && client.global_exists(filename1, token);
+		try {
+			client.global_exists(filename2, "fakeToken");
+			result = result && false;
+		} catch (BadToken& bd) {
+			result = result && true;
+		}
+
+		std::string buffer = "1";
+		result = result && client.global_drain(filename1, buffer, token);
+		try {
+			client.global_drain(filename2, buffer, "fakeToken");
+			result = result && false;
+		} catch (BadToken& bd) {
+			result = result && (buffer == "");
+		}
+
+		buffer = "";
+		client.global_fill(buffer, filename1, 0, token);
+		result = result && (buffer == "1");
+		try {
+			client.global_fill(buffer, filename2, 1, "fakeToken");
+			result = result && false;
+		} catch (BadToken& bd) {
+			result = result && (buffer == "");
+		}
+
+		result = result && client.global_rewind(filename1, token);
+		try {
+			client.global_rewind(filename2, "fakeToken");
+			result = result && false;
+		} catch (BadToken& bd) {
+			result = result && true;
+		}
+
+		result = result && client.global_trunc(filename1, token);
+		try {
+			client.global_trunc(filename2, "fakeToken");
+			result = result && false;
+		} catch (BadToken& bd) {
+			result = result && true;
+		}
+
+		result = result && !client.global_eof(filename1, token);
+		try {
+			client.global_eof(filename2, "fakeToken");
+			result = result && false;
+		} catch (BadToken& bd) {
+			result = result && true;
+		}
+
+		result = result && (client.global_size(filename1, token) == 1);
+		try {
+			client.global_size(filename2, "fakeToken");
+			result = result && false;
+		} catch (BadToken& bd) {
+			result = result && true;
+		}
+	}
+
+	for(auto& token : tokens) {
+		result = result && client.leave(token);
+		result = result && !client.leave(token);
+		result = result && !client.leave("fakeToken");
+	}
+
+	return result;
+}
+
 void do_test(const char* name, bool (*fct)(IODFSClient&, const std::string&), IODFSClient& client, const std::string& token = "") {
 	cout << name << " : ";
 	cout << " -> " << (fct(client, token) ? "PASSED" : "FAILED") << endl;
@@ -562,6 +654,7 @@ void testing_global_requests(IODFSClient& client) {
 	    do_test("test_global_create_exists_delete_size_eof_one_file", &test_global_create_exists_delete_size_eof_one_file, client, token);
 	    do_test("test_global_create_exists_delete_size_eof_two_files", &test_global_create_exists_delete_size_eof_two_files, client, token);
 	    do_test("test_global_drain_fill", &test_global_drain_fill, client, token);
+	    do_test("test_global_token", &test_global_token, client, token);
 	    client.leave(token);
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
