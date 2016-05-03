@@ -346,6 +346,7 @@ class IODFSHandler : virtual public IODFSIf {
     std::cout << "JOIN from " << name << " " << iface << std::endl;
     add_machines.lock();
     add_new_machine(name, iface);
+    hurricane::hurricane_server->add_new_machine();
     add_machines.unlock();
   }
 
@@ -648,6 +649,7 @@ private:
             add_new_machine(machine.name, machine.iface);
             transports.back()->open();
             clients.back()->join(machines[me].name, machines[me].iface);
+            hurricane::hurricane_server->add_new_machine();
           }
           else
             clients[master]->join(machines[me].name, machines[me].iface); //Notify the master that he has joined the network
@@ -753,7 +755,6 @@ private:
       add_new_machine_in_pt_hurricane(name, iface, key_name, key_iface);
       add_new_machine_in_machines(key_name, key_iface);
       add_new_machine_network(name);
-      hurricane::hurricane_server->add_new_machine();
     }
 
     return !exists;
