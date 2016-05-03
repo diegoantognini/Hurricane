@@ -28,7 +28,7 @@ extern unsigned long baseport;
       addr << protocol << "://";
       addr << pt_hurricane.get<std::string>(name.str().c_str());
       unsigned long machines = pt_hurricane.get < unsigned
-      long > ("machines.count");
+      long > ("machines.max");
       unsigned long port = baseport + endpoint_count(machines) * mc_target +
                            mc_source;
       std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + " << mc_source << " = " << port << std::endl;
@@ -48,7 +48,7 @@ extern unsigned long baseport;
       addr << protocol << "://";
       addr << pt_hurricane.get<std::string>(name.str().c_str());
       unsigned long machines = pt_hurricane.get < unsigned
-      long > ("machines.count");
+      long > ("machines.max");
       unsigned long port = baseport + endpoint_count(machines) * mc_target +
                            mc_source;
       std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + " << mc_source << " = " << port << std::endl;
@@ -68,7 +68,7 @@ extern unsigned long baseport;
       addr << protocol << "://";
       addr << pt_hurricane.get<std::string>(name.str().c_str());
       unsigned long machines = pt_hurricane.get < unsigned
-      long > ("machines.count");
+      long > ("machines.max");
       unsigned long port = baseport + endpoint_count(machines) * mc_target +
                            machines + mc_source;
       std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + " << machines << + " + " << mc_source << " = " << port << std::endl;
@@ -88,7 +88,7 @@ extern unsigned long baseport;
       addr << protocol << "://";
       addr << pt_hurricane.get<std::string>(name.str().c_str());
       unsigned long machines = pt_hurricane.get < unsigned
-      long > ("machines.count");
+      long > ("machines.max");
       unsigned long port = baseport + endpoint_count(machines) * mc_target +
                            machines + mc_source;
       std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + " << machines << + " + " << mc_source << " = " << port << std::endl;
@@ -104,7 +104,7 @@ extern unsigned long baseport;
     addr << protocol << "://";
     addr << pt_hurricane.get<std::string>(name.str().c_str());
     unsigned long machines = pt_hurricane.get < unsigned
-    long > ("machines.count");
+    long > ("machines.max");
     unsigned long port = baseport + endpoint_count(machines) * mc_target +
                          2 * machines;
     std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + 2*" << machines << " = " << port << std::endl;
@@ -119,7 +119,7 @@ extern unsigned long baseport;
     addr << protocol << "://";
     addr << pt_hurricane.get<std::string>(name.str().c_str());
     unsigned long machines = pt_hurricane.get < unsigned
-    long > ("machines.count");
+    long > ("machines.max");
     unsigned long port = baseport + endpoint_count(machines) * mc_target +
                          2 * machines;
     std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + 2*" << machines << " = " << port << std::endl;
@@ -134,7 +134,7 @@ extern unsigned long baseport;
     addr << protocol << "://";
     addr << pt_hurricane.get<std::string>(name.str().c_str());
     unsigned long machines = pt_hurricane.get < unsigned
-    long > ("machines.count");
+    long > ("machines.max");
     unsigned long port = baseport + endpoint_count(machines) * mc_target +
                          2 * machines + 1;
     std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + 2*" << machines << " + 1 = " << port << std::endl;
@@ -149,7 +149,7 @@ extern unsigned long baseport;
     addr << protocol << "://";
     addr << pt_hurricane.get<std::string>(name.str().c_str());
     unsigned long machines = pt_hurricane.get < unsigned
-    long > ("machines.count");
+    long > ("machines.max");
     unsigned long port = baseport + endpoint_count(machines) * mc_target +
                          2 * machines + 1;
     std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + 2*" << machines << " + 1 = " << port << std::endl;
