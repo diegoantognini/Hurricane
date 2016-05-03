@@ -623,8 +623,7 @@ private:
       }
 
       // To do the join, we assume that we only know ONE server (+ us)
-      // TODO : For the moment, we DISABLE this function
-      /*if(!already_connect_at_least_one && machines.size() == 2) {
+      if(!already_connect_at_least_one && machines.size() == 2) {
         already_connect_at_least_one = true;
       
         // Find the index of the master (which musn't be "me" !)
@@ -659,7 +658,7 @@ private:
         // Now connect to all the server but without joining them again
         reconnect();
       }
-      else*/
+      else
         connection_to_server_done = true;
     } catch (TException& tx){
       transports[i]->close();
@@ -754,6 +753,7 @@ private:
       add_new_machine_in_pt_hurricane(name, iface, key_name, key_iface);
       add_new_machine_in_machines(key_name, key_iface);
       add_new_machine_network(name);
+      hurricane::hurricane_server->add_new_machine();
     }
 
     return !exists;
