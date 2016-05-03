@@ -304,7 +304,7 @@ class IODFSHandler : virtual public IODFSIf {
 
   // Create a connection with a client, given a generated token
   bool connect(const string& token) {
-    if (tokens.find(token) == tokens.end())
+    if (tokens.find(token) == tokens.end() || client_drains.find(token) != client_drains.end() || client_fills.find(token) != client_fills.end())
       return false;
 
     client_drains[token] = new hurricane::client_drain();
