@@ -1,6 +1,6 @@
 #ifndef _CONN_UTILS_
 #define _CONN_UTILS_
-
+#include <iostream>
 namespace hurricane {
 extern unsigned long baseport;
 
@@ -9,6 +9,7 @@ extern unsigned long baseport;
 
     // Number of endpoints
   static unsigned long endpoint_count(unsigned long machines) {
+    std::cout << machines << " " << machines << " " << "1 + 1" << std::endl;
     return machines + //server data in
            machines + //client data in
            1 + // server control
@@ -49,6 +50,7 @@ extern unsigned long baseport;
       long > ("machines.count");
       unsigned long port = baseport + endpoint_count(machines) * mc_target +
                            mc_source;
+      std::cout << baseport << " + '" << endpoint_count(machines) << "'*" << mc_target << " + " << mc_source << " = " << port << std::endl;
       addr << separator << port;
     }
     return addr.str();
