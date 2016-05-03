@@ -53,41 +53,62 @@ bool testing_deconnection_reconnection(IODFSClient& client) {
 	return result;
 }
 
-bool testing_join(IODFSClient& client) {
+bool testing_join1(IODFSClient& client) {
 	bool result = true;
 
 	try {    
-		std::string token_before = "";
-	    client.generate_token(token_before);
-		result = result && client.connect(token_before);
+		std::string token = "";
+	    client.generate_token(token);
+		result = result && client.connect(token);
+
+		for(int i = 0; i < 10; ++i) {
+			result = result && client.global_create(std::string("file_4_"+i), token);
+			usleep(1*1000*1000);
+		}
+
+		for(int i = 0; i < 10; ++i)
+			result = result && client.global_delete(std::string("file_4_"+i), token);
+		
+		result = result && client.leave(token);		
+	} catch (TException& tx) {
+		cout << "Global Error: " << tx.what() << endl;
+	}
+
+	return result;
+}
+
+bool testing_join2(IODFSClient& client) {
+	bool result = true;
+
+	try {    
+		std::string token = "";
+	    client.generate_token(token);
+		result = result && client.connect(token);
 
 		std::vector<network_interface> servers_before;
 		client.get_list_server_nodes(servers_before);
 		std::vector<network_interface> servers_after = servers_before;
 
-		result = result && client.global_create("file_before", token_before);
 		while(servers_before.size() == servers_after.size()) {
 			cout << "Waiting a server joining the network : " << servers_before.size() << " ?= " << servers_after.size() << endl;
 			client.get_list_server_nodes(servers_after);
 			usleep(1*1000*1000);
 		}
+		
 		cout << "A server has joined the network !" << endl;
+		
 		usleep(5*1000*1000);
-		std::string token_after = "";
-	    client.generate_token(token_after);
-		result = result && client.connect(token_after);
+		
+		for(int i = 0; i < 10; ++i) {
+			result = result && client.global_create(std::string("file_5_"+i), token);
+			usleep(1*1000*1000);
+		}
 
-		client.global_create("file_after", token_after);
-		cout << "A server has been created in the new network, please check that file_before is only in the old network and file_after in the new one" << endl;
-		usleep(60*1000*1000); 
-		// Should check manually that file_before is ONLY in the subset of servers at te begining 
-		// and file_after is in the subset of servers at the beginning + the new server which has joined
+		for(int i = 0; i < 10; ++i)
+			result = result && client.global_delete(std::string("file_5_"+i), token);
+		
 
-		result = result && client.global_delete("file_after", token_after);
-		result = result && client.global_delete("file_before", token_before);
-
-		result = result && client.leave(token_before);
-		result = result && client.leave(token_after);		
+		result = result && client.leave(token);		
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
 	}
@@ -105,7 +126,10 @@ void testing(IODFSClient& client, int test_case) {
 	    		do_test("testing_deconnection_reconnection", &testing_deconnection_reconnection, client);
 	    		break;
 	    	case 2:
-	    		do_test("testing_join", &testing_join, client);
+	    		do_test("testing_join1", &testing_join1, client);
+	    		break;
+	    	case 3:
+	    		do_test("testing_join2", &testing_join1, client);
 	    		break;
 	    }
 	} catch (TException& tx) {
