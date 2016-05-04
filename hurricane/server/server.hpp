@@ -22,13 +22,11 @@ namespace hurricane {
       }
 
       void* socket_data_in = zmq_socket(zmq_context_data_in, ZMQ_PULL);
-      std::cout << "conn_server_data_bindpoint" << me << " " << i << std::endl;
       hurricane_bind_endpoint(socket_data_in, conn_server_data_bindpoint(me, i).c_str());
 
       //void* socket_data_out  = zmq_socket(zmq_context_data_out, ZMQ_REP);
       void* socket_data_out = zmq_socket(zmq_context_data_out, ZMQ_PUSH);
 
-      std::cout << "conn_client_data_endpoint" << i << " " << me << std::endl;
       hurricane_connect_endpoint(socket_data_out, conn_client_data_endpoint(i, me).c_str());
 
       sockets_data_in.push_back(socket_data_in);

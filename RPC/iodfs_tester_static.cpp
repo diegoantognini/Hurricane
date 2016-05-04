@@ -556,87 +556,71 @@ bool test_global_token(IODFSClient& client, const std::string& not_used_token) {
 		
 	for(auto& token : tokens) {
 		result = result && client.global_create(filename1, token);
-		std::cout << "1 " << result << std::endl;
 		try {
 			client.global_create(filename2, "fakeToken");
 			result = result && false;
 		} catch (BadToken& bd) {
 			result = result && true;
 		}
-		std::cout << "2 " << result << std::endl;
 
 		result = result && client.global_exists(filename1, token);
-		std::cout << "3 " << result << std::endl;
 		try {
 			client.global_exists(filename2, "fakeToken");
 			result = result && false;
 		} catch (BadToken& bd) {
 			result = result && true;
 		}
-		std::cout << "4 " << result << std::endl;
 
 		std::string buffer = "1";
 		result = result && client.global_drain(filename1, buffer, token);
-		std::cout << "5 " << result << std::endl;
 		try {
 			client.global_drain(filename2, buffer, "fakeToken");
 			result = result && false;
 		} catch (BadToken& bd) {
 			result = result && (buffer == "");
 		}
-		std::cout << "6 " << result << std::endl;
 
 		buffer = "";
 		client.global_fill(buffer, filename1, 0, token);
 		result = result && (buffer == "1");
-		std::cout << "7 " << result << std::endl;
 		try {
 			client.global_fill(buffer, filename2, 1, "fakeToken");
 			result = result && false;
 		} catch (BadToken& bd) {
 			result = result && (buffer == "");
 		}
-		std::cout << "8" << result << std::endl;
 
 		result = result && client.global_rewind(filename1, token);
-		std::cout << "9 " << result << std::endl;
 		try {
 			client.global_rewind(filename2, "fakeToken");
 			result = result && false;
 		} catch (BadToken& bd) {
 			result = result && true;
 		}
-		std::cout << "10 " << result << std::endl;
 
 		result = result && client.global_trunc(filename1, token);
-		std::cout << "11 " << result << std::endl;
 		try {
 			client.global_trunc(filename2, "fakeToken");
 			result = result && false;
 		} catch (BadToken& bd) {
 			result = result && true;
 		}
-		std::cout << "12 " << result << std::endl;
 
 		result = result && !client.global_eof(filename1, token);
-		std::cout << "13 " << result << std::endl;
 		try {
 			client.global_eof(filename2, "fakeToken");
 			result = result && false;
 		} catch (BadToken& bd) {
 			result = result && true;
 		}
-		std::cout << "14 " << result << std::endl;
 
 		result = result && (client.global_size(filename1, token) == 1);
-		std::cout << "15 " << result << std::endl;
 		try {
 			client.global_size(filename2, "fakeToken");
 			result = result && false;
 		} catch (BadToken& bd) {
 			result = result && true;
 		}
-		std::cout << "16 " << result << std::endl;
 	}
 
 	for(auto& token : tokens) {
@@ -669,10 +653,10 @@ void testing_global_requests(IODFSClient& client) {
 		std::string token = "";
 		client.generate_token(token);
 		client.connect(token);
-	    //do_test("test_global_create_exists_delete_size_eof_one_file", &test_global_create_exists_delete_size_eof_one_file, client, token);
-	    //do_test("test_global_create_exists_delete_size_eof_two_files", &test_global_create_exists_delete_size_eof_two_files, client, token);
-	    //do_test("test_global_drain_fill", &test_global_drain_fill, client, token);
-	    do_test("test_global_token", &test_global_token, client, token);
+	    do_test("test_global_create_exists_delete_size_eof_one_file", &test_global_create_exists_delete_size_eof_one_file, client, token);
+	    do_test("test_global_create_exists_delete_size_eof_two_files", &test_global_create_exists_delete_size_eof_two_files, client, token);
+	    do_test("test_global_drain_fill", &test_global_drain_fill, client, token);
+	    //do_test("test_global_token", &test_global_token, client, token); Doesn't handle more than 1 client at a time
 	    client.leave(token);
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
@@ -691,7 +675,7 @@ int main(int argc, char **argv) {
 
 	transport->open();
 
-	//testing_local_requests(client);
+	testing_local_requests(client);
 	testing_global_requests(client);
 
 	transport->close();

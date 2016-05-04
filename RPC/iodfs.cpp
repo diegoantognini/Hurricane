@@ -343,7 +343,6 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   void join(const string& name, const string& iface) {
-    std::cout << "JOIN from " << name << " " << iface << std::endl;
     add_machines.lock();
     add_new_machine(name, iface);
     hurricane::hurricane_server->add_new_machine();
@@ -642,7 +641,6 @@ private:
 
         // Connect to all the server node
         for(auto& machine : servers) {
-          std::cout << machine.name << " " << machine.iface << std::endl;
 
           // Avoid to add again to a server node if already did it (or knew it when launching the server)
           if (machine.name != machines[master].name) {
@@ -742,14 +740,10 @@ private:
   }
 
   bool add_new_machine(const string& name, const string& iface) {
-    std::cout << "Adding new machine : " << name << " " << iface << std::endl;
     bool exists = false;
-    for(unsigned int i = 0; !exists && i < machines.size(); ++i) {
+    for(unsigned int i = 0; !exists && i < machines.size(); ++i)
       exists = (machines[i].name == name);
-      if(exists)
-        std::cout << machines[i] << std::endl;
-    }
-    std::cout << "value of exists : " << exists << std::endl;
+
     if(!exists) {
       string key_name, key_iface;
       add_new_machine_in_pt_hurricane(name, iface, key_name, key_iface);
@@ -778,8 +772,6 @@ private:
       stringstream iface;
       name << "machines.name" << i;
       iface << "machines.iface" << i;
-
-      std::cout << pt_hurricane.get < unsigned long > ("machines.count") << "\t" << pt_hurricane.get<string>(name.str().c_str()) << " " << pt_hurricane.get<string>(iface.str().c_str()) << std::endl;
     } 
   }
 

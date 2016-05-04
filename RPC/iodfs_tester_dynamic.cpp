@@ -88,20 +88,6 @@ bool testing_join2(IODFSClient& client) {
 	    client.generate_token(token);
 		result = result && client.connect(token);
 
-		std::vector<network_interface> servers_before;
-		client.get_list_server_nodes(servers_before);
-		std::vector<network_interface> servers_after = servers_before;
-
-		while(servers_before.size() == servers_after.size()) {
-			cout << "Waiting a server joining the network : " << servers_before.size() << " ?= " << servers_after.size() << endl;
-			client.get_list_server_nodes(servers_after);
-			usleep(10*1000*1000);
-		}
-		
-		cout << "A server has joined the network !" << endl;
-		
-		usleep(5*1000*1000);
-		
 		for(int i = 0; i < 10; ++i) {
 			std::string filename = "file_5_" + std::to_string(i);
 			result = result && client.global_create(filename, token);
@@ -113,7 +99,6 @@ bool testing_join2(IODFSClient& client) {
 			result = result && client.global_delete(filename, token);
 		}
 		
-
 		result = result && client.leave(token);		
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
@@ -135,7 +120,7 @@ void testing(IODFSClient& client, int test_case) {
 	    		do_test("testing_join1", &testing_join1, client);
 	    		break;
 	    	case 3:
-	    		do_test("testing_join2", &testing_join1, client);
+	    		do_test("testing_join2", &testing_join2, client);
 	    		break;
 	    }
 	} catch (TException& tx) {
@@ -144,7 +129,7 @@ void testing(IODFSClient& client, int test_case) {
 }
 
 int main(int argc, char **argv) {
-	const char* server = "128.178.52.205";
+	const char* server = "128.178.52.205"; // To be changed, server only support 1 client
 	int port = 9090;
 
 	srand (time(NULL));
@@ -156,8 +141,9 @@ int main(int argc, char **argv) {
 	transport->open();
 	// Each time, you have TIME_BEFORE_RUNNING_TEST before running the test
 	// Case 1 : When the servers have been initialized, deconnect a node and reconnect it a few moment later. It should work again
-	// Case 2 : Run a subset of all the servers (s.t. @labos_4) and then, use another machine to join the network (fifth server for example, joining the first server)
-	int test_case = 2;
+	// Case 2 : Run a client which connects on a network composed of n nodes (e.g. 4)
+	// Case 3 : Run a client which connects on a network composed of n+1 nodes (a new node network has joint)
+	int test_case = 3;
 	testing(client, test_case);
 
 	transport->close();
