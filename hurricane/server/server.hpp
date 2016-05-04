@@ -15,6 +15,7 @@ namespace hurricane {
 
 	class server {
   public:
+    // i = -1 -> A new machine
     void add_new_machine(int i = -1) {
       if(i == -1) {
         i = machines;

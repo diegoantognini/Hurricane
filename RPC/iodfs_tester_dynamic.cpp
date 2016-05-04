@@ -129,7 +129,7 @@ void testing(IODFSClient& client, int test_case) {
 }
 
 int main(int argc, char **argv) {
-	const char* server = "128.178.52.205"; // To be changed, server only support 1 client
+	const char* server = "128.178.52.205"; // To be changed, server only support 1 client  //-10g on DCO
 	int port = 9090;
 
 	srand (time(NULL));

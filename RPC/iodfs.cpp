@@ -53,26 +53,27 @@ class IODFSHandler : virtual public IODFSIf {
   private:
   // IO part
   unordered_map<string, hurricane::io*> local_buffers;
-  unordered_map<string, hurricane::io*> global_buffers; //the value is null, but we can use the hash table to find in O(1) :)
+  unordered_map<string, hurricane::io*> global_buffers; //the value is null, but we can use the hash table to find in O(1)
   hurricane::hurricane_req_t req;
   unsigned long slipchunk;
 
   // Network part
-  vector<network_interface> machines; //Struct defined in IODFS_types.h
-  mutex add_machines;
-  unordered_map<string, unsigned long> tokens; //Same tricks as global_buffers
+  vector<network_interface> machines; // Struct defined in IODFS_types.h. Contains name & iface
+  mutex add_machines; // Mutex when adding a new machine in the network
+  unordered_map<string, unsigned long> tokens; // Same tricks as global_buffers
   unordered_map<string, hurricane::client_drain*> client_drains;
   unordered_map<string, hurricane::client_fill*> client_fills;
 
   unsigned long me;
   unsigned int port;
-  bool connection_to_server_done;
+  bool connection_to_server_done; // false means that one of the server doesn't respond anymore
   bool already_connect_at_least_one; // Allow to "join" a network in reconnect method when this value is false
-  unsigned int first_known_lost_node;
+  unsigned int first_known_lost_node; // First node with which we have lost the connection
 
   vector<boost::shared_ptr<TTransport>> transports;
   vector<IODFSClient*> clients;
 
+  // Thread part for the reconnection
   boost::asio::deadline_timer* reconnect_timer;
   boost::asio::io_service reconnect_thread;
   boost::asio::io_service::work* reconnect_woker;
@@ -125,9 +126,11 @@ class IODFSHandler : virtual public IODFSIf {
 
     reconnect_thread.stop();
 
+    // Because global_buffers contain only NULL pointers, no need to delete them
     for(unordered_map<string, hurricane::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
       helper_delete(it);
-  
+    
+    // Close all open connections
     for(auto& it : client_fills) {
       it.second->teardown_conn();
       delete it.second;
@@ -199,7 +202,7 @@ class IODFSHandler : virtual public IODFSIf {
       _return = string(size, 0);
       int64_t bytes_read = it->second->fill((unsigned char*) _return.c_str(), &req);
 
-    // EOF, should return a string smaller and so, its size is modified
+      // EOF, should return a string smaller and so, its size is modified
       if(bytes_read < size)
         _return = _return.data();
     }
@@ -217,7 +220,7 @@ class IODFSHandler : virtual public IODFSIf {
       _return = string(size, 0);
       int64_t bytes_read = it->second->seek_and_fill((unsigned char*) _return.c_str(), &req);
 
-    // EOF, should return a string smaller and so, its size is modified
+      // EOF, should return a string smaller and so, its size is modified
       if(bytes_read < size)
         _return = _return.data();
     }
@@ -291,7 +294,7 @@ class IODFSHandler : virtual public IODFSIf {
 
 
 
- 
+  // Return a token which will be asked for all operations in the global part, in order to identify the client
   void generate_token(string& _return) {
     const string characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     _return = "";
@@ -299,10 +302,11 @@ class IODFSHandler : virtual public IODFSIf {
     for(int i = 0; i < LENGTH_TOKEN; ++i)
       _return += characters[rand() % (characters.size() -1)];
 
-    tokens[_return] = 0;
+    tokens[_return] = 0; // Until the client didn't connect to the server, he can't do anything (global operations won't do anything)
   }
 
   // Create a connection with a client, given a generated token
+  // False implies that there was a problem with the token
   bool connect(const string& token) {
     if (tokens.find(token) == tokens.end() || client_drains.find(token) != client_drains.end() || client_fills.find(token) != client_fills.end())
       return false;
@@ -315,10 +319,12 @@ class IODFSHandler : virtual public IODFSIf {
   }
 
   // Close the connection with the client corresponding to the token. The token is erased.
+  // False implies that there was a problem with the token
   bool leave(const string& token) {
     if (tokens.find(token) == tokens.end() || client_fills.find(token) == client_fills.end() || client_drains.find(token) == client_drains.end())
       return false;
 
+    // Close all currents connections
     client_drains[token]->teardown_conn();
     client_fills[token]->teardown_conn();
 
@@ -342,6 +348,7 @@ class IODFSHandler : virtual public IODFSIf {
     add_machines.unlock();
   }
 
+  // Join a server
   void join(const string& name, const string& iface) {
     add_machines.lock();
     add_new_machine(name, iface);
@@ -364,7 +371,7 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
 
-  // False implie that the file already exist on this machine
+  // False implie that the file already exist on a machine
   // Throw LostConnection if the server is blocked (loosing a node or initializing) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   // Throw BadToken if the token is not recognized
@@ -410,7 +417,7 @@ class IODFSHandler : virtual public IODFSIf {
     return result;
   }
 
-  // False implie that the file doesn't exist on this machine or on another machine
+  // False implie that the file doesn't exist on a machine or the deletion has failed somewhere
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   // Throw BadToken if the token is not recognized
@@ -434,7 +441,7 @@ class IODFSHandler : virtual public IODFSIf {
     return result;
   }
 
-  // An empty buffer implies that either the file doesn't exisir or the size is not a multiple of slipchunk !
+  // An empty buffer implies that either the file doesn't exist or the size is not a multiple of slipchunk !
   // Throw LostConnection if the server is blocked (initializing)
   // Throw BadToken if the token is not recognized
   void global_fill(string& _return, const string& filename, const int64_t size, const string& token) {
@@ -458,6 +465,7 @@ class IODFSHandler : virtual public IODFSIf {
     }
   }
 
+  // False implie that the file doesn't exist on a machine
   // Throw LostConnection if the server is blocked (initializing)
   // Throw BadToken if the token is not recognized
   bool global_drain(const string& filename, const string& buffer, const string& token) {
@@ -480,7 +488,7 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
 
-  // False implie that the file doesn't exist on this machine or on another machine
+  // False implie that the file doesn't exist on a machine or the rewind has failed somewhere
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   // Throw BadToken if the token is not recognized
@@ -504,7 +512,7 @@ class IODFSHandler : virtual public IODFSIf {
     return result;
   }
 
-  // False implie that the file doesn't exist on this machine or on another machine
+  // False implie that the file doesn't exist on a machine or the trunc has failed somewhere
   // Throw LostConnection if the server is blocked (loosing a node) or we lost a node during the voting phase
   // Throw LostConnectionDuringCommit if we lost a node during the commit phase, we might be in a inconsistency phase
   // Throw BadToken if the token is not recognized
@@ -591,15 +599,18 @@ class IODFSHandler : virtual public IODFSIf {
 
   
 private:
+  // Return an iterator on the item and return if the item exists
   bool helper_exists(const string& filename, unordered_map<string, hurricane::io*>::iterator& it, unordered_map<string, hurricane::io*>& buffers) {
     it = buffers.find(filename);
     return it != buffers.end();
   }
 
+  // Return if a filename exists
   bool helper_exists(const string& filename, unordered_map<string, hurricane::io*>& buffers) {
     return buffers.find(filename) != buffers.end();
   }
 
+  // Delete hurricane::io* of the iterator and unlink the file
   void helper_delete(unordered_map<string, hurricane::io*>::iterator& it) {
     delete it->second;
     unlink_file(((char*)it->first.c_str()));
@@ -668,6 +679,7 @@ private:
     }
   }
 
+  // Rerun the thread of connection
   void try_to_reconnect() {
     connection_to_server_done = false;
     reconnect_timer->async_wait(boost::bind(&IODFSHandler::reconnect, this));
@@ -713,6 +725,7 @@ private:
     }
   }
 
+  // check_fill = true implies checking if the token exists in client_fills, same trick for check_drain
   void handle_token(const string& token, bool check_fill = false, bool check_drain = false) {
     if (tokens.find(token) == tokens.end() || (check_fill && (client_fills.find(token) == client_fills.end()))  || (check_drain && (client_drains.find(token) == client_drains.end())) ) {
       BadToken bt;
@@ -720,6 +733,7 @@ private:
     }
   }
 
+  // Add a new machines in vector machines
   void add_new_machine_in_machines(const string& key_name, const string& key_iface) {
     network_interface ni;
     ni.name = pt_hurricane.get<string>(key_name.c_str());
@@ -728,6 +742,7 @@ private:
     machines.push_back(ni);
   }
 
+  // Create all the network stuff for a new machine on the network
   void add_new_machine_network(const string& name) {
     // Init the network part
     boost::shared_ptr<TTransport> socket(new TSocket(name.c_str(), port));
@@ -739,6 +754,7 @@ private:
     clients.push_back(client);
   }
 
+  // Add all the necessary when we add a machine to the network
   bool add_new_machine(const string& name, const string& iface) {
     bool exists = false;
     for(unsigned int i = 0; !exists && i < machines.size(); ++i)
@@ -754,6 +770,7 @@ private:
     return !exists;
   }
 
+  // Update pt_hurricane when adding a machine
   void add_new_machine_in_pt_hurricane(const string& _name, const string& _iface, string& key_name, string& key_iface) {
     stringstream name;
     stringstream iface;

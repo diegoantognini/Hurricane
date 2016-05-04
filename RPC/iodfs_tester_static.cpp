@@ -465,9 +465,9 @@ bool helper_test_global_drain_fill(IODFSClient& client, unsigned long SLIPCHUNCK
 	return result;
 }
 
-bool helper_chunk_test_global_drain_fill(IODFSClient& client, unsigned long SLIPCHUNCK, int64_t LENGTH, int64_t LENGTH2, const std::string& token) {
+bool helper_chunk_test_global_drain_fill(IODFSClient& client, unsigned long SLIPCHUNCK, int64_t LENGTH_DRAIN, int64_t LENGTH_FILL, const std::string& token) {
 	string filename = "testing_global_drain_fill";
-	string buffer(LENGTH, 0);
+	string buffer(LENGTH_DRAIN, 0);
 	bool result = true;
 	
 	result = result && client.global_create(filename, token);
@@ -475,7 +475,7 @@ bool helper_chunk_test_global_drain_fill(IODFSClient& client, unsigned long SLIP
 
 	// Drain
 	char var = 0;
-	for(int64_t i = 0; i < LENGTH; ++i) {
+	for(int64_t i = 0; i < LENGTH_DRAIN; ++i) {
 		var = rand()%127 + 1;
 		buffer[i] = var;
 	}
@@ -484,20 +484,20 @@ bool helper_chunk_test_global_drain_fill(IODFSClient& client, unsigned long SLIP
 
 	usleep(5*1000*1000); // As a "cyclic barrier"
 
-	result = result && (client.global_size(filename, token) == LENGTH);
+	result = result && (client.global_size(filename, token) == LENGTH_DRAIN);
 
 	// Fill only a part of the file
 	result = result && client.global_rewind(filename, token);
-	result = result && (client.global_size(filename, token) == LENGTH);
+	result = result && (client.global_size(filename, token) == LENGTH_DRAIN);
 
 	std::string res = "";
-	std::string read_buffer(LENGTH2, 0);
+	std::string read_buffer(LENGTH_FILL, 0);
 	do{
-		client.global_fill(read_buffer, filename, LENGTH2, token);
+		client.global_fill(read_buffer, filename, LENGTH_FILL, token);
 		res += read_buffer;
 
-		result = result && (LENGTH2 == ((int64_t) read_buffer.size()));
-		result = result && (client.global_size(filename, token) == LENGTH);
+		result = result && (LENGTH_FILL == ((int64_t) read_buffer.size()));
+		result = result && (client.global_size(filename, token) == LENGTH_DRAIN);
 	}while(res.size() != buffer.size());
 
 	std::sort(res.begin(), res.end());
@@ -521,23 +521,24 @@ bool test_global_drain_fill(IODFSClient& client, const std::string& token) {
 	
 	// first case, we read all the file which is a multiple of slipchunk
 	int64_t SLIPCHUNCK = 4*1024*1024; // 4 Mb
-	int64_t LENGTH = 32*SLIPCHUNCK;
-	int64_t LENGTH2 = LENGTH;
-	result = result && helper_test_global_drain_fill(client, SLIPCHUNCK, LENGTH, LENGTH2, token);
+	int64_t LENGTH_DRAIN = 32*SLIPCHUNCK;
+	int64_t LENGTH_FILL = LENGTH_DRAIN;
+	result = result && helper_test_global_drain_fill(client, SLIPCHUNCK, LENGTH_DRAIN, LENGTH_FILL, token);
 	
 	// second case : we write an non-multiple of slipchunk and want to read the whole file (the length must be a multiple of slipchunk, but the buffer will be smaller at the end)	
-	LENGTH = 133*1024*1024;
-	LENGTH2 = 140*1024*1024; //Read more than our 135Mb
-	result = result && helper_test_global_drain_fill(client, SLIPCHUNCK, LENGTH, LENGTH2, token);
+	LENGTH_DRAIN = 133*1024*1024;
+	LENGTH_FILL = 140*1024*1024; //Read more than our 135Mb
+	result = result && helper_test_global_drain_fill(client, SLIPCHUNCK, LENGTH_DRAIN, LENGTH_FILL, token);
 	
 	// third case : same as first but only a chunk
-	LENGTH = 32*SLIPCHUNCK;
-	LENGTH2 = 4*SLIPCHUNCK;
-	result = result && helper_chunk_test_global_drain_fill(client, SLIPCHUNCK, LENGTH, LENGTH2, token);
+	LENGTH_DRAIN = 32*SLIPCHUNCK;
+	LENGTH_FILL = 4*SLIPCHUNCK;
+	result = result && helper_chunk_test_global_drain_fill(client, SLIPCHUNCK, LENGTH_DRAIN, LENGTH_FILL, token);
 	
 	return result;
 }
 
+/* Doesn't handle more than 1 client at a time on a given server, due to port assignments
 bool test_global_token(IODFSClient& client, const std::string& not_used_token) {
 	bool result = true;
 	std::vector<std::string> tokens;
@@ -630,7 +631,7 @@ bool test_global_token(IODFSClient& client, const std::string& not_used_token) {
 	}
 
 	return result;
-}
+}*/
 
 void do_test(const char* name, bool (*fct)(IODFSClient&, const std::string&), IODFSClient& client, const std::string& token = "") {
 	cout << name << " : ";
@@ -656,7 +657,7 @@ void testing_global_requests(IODFSClient& client) {
 	    do_test("test_global_create_exists_delete_size_eof_one_file", &test_global_create_exists_delete_size_eof_one_file, client, token);
 	    do_test("test_global_create_exists_delete_size_eof_two_files", &test_global_create_exists_delete_size_eof_two_files, client, token);
 	    do_test("test_global_drain_fill", &test_global_drain_fill, client, token);
-	    //do_test("test_global_token", &test_global_token, client, token); Doesn't handle more than 1 client at a time
+	    //do_test("test_global_token", &test_global_token, client, token); Doesn't handle more than 1 client at a time on a given server, due to port assignments
 	    client.leave(token);
 	} catch (TException& tx) {
 		cout << "Global Error: " << tx.what() << endl;
@@ -664,7 +665,7 @@ void testing_global_requests(IODFSClient& client) {
 }
 
 int main(int argc, char **argv) {
-	const char* server = "128.178.52.205";
+	const char* server = "128.178.52.205"; //-10g on DCO
 	int port = 9090;
 
 	srand (time(NULL));
