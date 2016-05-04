@@ -62,12 +62,15 @@ bool testing_join1(IODFSClient& client) {
 		result = result && client.connect(token);
 
 		for(int i = 0; i < 10; ++i) {
-			result = result && client.global_create(std::string("file_4_"+i), token);
-			usleep(1*1000*1000);
+			std::string filename = "file_4_" + std::to_string(i);
+			result = result && client.global_create(filename, token);
+			usleep(60*1000*1000);
 		}
 
-		for(int i = 0; i < 10; ++i)
-			result = result && client.global_delete(std::string("file_4_"+i), token);
+		for(int i = 0; i < 10; ++i) {
+			std::string filename = "file_4_" + std::to_string(i);
+			result = result && client.global_delete(filename, token);
+		}
 		
 		result = result && client.leave(token);		
 	} catch (TException& tx) {
@@ -92,7 +95,7 @@ bool testing_join2(IODFSClient& client) {
 		while(servers_before.size() == servers_after.size()) {
 			cout << "Waiting a server joining the network : " << servers_before.size() << " ?= " << servers_after.size() << endl;
 			client.get_list_server_nodes(servers_after);
-			usleep(1*1000*1000);
+			usleep(10*1000*1000);
 		}
 		
 		cout << "A server has joined the network !" << endl;
@@ -100,12 +103,15 @@ bool testing_join2(IODFSClient& client) {
 		usleep(5*1000*1000);
 		
 		for(int i = 0; i < 10; ++i) {
-			result = result && client.global_create(std::string("file_5_"+i), token);
-			usleep(1*1000*1000);
+			std::string filename = "file_5_" + std::to_string(i);
+			result = result && client.global_create(filename, token);
+			usleep(20*1000*1000);
 		}
 
-		for(int i = 0; i < 10; ++i)
-			result = result && client.global_delete(std::string("file_5_"+i), token);
+		for(int i = 0; i < 10; ++i) {
+			std::string filename = "file_5_" + std::to_string(i);
+			result = result && client.global_delete(filename, token);
+		}
 		
 
 		result = result && client.leave(token);		
