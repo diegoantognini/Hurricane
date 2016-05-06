@@ -49,6 +49,9 @@ public:
 };
 
 int main(int argc, const char **argv) {
+  setup_options(argc, argv);
+  init_hurricane_desc();
+
   std::stringstream name;
   name << "machines.name" << pt_hurricane.get < unsigned long > ("machines.me");
   string server = pt_hurricane.get<string>(name.str().c_str()); // We connect to "our" server

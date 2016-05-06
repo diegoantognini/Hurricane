@@ -806,7 +806,6 @@ int main(int argc, const char **argv) {
 
   srand (time(NULL));
   setup_options(argc, argv);
-  
   init_hurricane_desc();
 
   bool batching = (vm.count("request_batching") > 0);
