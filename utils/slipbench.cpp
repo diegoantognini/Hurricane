@@ -78,6 +78,7 @@ int main(int argc, const char **argv) {
   unsigned long align = vm["slipbench_align"].as < unsigned long > ();
   slipchunk = (slipchunk / align) * align;
   unsigned long blockmem = vm["blocked_memory"].as < unsigned long > ();
+
   /* Read in hurricane information */
   init_hurricane_desc();
   bool run_drain_test = (vm.count("drain_test") > 0);
@@ -91,6 +92,7 @@ int main(int argc, const char **argv) {
   unsigned long fill_bytes = 0;
   unsigned char *big_buffer;
   unsigned long big_bufsize = 512 * 1024 * 1024;
+
   if (blockmem > 0) {
     BOOST_LOG_TRIVIAL(info) << "Blocking " << blockmem;
   }
@@ -105,10 +107,11 @@ int main(int argc, const char **argv) {
   BOOST_LOG_TRIVIAL(info) << "Done ";
 
   bool batching = (vm.count("request_batching") > 0);
-
+  BOOST_LOG_TRIVIAL(info) << "Batching : " << batching << ", " << vm["batch_size"].as < unsigned long > ();
+  
   unsigned long silenced_clients = vm["slipbench_silence"].as < unsigned long > ();
   if (silenced_clients != ULONG_MAX &&
-      hurricane::hurricane_client_drain->get_me() < silenced_clients) {
+    hurricane::hurricane_client_drain->get_me() < silenced_clients) {
     silent = true;
   }
   else {
