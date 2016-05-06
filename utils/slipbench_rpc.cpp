@@ -49,9 +49,11 @@ public:
 };
 
 int main(int argc, const char **argv) {
-  const char* server = "128.178.52.205"; // Connect to one of the server
+  std::stringstream name;
+  name << "machines.name" << pt_hurricane.get < unsigned long > ("machines.me");
+  string server = pt_hurricane.get<string>(name.str().c_str()); // We connect to "our" server
   int port = 9090;
-
+  
   boost::shared_ptr<TTransport> socket(new TSocket(server, port));
   boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
   boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -119,6 +121,11 @@ int main(int argc, const char **argv) {
 
   control_barrier(); // everyone started
   if (run_drain_test) {
+    if(!client.global_create(filename, token)) {
+      BOOST_LOG_TRIVIAL(fatal) << "Unable to create a file on hurricane";
+      exit(-1);
+    }
+
     BOOST_LOG_TRIVIAL(info) << "Starting drain test";
     drain_clock.start();
     unsigned long drain_bytes = slipfile_size;
@@ -152,39 +159,25 @@ int main(int argc, const char **argv) {
     }
   }
 
-  /*if (run_fill_test) {
-    disks->clear();
-    strcpy(req.filename, "fill_test_data");
-    (*disks)[string(req.filename)] = streams;
-    streams->fill_test_prep(req.filename);
+  if (run_fill_test) {
     control_barrier();
     BOOST_LOG_TRIVIAL(info) << "Starting fill test";
     fill_clock.start();
     if (batching) {
       unsigned long filled_bytes;
       do {
-        req.cmd = hurricane::CMD_FILL;
-        filled_bytes =
-            hurricane::hurricane_client_fill->batch_access_store(&req,
-                                                                 big_buffer,
-                                                                 slipchunk,
-                                                                 big_bufsize);
+        client.global_fill(big_buffer, filename, big_bufsize, token);
+        filled_bytes = big_buffer.size();
+
         fill_bytes += filled_bytes;
       } while (filled_bytes > 0);
     }
     else {
-      do {
-        req.cmd = hurricane::CMD_FILL;
-        req.size = slipchunk;
-        if (!hurricane::hurricane_client_fill->access_store(&req, buffer)) {
-          break;
-        }
-        fill_bytes += req.size;
-      } while (true);
+      // Not handled
     }
     fill_clock.stop();
     BOOST_LOG_TRIVIAL(info) << "Completed fill test";
-  }*/
+  }
 
   control_barrier(); // everyone done
 
