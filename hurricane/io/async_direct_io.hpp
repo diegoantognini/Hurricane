@@ -20,17 +20,15 @@
 #define _ASYNC_DIRECT_IO_
 
 #include <boost/asio/io_service.hpp>
-#include "slipstore_io.hpp"
+#include "hurricane_io.hpp"
 #include "dio_buffer.hpp"
 
-namespace slipstore {
+namespace hurricane {
   extern boost::asio::io_service dioService;
   extern boost::thread_group diopool;
 
-  class async_direct_io : public slipstore_io {
-      unsigned long stream;
-      unsigned long partition;
-      unsigned long tile;
+  class async_direct_io : public hurricane_io {
+
       unsigned long seen_bytes;
       unsigned long data_bytes;
       char name[100];
@@ -38,25 +36,16 @@ namespace slipstore {
       bool snapped;
       dio_buffer *iobuf;
   public:
-      async_direct_io(unsigned long stream_in,
-                      unsigned long partition_in,
-                      unsigned long tile_in,
-                      unsigned long dio_unit,
-                      const char *name_in = NULL)
-          : stream(stream_in),
-            partition(partition_in),
-            tile(tile_in),
-            seen_bytes(0),
+      async_direct_io(const char *name_in, unsigned long dio_unit, bool test = false)
+          : seen_bytes(0),
             snapped(false) {
-        if (name_in != NULL) {
-          strcpy(name, name_in);
+        strcpy(name, name_in);
+        
+        if(test) {
           fd = open(name, O_RDWR | O_LARGEFILE | O_DIRECT, S_IRWXU);
           data_bytes = get_file_size(fd);
         }
         else {
-          sprintf(name, "stream.%lu.%lu.%lu", stream, partition, tile);
-          // This prevents us from over writing any snapshots
-          unlink_file(name);
           fd = open(name,
                     O_RDWR | O_LARGEFILE | O_CREAT | O_TRUNC | O_DIRECT,
                     S_IRWXU);
@@ -74,7 +63,7 @@ namespace slipstore {
         seen_bytes += size;
         while (iobuf->get_busy());
         iobuf->set_busy();
-        slipstore::dioService.post(boost::bind(&dio_buffer::read,
+        hurricane::dioService.post(boost::bind(&dio_buffer::read,
                                                iobuf,
                                                buffer,
                                                size));
@@ -88,7 +77,7 @@ namespace slipstore {
         unsigned long remaining_bytes;
         while (iobuf->get_busy());
         iobuf->set_busy();
-        slipstore::dioService.post(boost::bind(&dio_buffer::seek,
+        hurricane::dioService.post(boost::bind(&dio_buffer::seek,
                                                iobuf,
                                                offset));
         while (iobuf->get_busy());
@@ -99,7 +88,7 @@ namespace slipstore {
         }
         seen_bytes += size;
         iobuf->set_busy();
-        slipstore::dioService.post(boost::bind(&dio_buffer::read,
+        hurricane::dioService.post(boost::bind(&dio_buffer::read,
                                                iobuf,
                                                buffer,
                                                size));
@@ -112,7 +101,7 @@ namespace slipstore {
         seen_bytes += size;
         while (iobuf->get_busy());
         iobuf->set_busy();
-        slipstore::dioService.post(boost::bind(&dio_buffer::write,
+        hurricane::dioService.post(boost::bind(&dio_buffer::write,
                                                iobuf,
                                                buffer,
                                                size));
@@ -139,7 +128,7 @@ namespace slipstore {
       virtual void rewind() {
         while (iobuf->get_busy());
         iobuf->set_busy();
-        slipstore::dioService.post(boost::bind(&dio_buffer::flush,
+        hurricane::dioService.post(boost::bind(&dio_buffer::flush,
                                                iobuf));
         while (iobuf->get_busy());
         rewind_file(fd);
@@ -149,7 +138,7 @@ namespace slipstore {
       virtual void trunc() {
         while (iobuf->get_busy());
         iobuf->set_busy();
-        slipstore::dioService.post(boost::bind(&dio_buffer::flush,
+        hurricane::dioService.post(boost::bind(&dio_buffer::flush,
                                                iobuf));
         while (iobuf->get_busy());
         if (!snapped) {
@@ -167,51 +156,6 @@ namespace slipstore {
         usage -= data_bytes;
         seen_bytes = 0;
         data_bytes = 0;
-      }
-
-      virtual void take_snap(unsigned long no, fsnap *meta) {
-        char new_name[200];
-        while (iobuf->get_busy());
-        iobuf->flush();
-        sprintf(new_name, "snap_%lu_", no);
-        strcat(new_name, name);
-        int ret = link(name, new_name);
-        if (ret < 0) {
-          BOOST_LOG_TRIVIAL(fatal) << "Unable to create snap link"
-          << strerror(errno);
-          exit(-1);
-        }
-        snapped = true;
-        meta->pos = seen_bytes;
-        meta->size = data_bytes;
-      }
-
-      virtual void restore_snap(unsigned long no,
-                                fsnap *meta) {
-        char snap_name[200];
-        close(fd);
-        unlink_file(name);
-        sprintf(snap_name, "snap_%lu_", no);
-        strcat(snap_name, name);
-        int ret = link(snap_name, name);
-        if (ret < 0) {
-          BOOST_LOG_TRIVIAL(fatal) << "Unable to create snap link"
-          << strerror(errno);
-          exit(-1);
-        }
-        fd = open(name, O_RDWR | O_LARGEFILE | O_DIRECT);
-        truncate_file_to_size(fd, meta->size);
-        data_bytes = meta->size;
-        set_filepos(fd, meta->pos);
-        seen_bytes = meta->pos;
-        snapped = true;
-      }
-
-      virtual void delete_snap(unsigned long no) {
-        char snap_name[200];
-        sprintf(snap_name, "snap_%lu_", no);
-        strcat(snap_name, name);
-        unlink_file(snap_name);
       }
 
       virtual ~async_direct_io() {

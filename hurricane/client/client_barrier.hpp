@@ -2,11 +2,11 @@
 #define _CLIENT_BARRIER_
 
 #include "../../utils/conn_utils.h"
-#include "../../utils/slipstore_utils.h"
+#include "../../utils/hurricane_utils.h"
 #include "../../utils/zmq_utils.h"
 #include "../../utils/cyclic.hpp"
 
-namespace slipstore {
+namespace hurricane {
 	extern boost::asio::io_service ioService;
   extern void *zmq_context;
 
@@ -29,25 +29,25 @@ namespace slipstore {
       	////////////////////////////////// Barrier sockets
         socket_barrier_out = zmq_socket(zmq_context, ZMQ_PUSH);
         unsigned long barrier_ring_next = (me + 1) % machines;
-        slipstore_connect_endpoint(socket_barrier_out,
+        hurricane_connect_endpoint(socket_barrier_out,
                                    conn_client_barrier_endpoint(barrier_ring_next).c_str());
         socket_barrier_in = zmq_socket(zmq_context, ZMQ_PULL);
-        slipstore_bind_endpoint(socket_barrier_in,
+        hurricane_bind_endpoint(socket_barrier_in,
                                 conn_client_barrier_bindpoint(me).c_str());
         ///////////////////////////////// Connection to local store
         socket_local_store = zmq_socket(zmq_context, ZMQ_REQ);
-        slipstore_mark_low_latency(socket_local_store);
-        slipstore_connect_endpoint(socket_local_store,
+        hurricane_mark_low_latency(socket_local_store);
+        hurricane_connect_endpoint(socket_local_store,
                                    conn_server_control_endpoint(me).c_str());
       }
 
       void flush_local_store() {
-      	slipstore_req_t req;
+      	hurricane_req_t req;
         req.cmd = CMD_NOP;
         // Issue request
         (void) do_zmq_send(socket_local_store,
                            (unsigned char *) &req,
-                           sizeof(slipstore_req_t),
+                           sizeof(hurricane_req_t),
                            "client barrier cmd out");
         // Get reply
         unsigned long rep;
@@ -70,8 +70,8 @@ namespace slipstore {
 
       client_barrier() {
         slipchunk = vm["slipchunk"].as < unsigned long > ();
-        machines = pt_slipstore.get < unsigned long > ("machines.count");
-        me = pt_slipstore.get < unsigned long > ("machines.me");
+        machines = pt_hurricane.get < unsigned long > ("machines.count");
+        me = pt_hurricane.get < unsigned long > ("machines.me");
         setup_conn();
         in_progress = false;
         __sync_synchronize();

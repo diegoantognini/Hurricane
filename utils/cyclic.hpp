@@ -1,7 +1,7 @@
 #ifndef _CYCLIC_
 #define _CYCLIC_
 
-namespace slipstore {
+namespace hurricane {
   class cyclic {
       unsigned long *permutation;
       unsigned long cyclic_index;

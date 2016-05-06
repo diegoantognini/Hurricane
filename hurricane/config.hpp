@@ -16,19 +16,19 @@
  * limitations under the License.
  */
 
-#ifndef _CONFIG_SLIPSTORE_
-#define _CONFIG_SLIPSTORE_
+#ifndef _CONFIG_HURRICANE_
+#define _CONFIG_HURRICANE_
 
 #include "interface.hpp"
 #include "client/client_fill.hpp"
 #include "client/client_drain.hpp"
 #include "client/client_barrier.hpp"
  
-namespace slipstore {
-  client_fill *slipstore_client_fill = NULL;
-  client_drain *slipstore_client_drain = NULL;
-  client_barrier *slipstore_client_barrier = NULL;
-  server *slipstore_server = NULL;
+namespace hurricane {
+  client_fill *hurricane_client_fill = NULL;
+  client_drain *hurricane_client_drain = NULL;
+  client_barrier *hurricane_client_barrier = NULL;
+  server *hurricane_server = NULL;
   busy_counter *have_outstanding_request = NULL;
   boost::thread *server_thread = NULL;
   unsigned long baseport = 0;

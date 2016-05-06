@@ -16,9 +16,9 @@
  * limitations under the License.
  */
 
-#ifndef _SLIPSTORE_IO_
-#define _SLIPSTORE_IO_
-namespace slipstore {
+#ifndef _HURRICANE_IO_
+#define _HURRICANE_IO_
+namespace hurricane {
 
   struct fsnap {
       unsigned long pos;
@@ -29,7 +29,7 @@ namespace slipstore {
   extern unsigned long usage;
   extern unsigned long max_quota_usage;
 
-  class slipstore_io {
+  class hurricane_io {
   public:
       virtual unsigned long fill(unsigned char *buffer,
                                  unsigned long size) = 0;
@@ -51,14 +51,7 @@ namespace slipstore {
 
       virtual void trunc() = 0;
 
-      virtual void take_snap(unsigned long no, fsnap *meta) = 0;
-
-      virtual void restore_snap(unsigned long no,
-                                fsnap *meta) = 0;
-
-      virtual void delete_snap(unsigned long no) = 0;
-
-      virtual ~slipstore_io() { }
+      virtual ~hurricane_io() { }
   };
 }
 #endif

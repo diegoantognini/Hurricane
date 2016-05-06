@@ -5,16 +5,16 @@
 #include "../../utils/cyclic.hpp"
 #include "../../utils/busy_counter.hpp"
 #include "../../utils/conn_utils.h"
-#include "../../utils/slipstore_utils.h"
+#include "../../utils/hurricane_utils.h"
 #include "../../utils/zmq_utils.h"
 
-namespace slipstore {
+namespace hurricane {
 	extern void *zmq_context;
 	extern busy_counter *have_outstanding_request;
 	extern void *zmq_context_data_in;
 
 	class client_fill {
-	      // Command sockets
+		      // Command sockets
 	      void **sockets_cmd_out;
 	      // Data sockets
 	      void **sockets_data_in;
@@ -35,12 +35,12 @@ namespace slipstore {
 	      rtc_clock mem_read_time;
 
 	      void setup_conn() {
-	      	/////////////////////////////////// Command sockets
+	        /////////////////////////////////// Command sockets
 	        sockets_cmd_out = new void *[machines];
 	        for (unsigned long i = 0; i < machines; i++) {
 	          sockets_cmd_out[i] = zmq_socket(zmq_context, ZMQ_REQ);
-	          slipstore_mark_low_latency(sockets_cmd_out);
-	          slipstore_connect_endpoint(sockets_cmd_out[i],
+	          hurricane_mark_low_latency(sockets_cmd_out);
+	          hurricane_connect_endpoint(sockets_cmd_out[i],
 	                                     conn_server_control_endpoint(i).c_str());
 	        }
 	        ////////////////////////////////// Data sockets
@@ -48,7 +48,7 @@ namespace slipstore {
 	        for (unsigned long i = 0; i < machines; i++) {
 	          //sockets_data_in[i] = zmq_socket(zmq_context_data_in, ZMQ_REQ);
 	          sockets_data_in[i] = zmq_socket(zmq_context_data_in, ZMQ_PULL);
-	          slipstore_bind_endpoint(sockets_data_in[i],
+	          hurricane_bind_endpoint(sockets_data_in[i],
 	                                  conn_client_data_bindpoint(me, i).c_str());
 	        }
 	      }
@@ -64,19 +64,20 @@ namespace slipstore {
 
 	      client_fill() {
 	        slipchunk = vm["slipchunk"].as < unsigned long > ();
-	        machines = pt_slipstore.get < unsigned long > ("machines.count");
-	        me = pt_slipstore.get < unsigned long > ("machines.me");
+	        machines = pt_hurricane.get < unsigned long > ("machines.count");
+	        me = pt_hurricane.get < unsigned long > ("machines.me");
 	        setup_conn();
-	        if (vm["slipstore_servers"].as < unsigned long > () == ULONG_MAX) {
+	        if (vm["hurricane_servers"].as < unsigned long > () == ULONG_MAX) {
 	          request_cycle = new cyclic(machines, me);
 	          reset_cycle = new cyclic(machines, me);
 	        }
 	        else {
-	          request_cycle = new cyclic(vm["slipstore_servers"].as < unsigned long > (), me);
-	          reset_cycle = new cyclic(vm["slipstore_servers"].as < unsigned long > (), me);
+	          request_cycle = new cyclic(vm["hurricane_servers"].as < unsigned long > (), me);
+	          reset_cycle = new cyclic(vm["hurricane_servers"].as < unsigned long > (), me);
 	        }
 	        server_selector = new random_selector(machines, me + 128);
-	        batch_size = vm["batch_size"].as < unsigned long > ();
+	        batch_size = vm["batch_size"].as < unsigned
+	        long > ();
 	        window_mc = new unsigned long[batch_size];
 	        size_mc = new unsigned long[batch_size];
 	        ready = new bool[batch_size];
@@ -99,10 +100,9 @@ namespace slipstore {
 	        return slipchunk;
 	      }
 
-	      bool check_empty(unsigned long stream) {
-	      	bool empty = true;
-	        slipstore_req_t req;
-	        req.stream = stream;
+	      bool check_empty() {
+	        bool empty = true;
+	        hurricane_req_t req;
 	        req.cmd = CMD_EOF;
 	        have_outstanding_request->start();
 	        disk_read_time.start();
@@ -110,7 +110,7 @@ namespace slipstore {
 	          // Issue request
 	          (void) do_zmq_send(sockets_cmd_out[i],
 	                             (unsigned char *) &req,
-	                             sizeof(slipstore_req_t),
+	                             sizeof(hurricane_req_t),
 	                             "client cmd out");
 	          // Get reply
 	          unsigned long rep;
@@ -125,13 +125,8 @@ namespace slipstore {
 	        return empty;
 	      }
 
-	      void reset(unsigned long stream,
-	                 unsigned long partition,
-	                 unsigned long tile) {
-	        slipstore_req_t req;
-	        req.stream = stream;
-	        req.partition = partition;
-	        req.tile = tile;
+	      void reset() {
+	        hurricane_req_t req;
 	        req.cmd = CMD_RESET;
 	        have_outstanding_request->start();
 	        disk_read_time.start();
@@ -140,7 +135,7 @@ namespace slipstore {
 	          // Issue request
 	          (void) do_zmq_send(sockets_cmd_out[mc],
 	                             (unsigned char *) &req,
-	                             sizeof(slipstore_req_t),
+	                             sizeof(hurricane_req_t),
 	                             "client cmd out");
 	          // Get reply
 	          unsigned long rep;
@@ -154,20 +149,16 @@ namespace slipstore {
 	      }
 
 	      // Client: execute a data transfer command
-	      bool access_store(slipstore_req_t *req,
+	      bool access_store(hurricane_req_t *req,
 	                        unsigned char *buffer,
 	                        unsigned long mc = ULONG_MAX) {
 	        unsigned long trials;
 	        unsigned long *bytes_read;
 	        rtc_clock *read_time;
-	        if (req->cmd == CMD_FILL && req->stream == STREAM_MEMBUFFER) {
-	          bytes_read = &mem_bytes_read;
-	          read_time = &mem_read_time;
-	        }
-	        else {
-	          bytes_read = &disk_bytes_read;
-	          read_time = &disk_read_time;
-	        }
+
+	        bytes_read = &disk_bytes_read;
+	        read_time = &disk_read_time;
+
 	        if (mc != ULONG_MAX) {
 	          trials = machines - 1;
 	        }
@@ -182,7 +173,7 @@ namespace slipstore {
 	          // Issue request
 	          (void) do_zmq_send(sockets_cmd_out[mc],
 	                             (unsigned char *) req,
-	                             sizeof(slipstore_req_t),
+	                             sizeof(hurricane_req_t),
 	                             "client cmd out");
 	          // Get reply
 	          unsigned long rep;
@@ -224,16 +215,16 @@ namespace slipstore {
 	      }
 
 	      // Client: execute a data transfer command
-	      unsigned long batch_access_store(slipstore_req_t *req,
+	      unsigned long batch_access_store(hurricane_req_t *req,
 	                                       unsigned char *buffer,
 	                                       unsigned long chunksize,
 	                                       unsigned long bufsize) {
 	        unsigned long offset = 0;
 	        unsigned long used_bytes = 0;
 	        unsigned long outstanding = 0;
-	        slipstore_req_t saved_req;
+	        hurricane_req_t saved_req;
 	        req->source_mc = me;
-	        memcpy(&saved_req, req, sizeof(slipstore_req_t));
+	        memcpy(&saved_req, req, sizeof(hurricane_req_t));
 	        disk_read_time.start();
 	        have_outstanding_request->start();
 	        bool do_polling = (vm.count("polling_client") > 0);
@@ -298,13 +289,13 @@ namespace slipstore {
 	              window_mc[i] = server_selector->select();
 	              ready[i] = false;
 	              if (window_mc[i] != ULONG_MAX) {
-	                memcpy(req, &saved_req, sizeof(slipstore_req_t));
+	                memcpy(req, &saved_req, sizeof(hurricane_req_t));
 	                req->size = chunksize;
 	                size_mc[i] = req->size;
 	                used_bytes += size_mc[i];
 	                (void) do_zmq_send(sockets_cmd_out[window_mc[i]],
 	                                   (unsigned char *) req,
-	                                   sizeof(slipstore_req_t),
+	                                   sizeof(hurricane_req_t),
 	                                   "client cmd out");
 	                outstanding++;
 	              }
@@ -319,8 +310,8 @@ namespace slipstore {
 	      }
 
 	      void print_times() {
-	        disk_read_time.print("SLIPSTORE::CLIENT::DISK_READ_TIME ");
-	        mem_read_time.print("SLIPSTORE::CLIENT::MEM_READ_TIME ");
+	        disk_read_time.print("HURRICANE::CLIENT::DISK_READ_TIME ");
+	        mem_read_time.print("HURRICANE::CLIENT::MEM_READ_TIME ");
 	      }
 
 	      unsigned long get_disk_bytes_read() {

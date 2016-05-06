@@ -1,7 +1,7 @@
 #ifndef _RANDOM_SELECTOR_
 #define _RANDOM_SELECTOR_
 
-namespace slipstore {
+namespace hurricane {
 	class random_selector {
 	      unsigned long *permutation;
 	      unsigned long machines;
@@ -45,7 +45,7 @@ namespace slipstore {
 	      }
 
 	      ~random_selector() {
-	        delete permutation;
+	        delete [] permutation;
 	      }
 	  };
 }

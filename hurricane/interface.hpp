@@ -31,10 +31,15 @@
 #include "client/client_barrier.hpp"
 #include "server/server_async.hpp"
 #include "server/server_sync.hpp"
+#include <string>
+#include <unordered_map>
+
+using std::unordered_map;
+using std::string;
 
 // Interface for the slipstorage service
 
-namespace slipstore {
+namespace hurricane {
   extern void *zmq_context;
   extern void *zmq_context_data_out;
   extern void *zmq_context_data_in;
@@ -49,46 +54,47 @@ namespace slipstore {
   class client_drain;
   class client_barrier;
 
-  extern client_fill *slipstore_client_fill;
-  extern client_drain *slipstore_client_drain;
-  extern client_barrier *slipstore_client_barrier;
+  extern client_fill *hurricane_client_fill;
+  extern client_drain *hurricane_client_drain;
+  extern client_barrier *hurricane_client_barrier;
 
   class server;
-  extern server *slipstore_server;
+  extern server *hurricane_server;
   extern boost::thread *server_thread;
 
   static
-  void init(io *disks, unsigned long tile_size, unsigned long partitions) {
-    unsigned long zmq_threads = vm["zmq_threads"].as < unsigned
-    long > ();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::ZMQ_THREADS " <<
-    zmq_threads;
+  void init(unordered_map<string, hurricane::io*>* disks, bool RPC = false) {
+    unsigned long zmq_threads = vm["zmq_threads"].as < unsigned long > ();
+    BOOST_LOG_TRIVIAL(info) << "HURRICANE::ZMQ_THREADS " << zmq_threads;
     zmq_context = zmq_init(zmq_threads);
     zmq_context_data_out = zmq_init(zmq_threads);
     zmq_context_data_in = zmq_init(zmq_threads);
-    baseport = vm["baseport"].as < unsigned
-    long > ();
-    slipstore_client_fill = new client_fill();
-    slipstore_client_drain = new client_drain();
-    slipstore_client_barrier = new client_barrier();
-    have_outstanding_request = new busy_counter();
-    if (vm.count("use_async_server") > 0) {
-      slipstore_server = new server_async(disks, tile_size, partitions);
-      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER ASYNC";
-    } else {
-      slipstore_server = new server_sync(disks, tile_size, partitions);
-      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SERVER SYNC";
+    baseport = vm["baseport"].as < unsigned long > ();
+
+    if(!RPC) {
+      hurricane_client_fill = new client_fill();
+      hurricane_client_drain = new client_drain();
+      hurricane_client_barrier = new client_barrier();
     }
+    have_outstanding_request = new busy_counter();
+
+    if (vm.count("use_async_server") > 0) {
+      hurricane_server = new server_async(disks);
+      BOOST_LOG_TRIVIAL(info) << "HURRICANE::SERVER ASYNC";
+    } else {
+      hurricane_server = new server_sync(disks);
+      BOOST_LOG_TRIVIAL(info) << "HURRICANE::SERVER SYNC";
+    }
+
    // Launch server thread
-    server_thread = new boost::thread(boost::ref(*slipstore_server));
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::MACHINES " <<
-    slipstore_client_fill->get_machines();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::ME " <<
-    slipstore_client_fill->get_me();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::SLIPCHUNK " <<
-    slipstore_client_barrier->get_slipchunk();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::QUOTA " <<
-    quota;
+    server_thread = new boost::thread(boost::ref(*hurricane_server));
+    if(!RPC) {
+      BOOST_LOG_TRIVIAL(info) << "HURRICANE::MACHINES " << hurricane_client_fill->get_machines();
+      BOOST_LOG_TRIVIAL(info) << "HURRICANE::ME " << hurricane_client_fill->get_me();
+      BOOST_LOG_TRIVIAL(info) << "HURRICANE::SLIPCHUNK " << hurricane_client_barrier->get_slipchunk();
+    }
+    BOOST_LOG_TRIVIAL(info) << "HURRICANE::QUOTA " << quota;
+
     // Launch async client thread
     threadpool.create_thread(boost::bind(&boost::asio::io_service::run,
                                          &ioService));
@@ -96,18 +102,18 @@ namespace slipstore {
     if (vm.count("use_direct_io") > 0) {
       diopool.create_thread(boost::bind(&boost::asio::io_service::run,
                                         &dioService));
-      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::IO DIRECT";
+      BOOST_LOG_TRIVIAL(info) << "HURRICANE::IO DIRECT";
     }
     else if (vm.count("use_dummy_io") > 0) {
-      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::IO DUMMY";
+      BOOST_LOG_TRIVIAL(info) << "HURRICANE::IO DUMMY";
     }
     else {
-      BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::IO PAGECACHE";
+      BOOST_LOG_TRIVIAL(info) << "HURRICANE::IO PAGECACHE";
     }
   }
 
   static
-  void shutdown() {
+  void shutdown(bool RPC = false) {
     // Shut down async client service
     ioService.stop();
     threadpool.join_all();
@@ -116,29 +122,35 @@ namespace slipstore {
       dioService.stop();
       diopool.join_all();
     }
-    // Terminate server
-    slipstore_req_t req;
-    req.cmd = CMD_TERMINATE;
-    slipstore_client_drain->access_store(&req,
-                                         NULL,
-                                         slipstore_client_drain->get_me());
+    if(!RPC){
+      // Terminate server
+      hurricane_req_t req;
+      req.cmd = CMD_TERMINATE;
+      hurricane_client_drain->access_store(&req,
+                                           NULL,
+                                           hurricane_client_drain->get_me());
+    }
     server_thread->join();
-    // Teardown sockets
-    slipstore_client_drain->teardown_conn();
-    slipstore_client_fill->teardown_conn();
-    slipstore_client_barrier->teardown_conn();
+    if(!RPC) {
+      // Teardown sockets
+      hurricane_client_drain->teardown_conn();
+      hurricane_client_fill->teardown_conn();
+      hurricane_client_barrier->teardown_conn();
+    }
     // Terminate context
     zmq_term(zmq_context);
     zmq_term(zmq_context_data_out);
     zmq_term(zmq_context_data_in);
-    slipstore_client_fill->print_times();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::CLIENT::DISK_BYTES_READ " <<
-    slipstore_client_fill->get_disk_bytes_read();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::CLIENT::MEM_BYTES_READ " <<
-    slipstore_client_fill->get_mem_bytes_read();
-    BOOST_LOG_TRIVIAL(info) << "SLIPSTORE::CLIENT::BYTES_WRITTEN " <<
-    slipstore_client_drain->get_bytes_written();
-    have_outstanding_request->counter.print("SLIPSTORE::CLIENT_BUSY ");
+    if(!RPC) {
+      hurricane_client_fill->print_times();
+      BOOST_LOG_TRIVIAL(info) << "HURRICANE::CLIENT::DISK_BYTES_READ " <<
+      hurricane_client_fill->get_disk_bytes_read();
+      BOOST_LOG_TRIVIAL(info) << "HURRICANE::CLIENT::MEM_BYTES_READ " <<
+      hurricane_client_fill->get_mem_bytes_read();
+      BOOST_LOG_TRIVIAL(info) << "HURRICANE::CLIENT::BYTES_WRITTEN " <<
+      hurricane_client_drain->get_bytes_written();
+    }
+    have_outstanding_request->counter.print("HURRICANE::CLIENT_BUSY ");
   }
 }
 

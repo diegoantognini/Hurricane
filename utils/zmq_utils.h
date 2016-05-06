@@ -4,7 +4,7 @@
 #include <zmq.h>
 #include <netinet/ip.h>
 
-namespace slipstore {
+namespace hurricane {
 	  static
     unsigned long do_zmq_send(void *socket,
                           unsigned char *data,
@@ -14,7 +14,7 @@ namespace slipstore {
       int rc = zmq_send(socket, data, size, 0);
       if (rc == -1) {
         if (errno != EAGAIN) {
-          BOOST_LOG_TRIVIAL(fatal) << "SLIPSTORE: Unable to transmit";
+          BOOST_LOG_TRIVIAL(fatal) << "HURRICANE: Unable to transmit";
           perror(context);
           exit(-1);
         }
@@ -37,7 +37,7 @@ namespace slipstore {
       rc = zmq_recv(socket, data, size, 0);
       if (rc == -1) {
         if (errno != EAGAIN) {
-          BOOST_LOG_TRIVIAL(fatal) << "SLIPSTORE: Unable to receive";
+          BOOST_LOG_TRIVIAL(fatal) << "HURRICANE: Unable to receive";
           perror(context);
           exit(-1);
         }
@@ -59,7 +59,7 @@ namespace slipstore {
     rc = zmq_recv(socket, data, size, ZMQ_NOBLOCK);
 
     if (rc == -1 && errno != EAGAIN) {
-      BOOST_LOG_TRIVIAL(fatal) << "SLIPSTORE: Unable to receive";
+      BOOST_LOG_TRIVIAL(fatal) << "HURRICANE: Unable to receive";
       perror(context);
       exit(-1);
     }
