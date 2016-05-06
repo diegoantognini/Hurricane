@@ -79,12 +79,15 @@ class IODFSHandler : virtual public IODFSIf {
   boost::asio::io_service::work* reconnect_woker;
 
  public:
-  IODFSHandler(unsigned long _me, unsigned long _port, unsigned long _slipchunk)
-  : slipchunk(_slipchunk), 
-    me(_me), 
-    port(_port), 
+  IODFSHandler(unsigned long _port)
+  : port(_port), 
     connection_to_server_done(false),
     already_connect_at_least_one(false)  {
+
+    slipchunk = vm["slipchunk"].as < unsigned long > ();
+    unsigned long align = vm["slipbench_align"].as < unsigned long > ();
+    slipchunk = (slipchunk / align) * align;
+    me = pt_hurricane.get < unsigned long > ("machines.me");
 
     // Copy all the server from hurricane.ini
     for(unsigned int i = 0; i < pt_hurricane.get < unsigned long > ("machines.count"); ++i){
@@ -783,13 +786,6 @@ private:
     pt_hurricane.put("machines.count", i+1);
     pt_hurricane.put(key_name.c_str(), _name);
     pt_hurricane.put(key_iface.c_str(), _iface);
-
-    for(unsigned int i = 0; i < pt_hurricane.get < unsigned long > ("machines.count"); ++i){
-      stringstream name;
-      stringstream iface;
-      name << "machines.name" << i;
-      iface << "machines.iface" << i;
-    } 
   }
 
 };
@@ -812,21 +808,19 @@ int main(int argc, const char **argv) {
   setup_options(argc, argv);
   
   init_hurricane_desc();
-  unsigned long me = pt_hurricane.get < unsigned long > ("machines.me");
-
-  unsigned long slipchunk = vm["slipchunk"].as < unsigned long > ();
-  unsigned long align = vm["slipbench_align"].as < unsigned long > ();
-  slipchunk = (slipchunk / align) * align;
 
   bool batching = (vm.count("request_batching") > 0);
   unsigned long batch_size = vm["batch_size"].as < unsigned long > ();
+  unsigned long slipchunk = vm["slipchunk"].as < unsigned long > ();
+  unsigned long align = vm["slipbench_align"].as < unsigned long > ();
+  slipchunk = (slipchunk / align) * align;
 
   BOOST_LOG_TRIVIAL(info) << "BATCHING : " << batching;
   BOOST_LOG_TRIVIAL(info) << "SLIPCHUNK" << slipchunk;
   BOOST_LOG_TRIVIAL(info) << "BATCH SIZE" << batch_size;
 
   TThreadedServer server(
-    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(me, port, slipchunk)),
+    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(port)),
     boost::make_shared<TServerSocket>(port),
     boost::make_shared<TBufferedTransportFactory>(),
     boost::make_shared<TBinaryProtocolFactory>());
@@ -834,7 +828,7 @@ int main(int argc, const char **argv) {
   /*
   // if you don't need per-connection state, do the following instead
   TThreadedServer server(
-    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port)),
+    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(port)),
     boost::make_shared<TServerSocket>(port),
     boost::make_shared<TBufferedTransportFactory>(),
     boost::make_shared<TBinaryProtocolFactory>());
@@ -842,7 +836,7 @@ int main(int argc, const char **argv) {
   /*
   // This server only allows one connection at a time, but spawns no threads
   TSimpleServer server(
-    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port)),
+    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(port)),
     boost::make_shared<TServerSocket>(9090),
     boost::make_shared<TBufferedTransportFactory>(),
     boost::make_shared<TBinaryProtocolFactory>());
@@ -859,7 +853,7 @@ int main(int argc, const char **argv) {
 
   // This server allows "workerCount" connection at a time, and reuses threads
   TThreadPoolServer server(
-    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(machines, me, port)),
+    boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(port)),
     boost::make_shared<TServerSocket>(9090),
     boost::make_shared<TBufferedTransportFactory>(),
     boost::make_shared<TBinaryProtocolFactory>(),
