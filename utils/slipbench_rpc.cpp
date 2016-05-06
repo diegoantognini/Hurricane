@@ -181,6 +181,11 @@ int main(int argc, const char **argv) {
 
   control_barrier(); // everyone done
 
+  if(!client.leave(token)){
+    BOOST_LOG_TRIVIAL(fatal) << "Unable to leave to hurricane";
+    exit(-1);
+  }
+
   delete buffer;
   
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::DRAIN_BYTES " << slipfile_size;
