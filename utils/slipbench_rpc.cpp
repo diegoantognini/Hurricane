@@ -68,7 +68,6 @@ int main(int argc, const char **argv) {
   rtc_clock drain_clock;
 
   /* Get options */
-  setup_options(argc, argv);
   unsigned long slipchunk = vm["slipchunk"].as < unsigned long > ();
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::SLIPCHUNK " << slipchunk;
   unsigned long slipfile_size = vm["slipbench_fsize"].as < unsigned long > ();
@@ -79,7 +78,6 @@ int main(int argc, const char **argv) {
   unsigned long blockmem = vm["blocked_memory"].as < unsigned long > ();
 
   /* Read in hurricane information */
-  init_hurricane_desc();
   bool run_drain_test = (vm.count("drain_test") > 0);
   bool run_fill_test = (vm.count("fill_test") > 0);
   string filename = "fill_data";
