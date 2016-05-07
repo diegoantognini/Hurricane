@@ -405,7 +405,7 @@ class IODFSHandler : virtual public IODFSIf {
   // Throw BadToken if the token is not recognized
   bool global_exists(const string& filename, const string& token) {
     handle_token(token);
-    handle_connection_to_server_done(token, true);
+    handle_connection_to_server_done(token, false);
 
     bool result = true;
     try {
