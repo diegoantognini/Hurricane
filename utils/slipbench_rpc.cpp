@@ -13,22 +13,6 @@ using namespace apache::thrift::transport;
 using std::unordered_map;
 using std::string;
 
-class null_barrier_work : public hurricane::barrier_work {
-  public:
-      virtual void operator()() {
-      }
-  };
-
-void control_barrier() {
-  null_barrier_work null_obj;
-  hurricane::hurricane_client_barrier->in_progress = true;
-  hurricane::ioService.post
-      (boost::bind(&hurricane::client_barrier::work_barrier,
-                   hurricane::hurricane_client_barrier,
-                   &null_obj));
-  while (hurricane::hurricane_client_barrier->in_progress);
-}
-
 volatile unsigned long bthread_running = 0;
 
 class interference {
@@ -48,26 +32,15 @@ public:
     }
 };
 
+void write_into_string(char* in, const char* out, int n) {
+  strncpy(in, out, n);
+}
 int main(int argc, const char **argv) {
-  setup_options(argc, argv);
-  init_hurricane_desc();
-
-  std::stringstream name;
-  name << "machines.name" << pt_hurricane.get < unsigned long > ("machines.me");
-  string server = pt_hurricane.get<string>(name.str().c_str()); // We connect to "our" server
-  int port = 9090;
-  
-  boost::shared_ptr<TTransport> socket(new TSocket(server, port));
-  boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-  boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-  IODFSClient client(protocol);
-
-  transport->open();
-
   rtc_clock fill_clock;
   rtc_clock drain_clock;
 
   /* Get options */
+  setup_options(argc, argv);
   unsigned long slipchunk = vm["slipchunk"].as < unsigned long > ();
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::SLIPCHUNK " << slipchunk;
   unsigned long slipfile_size = vm["slipbench_fsize"].as < unsigned long > ();
@@ -78,18 +51,11 @@ int main(int argc, const char **argv) {
   unsigned long blockmem = vm["blocked_memory"].as < unsigned long > ();
 
   /* Read in hurricane information */
+  init_hurricane_desc();
   bool run_drain_test = (vm.count("drain_test") > 0);
   bool run_fill_test = (vm.count("fill_test") > 0);
   string filename = "fill_data";
 
-  string token;
-  client.generate_token(token);
-  if(!client.connect(token)){
-    BOOST_LOG_TRIVIAL(fatal) << "Unable to connect to hurricane";
-    exit(-1);
-  }
-
-  unsigned char *buffer = new unsigned char[slipchunk];
   unsigned long fill_bytes = 0;
   unsigned long big_bufsize = 512 * 1024 * 1024;
 
@@ -104,8 +70,10 @@ int main(int argc, const char **argv) {
     blockmem = big_bufsize;
   }
 
-  string big_buffer((char *) map_anon_memory(blockmem, true, "Blockmem"));
-
+  string big_buffer(blockmem, 0);
+  const char* block = (const char *) map_anon_memory(blockmem, true, "Blockmem");
+  write_into_string( (char*) big_buffer.c_str(), block, blockmem);
+  
   BOOST_LOG_TRIVIAL(info) << "Done ";
 
   bool batching = (vm.count("request_batching") > 0);
@@ -120,13 +88,33 @@ int main(int argc, const char **argv) {
     BOOST_LOG_TRIVIAL(info) << "done";
   }
 
-  control_barrier(); // everyone started
-  if (run_drain_test) {
-    if(!client.global_create(filename, token)) {
-      BOOST_LOG_TRIVIAL(fatal) << "Unable to create a file on hurricane";
-      exit(-1);
-    }
+  std::stringstream name;
+  unsigned long me = pt_hurricane.get < unsigned long > ("machines.me");
+  name << "machines.name" << me;
+  string server = pt_hurricane.get<string>(name.str().c_str()); // We connect to "our" server
+  int port = 9090;
+  
+  boost::shared_ptr<TTransport> socket(new TSocket(server, port));
+  boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+  boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+  IODFSClient client(protocol);
 
+  transport->open();
+
+  string token;
+  client.generate_token(token);
+  if(!client.connect(token)){
+    BOOST_LOG_TRIVIAL(fatal) << "Unable to connect to hurricane";
+    exit(-1);
+  }
+
+  if (run_drain_test) {
+    if(me == 0) // Only one person create fhe file
+      if(!client.global_create(filename, token)) {
+        BOOST_LOG_TRIVIAL(fatal) << "Unable to create a file on hurricane";
+        exit(-1);
+      }
+    
     BOOST_LOG_TRIVIAL(info) << "Starting drain test";
     drain_clock.start();
     unsigned long drain_bytes = slipfile_size;
@@ -151,22 +139,20 @@ int main(int argc, const char **argv) {
     drain_clock.stop();
     BOOST_LOG_TRIVIAL(info) << "Completed drain test";
     if (run_fill_test) {
-      control_barrier();
       if(!client.global_rewind(filename, token)) {
         BOOST_LOG_TRIVIAL(fatal) << "Unable to rewind the file";
         exit(-1);
       }
-      control_barrier();
     }
   }
 
   if (run_fill_test) {
-    control_barrier();
     BOOST_LOG_TRIVIAL(info) << "Starting fill test";
     fill_clock.start();
     if (batching) {
       unsigned long filled_bytes;
       do {
+        big_buffer = "";
         client.global_fill(big_buffer, filename, big_bufsize, token);
         filled_bytes = big_buffer.size();
 
@@ -180,22 +166,19 @@ int main(int argc, const char **argv) {
     BOOST_LOG_TRIVIAL(info) << "Completed fill test";
   }
 
-  control_barrier(); // everyone done
-
   if(!client.leave(token)){
     BOOST_LOG_TRIVIAL(fatal) << "Unable to leave to hurricane";
     exit(-1);
   }
 
-  delete buffer;
-  
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::DRAIN_BYTES " << slipfile_size;
   drain_clock.print("SLIPBENCH::DRAIN_TIME ");
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::FILL_BYTES " << fill_bytes;
   fill_clock.print("SLIPBENCH::FILL_TIME ");
 
-
   transport->close();
+
+  delete block;
 
   return 0;
 }
