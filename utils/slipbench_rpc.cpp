@@ -138,12 +138,11 @@ int main(int argc, const char **argv) {
     }
     drain_clock.stop();
     BOOST_LOG_TRIVIAL(info) << "Completed drain test";
-    if (run_fill_test) {
-      if(!client.global_rewind(filename, token)) {
-        BOOST_LOG_TRIVIAL(fatal) << "Unable to rewind the file";
-        exit(-1);
-      }
-    }
+  }
+
+  if(!client.global_rewind(filename, token)) {
+    BOOST_LOG_TRIVIAL(fatal) << "Unable to rewind the file";
+    exit(-1);
   }
 
   if (run_fill_test) {
