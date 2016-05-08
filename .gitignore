@@ -26,3 +26,15 @@
 *.exe
 *.out
 *.app
+
+bin/iodfs
+
+bin/iodfs_tester_dynamic
+
+bin/iodfs_tester_static
+
+bin/slipbench
+
+bin/slipbench_rpc
+
+*.d
