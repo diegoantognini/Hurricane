@@ -120,7 +120,7 @@ int main(int argc, const char **argv) {
 
   transport->open();
 
-  string filename = "fill_data" + std::to_string(me);
+  string filename = "fill_data";
   string token;
   client.generate_token(token);
   if(!client.connect(token)){
