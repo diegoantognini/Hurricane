@@ -13,6 +13,22 @@ using namespace apache::thrift::transport;
 using std::unordered_map;
 using std::string;
 
+class null_barrier_work : public hurricane::barrier_work {
+  public:
+      virtual void operator()() {
+      }
+  };
+
+void control_barrier() {
+  null_barrier_work null_obj;
+  hurricane::hurricane_client_barrier->in_progress = true;
+  hurricane::ioService.post
+      (boost::bind(&hurricane::client_barrier::work_barrier,
+                   hurricane::hurricane_client_barrier,
+                   &null_obj));
+  while (hurricane::hurricane_client_barrier->in_progress);
+}
+
 volatile unsigned long bthread_running = 0;
 
 class interference {
@@ -35,6 +51,7 @@ public:
 void write_into_string(char* in, const char* out, int n) {
   strncpy(in, out, n);
 }
+
 int main(int argc, const char **argv) {
   rtc_clock fill_clock;
   rtc_clock drain_clock;
@@ -87,6 +104,9 @@ int main(int argc, const char **argv) {
     BOOST_LOG_TRIVIAL(info) << "done";
   }
 
+  hurricane::init(NULL);
+  hurricane::client_barrier* hurricane_client_barrier = new hurricane::client_barrier();
+
   std::stringstream name;
   unsigned long me = pt_hurricane.get < unsigned long > ("machines.me");
   name << "machines.name" << me;
@@ -108,13 +128,16 @@ int main(int argc, const char **argv) {
     exit(-1);
   }
 
+  control_barrier(); // Start
+
   if (run_drain_test) {
-    if(!client.global_create(filename, token)) {
-      BOOST_LOG_TRIVIAL(fatal) << "Unable to create a file on hurricane";
-      exit(-1);
-    }
+    if(me == 0)
+      if(!client.global_create(filename, token)) {
+        BOOST_LOG_TRIVIAL(fatal) << "Unable to create a file on hurricane";
+        exit(-1);
+      }
     
-    usleep(5*1000*1000); // Sync with other client
+    control_barrier(); // Sync with other client
 
     BOOST_LOG_TRIVIAL(info) << "Starting drain test";
     drain_clock.start();
@@ -146,6 +169,8 @@ int main(int argc, const char **argv) {
     exit(-1);
   }
 
+  control_barrier(); // Handle the case where we do a drain AND a fill
+
   if (run_fill_test) {
     BOOST_LOG_TRIVIAL(info) << "Starting fill test";
     fill_clock.start();
@@ -171,6 +196,8 @@ int main(int argc, const char **argv) {
     exit(-1);
   }
 
+  control_barrier(); // End
+
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::DRAIN_BYTES " << slipfile_size;
   drain_clock.print("SLIPBENCH::DRAIN_TIME ");
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::FILL_BYTES " << fill_bytes;
@@ -178,6 +205,10 @@ int main(int argc, const char **argv) {
 
   transport->close();
 
+  hurricane_client_barrier->teardown_conn();
+  hurricane::shutdown();
+
+  delete hurricane_client_barrier;
   delete block;
 
   return 0;
