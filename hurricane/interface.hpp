@@ -78,7 +78,7 @@ namespace hurricane {
     }
     have_outstanding_request = new busy_counter();
 
-    if(with_server)
+    if(with_server) {
       if (vm.count("use_async_server") > 0) {
         hurricane_server = new server_async(disks);
         BOOST_LOG_TRIVIAL(info) << "HURRICANE::SERVER ASYNC";
@@ -86,7 +86,8 @@ namespace hurricane {
         hurricane_server = new server_sync(disks);
         BOOST_LOG_TRIVIAL(info) << "HURRICANE::SERVER SYNC";
       }
-
+    }
+    
     // Launch server thread
     if(with_server)
       server_thread = new boost::thread(boost::ref(*hurricane_server));
@@ -135,7 +136,7 @@ namespace hurricane {
     }
     if(with_server)
       server_thread->join();
-    
+
     if(!RPC) {
       // Teardown sockets
       hurricane_client_drain->teardown_conn();
