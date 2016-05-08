@@ -54,7 +54,6 @@ int main(int argc, const char **argv) {
   init_hurricane_desc();
   bool run_drain_test = (vm.count("drain_test") > 0);
   bool run_fill_test = (vm.count("fill_test") > 0);
-  string filename = "fill_data";
 
   unsigned long fill_bytes = 0;
   unsigned long big_bufsize = 512 * 1024 * 1024;
@@ -101,6 +100,7 @@ int main(int argc, const char **argv) {
 
   transport->open();
 
+  string filename = "fill_data" + std::to_string(me);
   string token;
   client.generate_token(token);
   if(!client.connect(token)){
@@ -109,11 +109,10 @@ int main(int argc, const char **argv) {
   }
 
   if (run_drain_test) {
-    if(me == 0) // Only one person create fhe file
-      if(!client.global_create(filename, token)) {
-        BOOST_LOG_TRIVIAL(fatal) << "Unable to create a file on hurricane";
-        exit(-1);
-      }
+    if(!client.global_create(filename, token)) {
+      BOOST_LOG_TRIVIAL(fatal) << "Unable to create a file on hurricane";
+      exit(-1);
+    }
     
     usleep(5*1000*1000); // Sync with other client
 
