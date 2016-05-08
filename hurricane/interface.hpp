@@ -63,7 +63,7 @@ namespace hurricane {
   extern boost::thread *server_thread;
 
   static
-  void init(unordered_map<string, hurricane::io*>* disks, bool RPC = false) {
+  void init(unordered_map<string, hurricane::io*>* disks, bool RPC = false, bool with_server = true) {
     unsigned long zmq_threads = vm["zmq_threads"].as < unsigned long > ();
     BOOST_LOG_TRIVIAL(info) << "HURRICANE::ZMQ_THREADS " << zmq_threads;
     zmq_context = zmq_init(zmq_threads);
@@ -78,16 +78,19 @@ namespace hurricane {
     }
     have_outstanding_request = new busy_counter();
 
-    if (vm.count("use_async_server") > 0) {
-      hurricane_server = new server_async(disks);
-      BOOST_LOG_TRIVIAL(info) << "HURRICANE::SERVER ASYNC";
-    } else {
-      hurricane_server = new server_sync(disks);
-      BOOST_LOG_TRIVIAL(info) << "HURRICANE::SERVER SYNC";
-    }
+    if(with_server)
+      if (vm.count("use_async_server") > 0) {
+        hurricane_server = new server_async(disks);
+        BOOST_LOG_TRIVIAL(info) << "HURRICANE::SERVER ASYNC";
+      } else {
+        hurricane_server = new server_sync(disks);
+        BOOST_LOG_TRIVIAL(info) << "HURRICANE::SERVER SYNC";
+      }
 
-   // Launch server thread
-    server_thread = new boost::thread(boost::ref(*hurricane_server));
+    // Launch server thread
+    if(with_server)
+      server_thread = new boost::thread(boost::ref(*hurricane_server));
+    
     if(!RPC) {
       BOOST_LOG_TRIVIAL(info) << "HURRICANE::MACHINES " << hurricane_client_fill->get_machines();
       BOOST_LOG_TRIVIAL(info) << "HURRICANE::ME " << hurricane_client_fill->get_me();
@@ -113,7 +116,7 @@ namespace hurricane {
   }
 
   static
-  void shutdown(bool RPC = false) {
+  void shutdown(bool RPC = false, bool with_server = true) {
     // Shut down async client service
     ioService.stop();
     threadpool.join_all();
@@ -130,7 +133,9 @@ namespace hurricane {
                                            NULL,
                                            hurricane_client_drain->get_me());
     }
-    server_thread->join();
+    if(with_server)
+      server_thread->join();
+    
     if(!RPC) {
       // Teardown sockets
       hurricane_client_drain->teardown_conn();

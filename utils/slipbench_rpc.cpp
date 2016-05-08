@@ -104,7 +104,7 @@ int main(int argc, const char **argv) {
     BOOST_LOG_TRIVIAL(info) << "done";
   }
 
-  hurricane::init(NULL);
+  hurricane::init(NULL, false, false);
   hurricane::client_barrier* hurricane_client_barrier = new hurricane::client_barrier();
 
   std::stringstream name;
@@ -206,7 +206,7 @@ int main(int argc, const char **argv) {
   transport->close();
 
   hurricane_client_barrier->teardown_conn();
-  hurricane::shutdown();
+  hurricane::shutdown(false, false);
 
   delete hurricane_client_barrier;
   delete block;
