@@ -115,6 +115,8 @@ int main(int argc, const char **argv) {
         exit(-1);
       }
     
+    usleep(5*1000*1000); // Sync with other client
+
     BOOST_LOG_TRIVIAL(info) << "Starting drain test";
     drain_clock.start();
     unsigned long drain_bytes = slipfile_size;
