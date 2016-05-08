@@ -105,7 +105,7 @@ int main(int argc, const char **argv) {
   }
 
   hurricane::init(NULL, false, false);
-  hurricane::client_barrier* hurricane_client_barrier = new hurricane::client_barrier();
+  hurricane::hurricane_client_barrier = new hurricane::client_barrier();
 
   std::stringstream name;
   unsigned long me = pt_hurricane.get < unsigned long > ("machines.me");
@@ -205,10 +205,10 @@ int main(int argc, const char **argv) {
 
   transport->close();
 
-  hurricane_client_barrier->teardown_conn();
+  hurricane::hurricane_client_barrier->teardown_conn();
   hurricane::shutdown(false, false);
 
-  delete hurricane_client_barrier;
+  delete hurricane::hurricane_client_barrier;
   delete block;
 
   return 0;
