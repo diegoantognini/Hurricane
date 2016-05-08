@@ -17,6 +17,7 @@ struct network_interface {
 service IODFS {
 	// Local IO
 	bool local_create(1:string filename),
+	bool local_create_from_global(1:string filename),
 	bool local_exists(1:string filename),
 	bool local_delete(1:string filename),
 

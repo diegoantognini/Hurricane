@@ -25,6 +25,11 @@ class IODFSHandler : virtual public IODFSIf {
     printf("local_create\n");
   }
 
+  bool local_create_from_global(const std::string& filename) {
+    // Your implementation goes here
+    printf("local_create_from_global\n");
+  }
+
   bool local_exists(const std::string& filename) {
     // Your implementation goes here
     printf("local_exists\n");

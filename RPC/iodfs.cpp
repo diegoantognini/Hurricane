@@ -174,6 +174,18 @@ class IODFSHandler : virtual public IODFSIf {
     return true;
   }
 
+  // We suppose it is called only from the server (global_create)
+  // False indicate that the file already exists
+  bool local_create_from_global(const string& filename) {
+    bool result = local_create(filename);
+
+    if(result)
+      global_buffers[filename] = NULL;
+
+    return result;
+  }
+
+  
   bool local_exists(const string& filename) {
     return helper_exists(filename, local_buffers);
   }
@@ -388,14 +400,12 @@ class IODFSHandler : virtual public IODFSIf {
     bool result = true;
     try {
       for(first_known_lost_node = 0; result && first_known_lost_node < tokens[token]; ++first_known_lost_node)
-        result = result && clients[first_known_lost_node]->local_create(filename);
+        result = result && clients[first_known_lost_node]->local_create_from_global(filename);
     } catch(TException& tx) {
       LostConnectionDuringCommit lcdc;
       lcdc.name_node_lost = machines[first_known_lost_node].name;
       throw lcdc;
     }
-
-    global_buffers[filename] = NULL;
 
     return result;
   }

@@ -22,6 +22,7 @@ class IODFSIf {
  public:
   virtual ~IODFSIf() {}
   virtual bool local_create(const std::string& filename) = 0;
+  virtual bool local_create_from_global(const std::string& filename) = 0;
   virtual bool local_exists(const std::string& filename) = 0;
   virtual bool local_delete(const std::string& filename) = 0;
   virtual void local_fill(std::string& _return, const std::string& filename, const int64_t size) = 0;
@@ -77,6 +78,10 @@ class IODFSNull : virtual public IODFSIf {
  public:
   virtual ~IODFSNull() {}
   bool local_create(const std::string& /* filename */) {
+    bool _return = false;
+    return _return;
+  }
+  bool local_create_from_global(const std::string& /* filename */) {
     bool _return = false;
     return _return;
   }
@@ -275,6 +280,110 @@ class IODFS_local_create_presult {
   bool* success;
 
   _IODFS_local_create_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _IODFS_local_create_from_global_args__isset {
+  _IODFS_local_create_from_global_args__isset() : filename(false) {}
+  bool filename :1;
+} _IODFS_local_create_from_global_args__isset;
+
+class IODFS_local_create_from_global_args {
+ public:
+
+  IODFS_local_create_from_global_args(const IODFS_local_create_from_global_args&);
+  IODFS_local_create_from_global_args& operator=(const IODFS_local_create_from_global_args&);
+  IODFS_local_create_from_global_args() : filename() {
+  }
+
+  virtual ~IODFS_local_create_from_global_args() throw();
+  std::string filename;
+
+  _IODFS_local_create_from_global_args__isset __isset;
+
+  void __set_filename(const std::string& val);
+
+  bool operator == (const IODFS_local_create_from_global_args & rhs) const
+  {
+    if (!(filename == rhs.filename))
+      return false;
+    return true;
+  }
+  bool operator != (const IODFS_local_create_from_global_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const IODFS_local_create_from_global_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class IODFS_local_create_from_global_pargs {
+ public:
+
+
+  virtual ~IODFS_local_create_from_global_pargs() throw();
+  const std::string* filename;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _IODFS_local_create_from_global_result__isset {
+  _IODFS_local_create_from_global_result__isset() : success(false) {}
+  bool success :1;
+} _IODFS_local_create_from_global_result__isset;
+
+class IODFS_local_create_from_global_result {
+ public:
+
+  IODFS_local_create_from_global_result(const IODFS_local_create_from_global_result&);
+  IODFS_local_create_from_global_result& operator=(const IODFS_local_create_from_global_result&);
+  IODFS_local_create_from_global_result() : success(0) {
+  }
+
+  virtual ~IODFS_local_create_from_global_result() throw();
+  bool success;
+
+  _IODFS_local_create_from_global_result__isset __isset;
+
+  void __set_success(const bool val);
+
+  bool operator == (const IODFS_local_create_from_global_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const IODFS_local_create_from_global_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const IODFS_local_create_from_global_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _IODFS_local_create_from_global_presult__isset {
+  _IODFS_local_create_from_global_presult__isset() : success(false) {}
+  bool success :1;
+} _IODFS_local_create_from_global_presult__isset;
+
+class IODFS_local_create_from_global_presult {
+ public:
+
+
+  virtual ~IODFS_local_create_from_global_presult() throw();
+  bool* success;
+
+  _IODFS_local_create_from_global_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -3174,6 +3283,9 @@ class IODFSClient : virtual public IODFSIf {
   bool local_create(const std::string& filename);
   void send_local_create(const std::string& filename);
   bool recv_local_create();
+  bool local_create_from_global(const std::string& filename);
+  void send_local_create_from_global(const std::string& filename);
+  bool recv_local_create_from_global();
   bool local_exists(const std::string& filename);
   void send_local_exists(const std::string& filename);
   bool recv_local_exists();
@@ -3265,6 +3377,7 @@ class IODFSProcessor : public ::apache::thrift::TDispatchProcessor {
   typedef std::map<std::string, ProcessFunction> ProcessMap;
   ProcessMap processMap_;
   void process_local_create(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_local_create_from_global(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_local_exists(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_local_delete(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_local_fill(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -3294,6 +3407,7 @@ class IODFSProcessor : public ::apache::thrift::TDispatchProcessor {
   IODFSProcessor(boost::shared_ptr<IODFSIf> iface) :
     iface_(iface) {
     processMap_["local_create"] = &IODFSProcessor::process_local_create;
+    processMap_["local_create_from_global"] = &IODFSProcessor::process_local_create_from_global;
     processMap_["local_exists"] = &IODFSProcessor::process_local_exists;
     processMap_["local_delete"] = &IODFSProcessor::process_local_delete;
     processMap_["local_fill"] = &IODFSProcessor::process_local_fill;
@@ -3354,6 +3468,15 @@ class IODFSMultiface : virtual public IODFSIf {
       ifaces_[i]->local_create(filename);
     }
     return ifaces_[i]->local_create(filename);
+  }
+
+  bool local_create_from_global(const std::string& filename) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->local_create_from_global(filename);
+    }
+    return ifaces_[i]->local_create_from_global(filename);
   }
 
   bool local_exists(const std::string& filename) {
@@ -3619,6 +3742,9 @@ class IODFSConcurrentClient : virtual public IODFSIf {
   bool local_create(const std::string& filename);
   int32_t send_local_create(const std::string& filename);
   bool recv_local_create(const int32_t seqid);
+  bool local_create_from_global(const std::string& filename);
+  int32_t send_local_create_from_global(const std::string& filename);
+  bool recv_local_create_from_global(const int32_t seqid);
   bool local_exists(const std::string& filename);
   int32_t send_local_exists(const std::string& filename);
   bool recv_local_exists(const int32_t seqid);
