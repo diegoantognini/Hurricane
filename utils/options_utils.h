@@ -129,6 +129,7 @@ static void setup_options(int argc, const char *argv[]) {
       ("log_phases", "Log timestamps for entry/exit of phases")
       ("request_batching", "Batch requests to storage servers")
       ("gather_io_drain", "Use gather IO for drains")
+      ("enable_join", "Enable the join : Be careful, the join has to have 2 machines in hurricane.ini : itself and one of the node to join")
       ("batch_size",
        boost::program_options::value < unsigned
   long > ()->default_value(1),

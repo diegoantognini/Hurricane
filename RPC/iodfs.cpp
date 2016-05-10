@@ -647,7 +647,7 @@ private:
       }
 
       // To do the join, we assume that we only know ONE server (+ us)
-      if(!already_connect_at_least_one && machines.size() == 2) {
+      if((vm.count("request_batching") > 0) && !already_connect_at_least_one && machines.size() == 2) {
         already_connect_at_least_one = true;
       
         // Find the index of the master (which musn't be "me" !)
