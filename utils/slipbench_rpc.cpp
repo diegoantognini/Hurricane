@@ -5,6 +5,7 @@
 #include <thrift/transport/TTransportUtils.h>
 #include "../hurricane/interface.hpp"
 #include "../hurricane/config.hpp"
+#include <sys/mman.h>
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -89,8 +90,10 @@ int main(int argc, const char **argv) {
   string big_buffer;
   for(int i = 0; big_buffer.size() < blockmem; ++i) {
     const char* block = (const char *) map_anon_memory(big_bufsize, true, "Blockmem");
-    big_buffer += string(block);
-    delete block;
+    string strblock(big_bufsize, 0);
+    write_into_string((char*) strblock.c_str(), block, big_bufsize);
+    big_buffer += strblock;
+    munmap((void *) block, big_bufsize);
   }
   
   BOOST_LOG_TRIVIAL(info) << "Done ";
