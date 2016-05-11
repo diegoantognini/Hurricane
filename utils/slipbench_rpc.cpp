@@ -144,6 +144,8 @@ int main(int argc, const char **argv) {
       }
     
     control_barrier(); // Sync with other client
+    
+    big_buffer.resize(big_bufsize); // Cannot send a lot of data at once
 
     BOOST_LOG_TRIVIAL(info) << "Starting drain test";
     drain_clock.start();
