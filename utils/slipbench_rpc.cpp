@@ -88,6 +88,7 @@ int main(int argc, const char **argv) {
   }
 
   string big_buffer;
+  blockmem = big_bufsize;  // Cannot send a lot of data at once, need to decrease RAM
   for(int i = 0; big_buffer.size() < blockmem; ++i) {
     const char* block = (const char *) map_anon_memory(big_bufsize, true, "Blockmem");
     string strblock(big_bufsize, 0);
@@ -145,7 +146,7 @@ int main(int argc, const char **argv) {
     
     control_barrier(); // Sync with other client
     
-    big_buffer.resize(big_bufsize); // Cannot send a lot of data at once
+    //big_buffer.resize(big_bufsize); // Cannot send a lot of data at once
 
     BOOST_LOG_TRIVIAL(info) << "Starting drain test";
     drain_clock.start();
