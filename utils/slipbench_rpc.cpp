@@ -86,9 +86,12 @@ int main(int argc, const char **argv) {
     blockmem = big_bufsize;
   }
 
-  string big_buffer(blockmem, 0);
-  const char* block = (const char *) map_anon_memory(blockmem, true, "Blockmem");
-  write_into_string( (char*) big_buffer.c_str(), block, blockmem);
+  string big_buffer;
+  for(int i = 0; big_buffer.size() < blockmem; ++i) {
+    const char* block = (const char *) map_anon_memory(big_bufsize, true, "Blockmem");
+    big_buffer += string(block);
+    delete block;
+  }
   
   BOOST_LOG_TRIVIAL(info) << "Done ";
 
@@ -209,7 +212,6 @@ int main(int argc, const char **argv) {
   hurricane::shutdown(false, false);
 
   delete hurricane::hurricane_client_barrier;
-  delete block;
 
   return 0;
 }
