@@ -11,10 +11,9 @@
 #include "../hurricane/client/client_fill.hpp"
 #include "../hurricane/client/client_drain.hpp"
 
-#include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
-#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/protocol/TCompactProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadPoolServer.h>
 #include <thrift/server/TThreadedServer.h>
@@ -760,7 +759,7 @@ private:
     // Init the network part
     boost::shared_ptr<TTransport> socket(new TSocket(name.c_str(), port));
     boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    boost::shared_ptr<TProtocol> protocol(new TCompactProtocol(transport));
     IODFSClient* client = new IODFSClient(protocol);
 
     transports.push_back(transport);
@@ -832,7 +831,7 @@ int main(int argc, const char **argv) {
     boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(port)),
     boost::make_shared<TServerSocket>(port),
     boost::make_shared<TBufferedTransportFactory>(),
-    boost::make_shared<TBinaryProtocolFactory>());
+    boost::make_shared<TCompactProtocolFactory>());
   
   /*
   // if you don't need per-connection state, do the following instead
@@ -840,7 +839,7 @@ int main(int argc, const char **argv) {
     boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(port)),
     boost::make_shared<TServerSocket>(port),
     boost::make_shared<TBufferedTransportFactory>(),
-    boost::make_shared<TBinaryProtocolFactory>());
+    boost::make_shared<TCompactProtocolFactory>());
   */
   /*
   // This server only allows one connection at a time, but spawns no threads
@@ -848,7 +847,7 @@ int main(int argc, const char **argv) {
     boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(port)),
     boost::make_shared<TServerSocket>(9090),
     boost::make_shared<TBufferedTransportFactory>(),
-    boost::make_shared<TBinaryProtocolFactory>());
+    boost::make_shared<TCompactProtocolFactory>());
   */
 
   /*
@@ -865,7 +864,7 @@ int main(int argc, const char **argv) {
     boost::make_shared<IODFSProcessor>(boost::make_shared<IODFSHandler>(port)),
     boost::make_shared<TServerSocket>(9090),
     boost::make_shared<TBufferedTransportFactory>(),
-    boost::make_shared<TBinaryProtocolFactory>(),
+    boost::make_shared<TCompactProtocolFactory>(),
     threadManager);
   */
   
