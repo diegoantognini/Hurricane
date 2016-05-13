@@ -62,6 +62,8 @@ class IODFSHandler : virtual public IODFSIf {
   unordered_map<string, unsigned long> tokens; // Same tricks as global_buffers
   unordered_map<string, hurricane::client_drain*> client_drains;
   unordered_map<string, hurricane::client_fill*> client_fills;
+  unordered_map<string, mutex*> client_drain_mutexes;
+  unordered_map<string, mutex*> client_fill_mutexes;
 
   unsigned long me;
   unsigned int port;
@@ -132,6 +134,16 @@ class IODFSHandler : virtual public IODFSIf {
     for(unordered_map<string, hurricane::io*>::iterator it = local_buffers.begin(); it != local_buffers.end(); ++it)
       helper_delete(it);
     
+    for(auto& it : client_drain_mutexes) {
+      it.second->unlock();
+      delete it.second;
+    }
+
+    for(auto& it : client_fill_mutexes) {
+      it.second->unlock();
+      delete it.second;
+    }
+
     // Close all open connections
     for(auto& it : client_fills) {
       it.second->teardown_conn();
@@ -327,6 +339,8 @@ class IODFSHandler : virtual public IODFSIf {
 
     client_drains[token] = new hurricane::client_drain();
     client_fills[token] = new hurricane::client_fill();
+    client_drain_mutexes[token] = new mutex();
+    client_fill_mutexes[token] = new mutex();
     tokens[token] = machines.size();
 
     return true;
@@ -342,9 +356,16 @@ class IODFSHandler : virtual public IODFSIf {
     client_drains[token]->teardown_conn();
     client_fills[token]->teardown_conn();
 
+    client_fill_mutexes[token]->unlock();
+    delete client_fill_mutexes[token];
+
+    client_drain_mutexes[token]->unlock();
+    delete client_drain_mutexes[token];
+
+
     delete client_drains[token];
     delete client_fills[token];
-
+    
     client_drains.erase(token);
     client_fills.erase(token);
     tokens.erase(token);
@@ -463,13 +484,18 @@ class IODFSHandler : virtual public IODFSIf {
     if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || (size%slipchunk != 0))
       _return = "";
     else {
+      _return = string(size, 0);
+
+      client_fill_mutexes[token]->lock();
+
       init_req();
       strcpy(req.filename, filename.c_str());
       req.cmd = hurricane::CMD_FILL;
       req.size = size;
 
-      _return = string(size, 0);
       int64_t filled_bytes = client_fills[token]->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
+
+      client_fill_mutexes[token]->unlock();
 
       // EOF, should return a string smaller and so, its size is modified
       if(filled_bytes < size) 
@@ -487,15 +513,20 @@ class IODFSHandler : virtual public IODFSIf {
     if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
       return false;
 
+    client_drain_mutexes[token]->lock();
+
     init_req();
     strcpy(req.filename, filename.c_str());
     req.cmd = hurricane::CMD_DRAIN;
     req.size = buffer.size();
 
     if (client_drains[token]->batch_access_store(&req, (unsigned char*) buffer.c_str(), slipchunk, buffer.size())) {
+      client_drain_mutexes[token]->unlock();
       BOOST_LOG_TRIVIAL(fatal) << "Unable to write to hurricane";
       return false;
     }
+
+    client_drain_mutexes[token]->unlock();
 
     return true;
   }
@@ -739,7 +770,7 @@ private:
 
   // check_fill = true implies checking if the token exists in client_fills, same trick for check_drain
   void handle_token(const string& token, bool check_fill = false, bool check_drain = false) {
-    if (tokens.find(token) == tokens.end() || (check_fill && (client_fills.find(token) == client_fills.end()))  || (check_drain && (client_drains.find(token) == client_drains.end())) ) {
+    if (tokens.find(token) == tokens.end() || (check_fill && ((client_fills.find(token) == client_fills.end() || client_fill_mutexes.find(token) == client_fill_mutexes.end())))  || (check_drain && ((client_drains.find(token) == client_drains.end() || client_drain_mutexes.find(token) == client_drain_mutexes.end()))) ) {
       BadToken bt;
       throw bt;
     }
