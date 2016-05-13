@@ -1,6 +1,6 @@
 #include "gen-cpp/IODFS.h"
 #include "gen-cpp/IODFS_types.h"
-#include <thrift/protocol/TCompactProtocol.h>
+#include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <iostream>
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
 	srand (time(NULL));
 	boost::shared_ptr<TTransport> socket(new TSocket(server, port));
 	boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-	boost::shared_ptr<TProtocol> protocol(new TCompactProtocol(transport));
+	boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 	IODFSClient client(protocol);
 
 	transport->open();

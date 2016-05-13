@@ -1,6 +1,6 @@
 #include "../RPC/gen-cpp/IODFS.h"
 #include "../RPC/gen-cpp/IODFS_types.h"
-#include <thrift/protocol/TCompactProtocol.h>
+#include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
 #include "../hurricane/interface.hpp"
@@ -201,7 +201,7 @@ int main(int argc, const char **argv) {
   for(int i = 0; i < NB_THREADS; ++i) {
     boost::shared_ptr<TTransport> socket(new TSocket(server, port));
     boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-    boost::shared_ptr<TProtocol> protocol(new TCompactProtocol(transport));
+    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
     
     sockets.push_back(socket);
     transports.push_back(transport);
