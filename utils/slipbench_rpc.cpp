@@ -17,7 +17,7 @@ using std::unordered_map;
 using std::string;
 using std::vector;
 
-#define BIG_BUFSIZE 512 * 1024 * 1024
+const unsigned long BIG_BUFSIZE = 512 * 1024 * 1024;
 #define NB_THREADS 8
 
 class null_barrier_work : public hurricane::barrier_work {
@@ -113,11 +113,13 @@ public:
       unsigned long filled_bytes = 0;
       //*fill_bytes = 0;
       string big_buffer;
-      for(unsigned long i = 0; i < (size_per_thread/BIG_BUFSIZE); ++i) {
+      unsigned long iter = size_per_thread/BIG_BUFSIZE;
+
+      for(unsigned long i = 0; i < iter; ++i) {
         big_buffer = "";
         client->global_fill(big_buffer, *filename, BIG_BUFSIZE, *token);
         filled_bytes = big_buffer.size();
-        std::cout << id << " " << filled_bytes << std::endl;
+        std::cout << id << " " << filled_bytes << " " << iter << std::endl;
         //*fill_bytes += filled_bytes;
       }
     }
@@ -283,12 +285,14 @@ int main(int argc, const char **argv) {
     threads.clear();
   }
 
-  control_barrier(); // End
+  control_barrier();
 
   if(!clients.front()->leave(token)){
     BOOST_LOG_TRIVIAL(fatal) << "Unable to leave to hurricane";
     exit(-1);
   }
+
+  control_barrier(); // End
 
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::DRAIN_BYTES " << slipfile_size;
   drain_clock.print("SLIPBENCH::DRAIN_TIME ");
