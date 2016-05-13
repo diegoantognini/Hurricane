@@ -247,13 +247,13 @@ int main(int argc, const char **argv) {
     }
     drain_clock.stop();
     BOOST_LOG_TRIVIAL(info) << "Completed drain test";
+    threads.clear();
   }
 
-  for(auto& client : clients)
-    if(!client->global_rewind(filename, token)) {
-      BOOST_LOG_TRIVIAL(fatal) << "Unable to rewind the file";
-      exit(-1);
-    }
+  if(!clients.front()->global_rewind(filename, token)) {
+    BOOST_LOG_TRIVIAL(fatal) << "Unable to rewind the file";
+    exit(-1);
+  }
 
   control_barrier(); // Handle the case where we do a drain AND a fill
 
@@ -276,6 +276,7 @@ int main(int argc, const char **argv) {
     }
     fill_clock.stop();
     BOOST_LOG_TRIVIAL(info) << "Completed fill test";
+    threads.clear();
   }
 
   if(!clients.front()->leave(token)){
