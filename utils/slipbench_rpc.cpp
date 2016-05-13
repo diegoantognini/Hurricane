@@ -124,7 +124,8 @@ public:
 };
 
 void write_into_string(char* in, const char* out, int n) {
-  strncpy(in, out, n);
+  strncpy(in, out, n-1);
+  *(in+n) = '\0';
 }
 
 int main(int argc, const char **argv) {
@@ -161,15 +162,9 @@ int main(int argc, const char **argv) {
     blockmem = big_bufsize;
   }
 
-  string big_buffer(big_bufsize,0);
-  blockmem = big_bufsize;  // Cannot send a lot of data at once, need to decrease RAM
-  //for(int i = 0; big_buffer.size() < blockmem; ++i) {
-    const char* block = (const char *) map_anon_memory(big_bufsize, true, "Blockmem");
-    //string strblock(big_bufsize, 0);
-    write_into_string((char*) big_buffer.c_str(), block, big_bufsize); // remove big_bufsize if removing comments
-    //big_buffer += strblock;
-    munmap((void *) block, big_bufsize);
-  //}
+  string big_buffer(big_bufsize, 0);
+  const char* block = (const char *) map_anon_memory(blockmem, true, "Blockmem");
+  write_into_string((char*) big_buffer.c_str(), block, big_bufsize);
   
   BOOST_LOG_TRIVIAL(info) << "Done ";
 
@@ -311,6 +306,8 @@ int main(int argc, const char **argv) {
   hurricane::shutdown(false, false);
 
   delete hurricane::hurricane_client_barrier;
+  
+  munmap((void *) block, blockmem);
 
   for(auto& client : clients)
     delete client;
