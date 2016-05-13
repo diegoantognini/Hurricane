@@ -6,6 +6,8 @@
 #include "../hurricane/interface.hpp"
 #include "../hurricane/config.hpp"
 #include <sys/mman.h>
+#include <vector>
+#include <algorithm>
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -13,6 +15,10 @@ using namespace apache::thrift::transport;
 
 using std::unordered_map;
 using std::string;
+using std::vector;
+
+#define BIG_BUFSIZE 512 * 1024 * 1024
+#define NB_THREADS 8
 
 class null_barrier_work : public hurricane::barrier_work {
   public:
@@ -49,6 +55,72 @@ public:
     }
 };
 
+class Drain {
+public:
+    IODFSClient* client;
+    unsigned long size_per_thread;
+    string* token;
+    string* big_buffer;
+    string* filename;
+    int id;
+
+    Drain(IODFSClient* _client, unsigned long _size_per_thread, string* _token, string* _big_buffer, string* _filename, int _id)
+    :client(_client),
+    size_per_thread(_size_per_thread),
+    token(_token),
+    big_buffer(_big_buffer),
+    filename(_filename),
+    id(_id) {
+    }
+
+    void operator()() {
+      unsigned long drain_bytes = size_per_thread;
+      while (drain_bytes) {
+          unsigned long bytes_to_drain = drain_bytes;
+          if (bytes_to_drain > BIG_BUFSIZE) {
+            bytes_to_drain = BIG_BUFSIZE;
+          }
+
+          if(!client->global_drain(*filename, *big_buffer, *token)) {
+            BOOST_LOG_TRIVIAL(fatal) << "Unable to write to hurricane";
+            exit(-1);
+          }
+          
+          drain_bytes -= bytes_to_drain;
+        }
+    }
+};
+
+class Fill {
+public:
+    IODFSClient* client;
+    string* token;
+    string* filename;
+    unsigned long* fill_bytes;
+    int id;
+
+    Fill(IODFSClient* _client, string* _token, string* _filename, unsigned long* _fill_bytes, int _id)
+    :client(_client),
+    token(_token),
+    filename(_filename),
+    fill_bytes(_fill_bytes),
+    id(_id) {
+    }
+
+    void operator()() {
+      unsigned long filled_bytes = 0;
+      *fill_bytes = 0;
+      string big_buffer;
+      do {
+        big_buffer = "";
+        client->global_fill(big_buffer, *filename, BIG_BUFSIZE, *token);
+        filled_bytes = big_buffer.size();
+
+        *fill_bytes += filled_bytes;
+      } while (*fill_bytes > 0);
+    }
+};
+
 void write_into_string(char* in, const char* out, int n) {
   strncpy(in, out, n);
 }
@@ -62,6 +134,7 @@ int main(int argc, const char **argv) {
   unsigned long slipchunk = vm["slipchunk"].as < unsigned long > ();
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::SLIPCHUNK " << slipchunk;
   unsigned long slipfile_size = vm["slipbench_fsize"].as < unsigned long > ();
+  unsigned long size_per_thread = slipfile_size/NB_THREADS;
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::SLIPBENCH_FIZE " << slipfile_size;
   unsigned long background_threads = vm["slipbench_background_threads"].as < unsigned long > ();
   unsigned long align = vm["slipbench_align"].as < unsigned long > ();
@@ -73,7 +146,6 @@ int main(int argc, const char **argv) {
   bool run_drain_test = (vm.count("drain_test") > 0);
   bool run_fill_test = (vm.count("fill_test") > 0);
 
-  unsigned long fill_bytes = 0;
   unsigned long big_bufsize = 512 * 1024 * 1024;
 
   if (blockmem > 0) {
@@ -89,13 +161,13 @@ int main(int argc, const char **argv) {
 
   string big_buffer;
   blockmem = big_bufsize;  // Cannot send a lot of data at once, need to decrease RAM
-  for(int i = 0; big_buffer.size() < blockmem; ++i) {
+  //for(int i = 0; big_buffer.size() < blockmem; ++i) {
     const char* block = (const char *) map_anon_memory(big_bufsize, true, "Blockmem");
-    string strblock(big_bufsize, 0);
-    write_into_string((char*) strblock.c_str(), block, big_bufsize);
-    big_buffer += strblock;
+    //string strblock(big_bufsize, 0);
+    write_into_string((char*) big_buffer.c_str(), block, big_bufsize); // remove big_bufsize if removing comments
+    //big_buffer += strblock;
     munmap((void *) block, big_bufsize);
-  }
+  //}
   
   BOOST_LOG_TRIVIAL(info) << "Done ";
 
@@ -120,17 +192,29 @@ int main(int argc, const char **argv) {
   string server = pt_hurricane.get<string>(name.str().c_str()); // We connect to "our" server
   int port = 9090;
   
-  boost::shared_ptr<TTransport> socket(new TSocket(server, port));
-  boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-  boost::shared_ptr<TProtocol> protocol(new TCompactProtocol(transport));
-  IODFSClient client(protocol);
+  vector<boost::shared_ptr<TTransport>> sockets;
+  vector<boost::shared_ptr<TTransport>> transports;
+  vector<boost::shared_ptr<TProtocol>> protocols;
+  vector<IODFSClient*> clients;
+  vector<boost::thread*> threads;
 
-  transport->open();
+  for(int i = 0; i < NB_THREADS; ++i) {
+    boost::shared_ptr<TTransport> socket(new TSocket(server, port));
+    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+    boost::shared_ptr<TProtocol> protocol(new TCompactProtocol(transport));
+    
+    sockets.push_back(socket);
+    transports.push_back(transport);
+    protocols.push_back(protocol);
+    clients.push_back(new IODFSClient(protocol));
+
+    transport->open();
+  }
 
   string filename = "fill_data";
   string token;
-  client.generate_token(token);
-  if(!client.connect(token)){
+  clients.front()->generate_token(token);
+  if(!clients.front()->connect(token)){
     BOOST_LOG_TRIVIAL(fatal) << "Unable to connect to hurricane";
     exit(-1);
   }
@@ -139,7 +223,7 @@ int main(int argc, const char **argv) {
 
   if (run_drain_test) {
     if(me == 0)
-      if(!client.global_create(filename, token)) {
+      if(!clients.front()->global_create(filename, token)) {
         BOOST_LOG_TRIVIAL(fatal) << "Unable to create a file on hurricane";
         exit(-1);
       }
@@ -149,22 +233,14 @@ int main(int argc, const char **argv) {
     //big_buffer.resize(big_bufsize); // Cannot send a lot of data at once
 
     BOOST_LOG_TRIVIAL(info) << "Starting drain test";
+    
     drain_clock.start();
-    unsigned long drain_bytes = slipfile_size;
     if (batching) {
-      while (drain_bytes) {
-        unsigned long bytes_to_drain = drain_bytes;
-        if (bytes_to_drain > big_bufsize) {
-          bytes_to_drain = big_bufsize;
-        }
-
-        if(!client.global_drain(filename, big_buffer, token)) {
-          BOOST_LOG_TRIVIAL(fatal) << "Unable to write to hurricane";
-          exit(-1);
-        }
-        
-        drain_bytes -= bytes_to_drain;
-      }
+      for(int i = 0; i < NB_THREADS; ++i)
+        threads.push_back(new boost::thread(boost::ref(*new Drain(clients[i], size_per_thread, &token, &big_buffer, &filename, i))));
+    
+      for(auto& thread : threads)
+        thread->join();
     }
     else {
       // Not handled
@@ -173,25 +249,27 @@ int main(int argc, const char **argv) {
     BOOST_LOG_TRIVIAL(info) << "Completed drain test";
   }
 
-  if(!client.global_rewind(filename, token)) {
-    BOOST_LOG_TRIVIAL(fatal) << "Unable to rewind the file";
-    exit(-1);
-  }
+  for(auto& client : clients)
+    if(!client->global_rewind(filename, token)) {
+      BOOST_LOG_TRIVIAL(fatal) << "Unable to rewind the file";
+      exit(-1);
+    }
 
   control_barrier(); // Handle the case where we do a drain AND a fill
+
+  vector<unsigned long> v_fill_bytes;
+  for(int i = 0; i < NB_THREADS; ++i)
+    v_fill_bytes.push_back(0);
 
   if (run_fill_test) {
     BOOST_LOG_TRIVIAL(info) << "Starting fill test";
     fill_clock.start();
     if (batching) {
-      unsigned long filled_bytes;
-      do {
-        big_buffer = "";
-        client.global_fill(big_buffer, filename, big_bufsize, token);
-        filled_bytes = big_buffer.size();
-
-        fill_bytes += filled_bytes;
-      } while (filled_bytes > 0);
+      for(int i = 0; i < NB_THREADS; ++i)
+        threads.push_back(new boost::thread(boost::ref(*new Fill(clients[i], &token, &filename, &v_fill_bytes[i], i))));
+    
+      for(auto& thread : threads)
+        thread->join();
     }
     else {
       // Not handled
@@ -200,7 +278,7 @@ int main(int argc, const char **argv) {
     BOOST_LOG_TRIVIAL(info) << "Completed fill test";
   }
 
-  if(!client.leave(token)){
+  if(!clients.front()->leave(token)){
     BOOST_LOG_TRIVIAL(fatal) << "Unable to leave to hurricane";
     exit(-1);
   }
@@ -209,15 +287,24 @@ int main(int argc, const char **argv) {
 
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::DRAIN_BYTES " << slipfile_size;
   drain_clock.print("SLIPBENCH::DRAIN_TIME ");
-  BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::FILL_BYTES " << fill_bytes;
+
+  unsigned long tot_fill_bytes = 0;
+  for(auto& fill_bytes : v_fill_bytes)
+    tot_fill_bytes += fill_bytes;
+
+  BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::FILL_BYTES " << tot_fill_bytes;
   fill_clock.print("SLIPBENCH::FILL_TIME ");
 
-  transport->close();
+  for(auto& transport : transports)
+    transport->close();
 
   hurricane::hurricane_client_barrier->teardown_conn();
   hurricane::shutdown(false, false);
 
   delete hurricane::hurricane_client_barrier;
+
+  for(auto& client : clients)
+    delete client;
 
   return 0;
 }
