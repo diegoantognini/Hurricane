@@ -334,7 +334,7 @@ class IODFSHandler : virtual public IODFSIf {
   // Create a connection with a client, given a generated token
   // False implies that there was a problem with the token
   bool connect(const string& token) {
-    if (tokens.find(token) == tokens.end() || client_drains.find(token) != client_drains.end() || client_fills.find(token) != client_fills.end())
+    if (tokens.find(token) == tokens.end() || client_drains.find(token) != client_drains.end() || client_fills.find(token) != client_fills.end() || client_fill_mutexes.find(token) == client_fill_mutexes.end() || client_drain_mutexes.find(token) == client_drain_mutexes.end())
       return false;
 
     client_drains[token] = new hurricane::client_drain();
@@ -349,7 +349,7 @@ class IODFSHandler : virtual public IODFSIf {
   // Close the connection with the client corresponding to the token. The token is erased.
   // False implies that there was a problem with the token
   bool leave(const string& token) {
-    if (tokens.find(token) == tokens.end() || client_fills.find(token) == client_fills.end() || client_drains.find(token) == client_drains.end())
+    if (tokens.find(token) == tokens.end() || client_fills.find(token) == client_fills.end() || client_drains.find(token) == client_drains.end() || client_fill_mutexes.find(token) == client_fill_mutexes.end() || client_drain_mutexes.find(token) == client_drain_mutexes.end())
       return false;
 
     // Close all currents connections
@@ -368,6 +368,8 @@ class IODFSHandler : virtual public IODFSIf {
     
     client_drains.erase(token);
     client_fills.erase(token);
+    client_drain_mutexes.erase(token);
+    client_fill_mutexes.erase(token);
     tokens.erase(token);
 
     return true;
