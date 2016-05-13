@@ -307,8 +307,6 @@ int main(int argc, const char **argv) {
 
   delete hurricane::hurricane_client_barrier;
   
-  munmap((void *) block, blockmem);
-
   for(auto& client : clients)
     delete client;
 
