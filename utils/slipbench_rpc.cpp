@@ -117,7 +117,7 @@ public:
         filled_bytes = big_buffer.size();
 
         *fill_bytes += filled_bytes;
-      } while (*fill_bytes > 0);
+      } while (filled_bytes > 0);
     }
 };
 
@@ -282,7 +282,7 @@ int main(int argc, const char **argv) {
   }
 
   control_barrier(); // End
-  
+
   if(!clients.front()->leave(token)){
     BOOST_LOG_TRIVIAL(fatal) << "Unable to leave to hurricane";
     exit(-1);
