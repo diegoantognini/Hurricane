@@ -152,6 +152,7 @@ int main(int argc, const char **argv) {
   unsigned long big_bufsize = BIG_BUFSIZE;
 
   if (blockmem > 0) {
+    blockmem = big_bufsize;
     BOOST_LOG_TRIVIAL(info) << "Blocking " << blockmem;
   }
   else {
