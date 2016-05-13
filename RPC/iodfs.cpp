@@ -53,7 +53,6 @@ class IODFSHandler : virtual public IODFSIf {
   // IO part
   unordered_map<string, hurricane::io*> local_buffers;
   unordered_map<string, hurricane::io*> global_buffers; //the value is null, but we can use the hash table to find in O(1)
-  hurricane::hurricane_req_t req;
   unsigned long slipchunk;
 
   // Network part
@@ -100,8 +99,6 @@ class IODFSHandler : virtual public IODFSIf {
     } 
 
     first_known_lost_node = machines.size();
-
-    init_req();  
 
     hurricane::init(&local_buffers, true);
 
@@ -223,7 +220,9 @@ class IODFSHandler : virtual public IODFSIf {
     if(!helper_exists(filename, it, local_buffers))
       _return = "";
     else {
-      init_req();
+      hurricane::hurricane_req_t req;
+      init_req(&req);
+
       req.size = size;
       _return = string(size, 0);
       int64_t bytes_read = it->second->fill((unsigned char*) _return.c_str(), &req);
@@ -240,7 +239,9 @@ class IODFSHandler : virtual public IODFSIf {
     if(!helper_exists(filename, it, local_buffers))
       _return = "";
     else {
-      init_req();
+      hurricane::hurricane_req_t req;
+      init_req(&req);
+      
       req.size = size;
       req.offset = offset;
       _return = string(size, 0);
@@ -258,7 +259,9 @@ class IODFSHandler : virtual public IODFSIf {
     if(!helper_exists(filename, it, local_buffers))
       return false;
 
-    init_req();
+    hurricane::hurricane_req_t req;
+    init_req(&req);
+
     req.size = buffer.size();
     it->second->drain((unsigned char*) buffer.c_str(), &req);
     return true;
@@ -352,16 +355,15 @@ class IODFSHandler : virtual public IODFSIf {
     if (tokens.find(token) == tokens.end() || client_fills.find(token) == client_fills.end() || client_drains.find(token) == client_drains.end() || client_fill_mutexes.find(token) == client_fill_mutexes.end() || client_drain_mutexes.find(token) == client_drain_mutexes.end())
       return false;
 
-    // Close all currents connections
-    client_drains[token]->teardown_conn();
-    client_fills[token]->teardown_conn();
-
     client_fill_mutexes[token]->unlock();
     delete client_fill_mutexes[token];
 
     client_drain_mutexes[token]->unlock();
     delete client_drain_mutexes[token];
 
+    // Close all currents connections
+    client_drains[token]->teardown_conn();
+    client_fills[token]->teardown_conn();
 
     delete client_drains[token];
     delete client_fills[token];
@@ -486,22 +488,22 @@ class IODFSHandler : virtual public IODFSIf {
     if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || (size%slipchunk != 0))
       _return = "";
     else {
-      client_fill_mutexes[token]->lock();
-
       _return = string(size, 0);
 
-      init_req();
+      hurricane::hurricane_req_t req;
+      init_req(&req);
+
       strcpy(req.filename, filename.c_str());
       req.cmd = hurricane::CMD_FILL;
       req.size = size;
 
+      client_fill_mutexes[token]->lock();
       int64_t filled_bytes = client_fills[token]->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
+      client_fill_mutexes[token]->unlock();
 
       // EOF, should return a string smaller and so, its size is modified
       if(filled_bytes < size) 
           _return = _return.data();
-
-      client_fill_mutexes[token]->unlock();
     }
   }
 
@@ -515,20 +517,21 @@ class IODFSHandler : virtual public IODFSIf {
     if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
       return false;
 
-    client_drain_mutexes[token]->lock();
+    hurricane::hurricane_req_t req;
+    init_req(&req);
 
-    init_req();
     strcpy(req.filename, filename.c_str());
     req.cmd = hurricane::CMD_DRAIN;
     req.size = buffer.size();
 
-    if (client_drains[token]->batch_access_store(&req, (unsigned char*) buffer.c_str(), slipchunk, buffer.size())) {
-      client_drain_mutexes[token]->unlock();
+    client_drain_mutexes[token]->lock();
+    bool res = client_drains[token]->batch_access_store(&req, (unsigned char*) buffer.c_str(), slipchunk, buffer.size());
+    client_drain_mutexes[token]->unlock();
+
+    if (res) {
       BOOST_LOG_TRIVIAL(fatal) << "Unable to write to hurricane";
       return false;
     }
-
-    client_drain_mutexes[token]->unlock();
 
     return true;
   }
@@ -661,8 +664,8 @@ private:
     unlink_file(((char*)it->first.c_str()));
   }
 
-  void init_req() {
-    req.source_mc = req.cmd = req.size = req.offset = 0;
+  void init_req(hurricane::hurricane_req_t* req) {
+    req->source_mc = req->cmd = req->size = req->offset = 0;
   }
 
   // When we reconnect, we do it with all the machines ! Not only the machines associated with a token

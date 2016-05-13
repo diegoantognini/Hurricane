@@ -42,13 +42,13 @@ class interference {
     unsigned char *buffer;
 public:
     interference() {
-      buffer = (unsigned char *) map_anon_memory(512 * 1024 * 1024, true, "Dummy buf");
+      buffer = (unsigned char *) map_anon_memory(BIG_BUFSIZE, true, "Dummy buf");
     }
 
     void operator()() {
       (void) __sync_fetch_and_add(&bthread_running, 1UL);
       while (true) {
-        for (unsigned long i = 0; i < 512 * 1024 * 1024; i++) {
+        for (unsigned long i = 0; i < BIG_BUFSIZE; i++) {
           buffer[i]++;
         }
       }
@@ -109,14 +109,14 @@ public:
 
     void operator()() {
       unsigned long filled_bytes = 0;
-      *fill_bytes = 0;
+      //*fill_bytes = 0;
       string big_buffer;
       do {
         big_buffer = "";
         client->global_fill(big_buffer, *filename, BIG_BUFSIZE, *token);
         filled_bytes = big_buffer.size();
 
-        *fill_bytes += filled_bytes;
+        //*fill_bytes += filled_bytes;
       } while (filled_bytes > 0);
     }
 };
@@ -146,7 +146,7 @@ int main(int argc, const char **argv) {
   bool run_drain_test = (vm.count("drain_test") > 0);
   bool run_fill_test = (vm.count("fill_test") > 0);
 
-  unsigned long big_bufsize = 512 * 1024 * 1024;
+  unsigned long big_bufsize = BIG_BUFSIZE;
 
   if (blockmem > 0) {
     BOOST_LOG_TRIVIAL(info) << "Blocking " << blockmem;
@@ -268,7 +268,7 @@ int main(int argc, const char **argv) {
     fill_clock.start();
     if (batching) {
       for(int i = 0; i < NB_THREADS; ++i)
-        threads.push_back(new boost::thread(boost::ref(*new Fill(clients[i], &token, &filename, &v_fill_bytes[i], i))));
+        threads.push_back(new boost::thread(boost::ref(*new Fill(clients[i], &token, &filename, &(v_fill_bytes[i]), i))));
     
       for(auto& thread : threads)
         thread->join();
