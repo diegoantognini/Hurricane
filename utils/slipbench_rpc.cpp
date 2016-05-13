@@ -17,8 +17,8 @@ using std::unordered_map;
 using std::string;
 using std::vector;
 
-const unsigned long BIG_BUFSIZE = 512 * 1024 * 1024;
-#define NB_THREADS 4
+const unsigned long BIG_BUFSIZE = 1024 * 1024 * 1024;
+#define NB_THREADS 2
 
 class null_barrier_work : public hurricane::barrier_work {
   public:
@@ -111,17 +111,14 @@ public:
 
     void operator()() {
       unsigned long filled_bytes = 0;
-      //*fill_bytes = 0;
+      *fill_bytes = 0;
       string big_buffer;
       unsigned long iter = size_per_thread/BIG_BUFSIZE;
-
       for(unsigned long i = 0; i < iter; ++i) {
-        std::cout << id << " starts iter " << i << std::endl; 
         big_buffer = "";
         client->global_fill(big_buffer, *filename, BIG_BUFSIZE, *token);
         filled_bytes = big_buffer.size();
-        *fill_bytes += filled_bytes;
-        std::cout << id << " ends iter " << i << filled_bytes << " " << " " << *fill_bytes << std::endl;        
+        *fill_bytes += filled_bytes;      
       }
     }
 };
