@@ -18,7 +18,7 @@ using std::string;
 using std::vector;
 
 const unsigned long BIG_BUFSIZE = 512 * 1024 * 1024;
-#define NB_THREADS 8
+#define NB_THREADS 4
 
 class null_barrier_work : public hurricane::barrier_work {
   public:
@@ -119,8 +119,8 @@ public:
         big_buffer = "";
         client->global_fill(big_buffer, *filename, BIG_BUFSIZE, *token);
         filled_bytes = big_buffer.size();
-        std::cout << id << " " << filled_bytes << " " << iter << std::endl;
-        //*fill_bytes += filled_bytes;
+        *fill_bytes += filled_bytes;
+        std::cout << id << " " << filled_bytes << " " << i << " " << *fill_bytes << std::endl;        
       }
     }
 };
@@ -266,6 +266,8 @@ int main(int argc, const char **argv) {
   vector<unsigned long> v_fill_bytes;
   for(int i = 0; i < NB_THREADS; ++i)
     v_fill_bytes.push_back(0);
+
+  control_barrier();
 
   if (run_fill_test) {
     BOOST_LOG_TRIVIAL(info) << "Starting fill test";
