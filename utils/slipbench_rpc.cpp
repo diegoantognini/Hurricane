@@ -159,7 +159,7 @@ int main(int argc, const char **argv) {
     blockmem = big_bufsize;
   }
 
-  string big_buffer;
+  string big_buffer(big_bufsize,0);
   blockmem = big_bufsize;  // Cannot send a lot of data at once, need to decrease RAM
   //for(int i = 0; big_buffer.size() < blockmem; ++i) {
     const char* block = (const char *) map_anon_memory(big_bufsize, true, "Blockmem");
