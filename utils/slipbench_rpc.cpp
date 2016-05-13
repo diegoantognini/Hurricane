@@ -248,14 +248,16 @@ int main(int argc, const char **argv) {
     drain_clock.stop();
     BOOST_LOG_TRIVIAL(info) << "Completed drain test";
     threads.clear();
-  }
 
-  if(!clients.front()->global_rewind(filename, token)) {
-    BOOST_LOG_TRIVIAL(fatal) << "Unable to rewind the file";
-    exit(-1);
-  }
+    control_barrier();
 
-  control_barrier(); // Handle the case where we do a drain AND a fill
+    if(!clients.front()->global_rewind(filename, token)) {
+      BOOST_LOG_TRIVIAL(fatal) << "Unable to rewind the file";
+      exit(-1);
+    }
+
+    control_barrier();
+  }
 
   vector<unsigned long> v_fill_bytes;
   for(int i = 0; i < NB_THREADS; ++i)
@@ -279,12 +281,12 @@ int main(int argc, const char **argv) {
     threads.clear();
   }
 
+  control_barrier(); // End
+  
   if(!clients.front()->leave(token)){
     BOOST_LOG_TRIVIAL(fatal) << "Unable to leave to hurricane";
     exit(-1);
   }
-
-  control_barrier(); // End
 
   BOOST_LOG_TRIVIAL(info) << "SLIPBENCH::DRAIN_BYTES " << slipfile_size;
   drain_clock.print("SLIPBENCH::DRAIN_TIME ");

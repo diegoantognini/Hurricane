@@ -486,9 +486,9 @@ class IODFSHandler : virtual public IODFSIf {
     if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || (size%slipchunk != 0))
       _return = "";
     else {
-      _return = string(size, 0);
-
       client_fill_mutexes[token]->lock();
+
+      _return = string(size, 0);
 
       init_req();
       strcpy(req.filename, filename.c_str());
@@ -497,11 +497,11 @@ class IODFSHandler : virtual public IODFSIf {
 
       int64_t filled_bytes = client_fills[token]->batch_access_store(&req, (unsigned char*) _return.c_str(), slipchunk, size);
 
-      client_fill_mutexes[token]->unlock();
-
       // EOF, should return a string smaller and so, its size is modified
       if(filled_bytes < size) 
           _return = _return.data();
+
+      client_fill_mutexes[token]->unlock();
     }
   }
 
