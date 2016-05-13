@@ -18,7 +18,7 @@ using std::string;
 using std::vector;
 
 const unsigned long BIG_BUFSIZE = 512 * 1024 * 1024;
-#define NB_THREADS 2
+#define NB_THREADS 4
 
 class null_barrier_work : public hurricane::barrier_work {
   public:

@@ -478,6 +478,7 @@ class IODFSHandler : virtual public IODFSIf {
     return result;
   }
 
+  // Pre-condition : global exists has been called
   // An empty buffer implies that either the file doesn't exist or the size is not a multiple of slipchunk !
   // Throw LostConnection if the server is blocked (initializing)
   // Throw BadToken if the token is not recognized
@@ -485,7 +486,7 @@ class IODFSHandler : virtual public IODFSIf {
     handle_token(token, true, false);
     handle_connection_to_server_done(token, false);
 
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers) || (size%slipchunk != 0))
+    if(!helper_exists(filename, global_buffers) || (size%slipchunk != 0))
       _return = "";
     else {
       _return = string(size, 0);
@@ -507,14 +508,15 @@ class IODFSHandler : virtual public IODFSIf {
     }
   }
 
-  // False implie that the file doesn't exist on a machine
+  // Pre-condition : global exists has been called
+  // False implie that the file doesn't exist on this machine
   // Throw LostConnection if the server is blocked (initializing)
   // Throw BadToken if the token is not recognized
   bool global_drain(const string& filename, const string& buffer, const string& token) {
     handle_token(token, false, true);
     handle_connection_to_server_done(token, false);
 
-    if(!global_exists(filename, token) || !helper_exists(filename, global_buffers))
+    if(!helper_exists(filename, global_buffers))
       return false;
 
     hurricane::hurricane_req_t req;
