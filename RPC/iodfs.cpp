@@ -334,7 +334,7 @@ class IODFSHandler : virtual public IODFSIf {
   // Create a connection with a client, given a generated token
   // False implies that there was a problem with the token
   bool connect(const string& token) {
-    if (tokens.find(token) == tokens.end() || client_drains.find(token) != client_drains.end() || client_fills.find(token) != client_fills.end() || client_fill_mutexes.find(token) == client_fill_mutexes.end() || client_drain_mutexes.find(token) == client_drain_mutexes.end())
+    if (tokens.find(token) == tokens.end() || client_drains.find(token) != client_drains.end() || client_fills.find(token) != client_fills.end() || client_fill_mutexes.find(token) != client_fill_mutexes.end() || client_drain_mutexes.find(token) != client_drain_mutexes.end())
       return false;
 
     client_drains[token] = new hurricane::client_drain();
