@@ -301,15 +301,15 @@ int main(int argc, const char **argv) {
 
   for(auto& transport : transports)
     transport->close();
-std::cout << "close barrier" << std::endl;
+
   hurricane::hurricane_client_barrier->teardown_conn();
-  std::cout << "shutdown" << std::endl;
+
   hurricane::shutdown(true, false);
-std::cout << "delete barrier"<< std::endl;
+
   delete hurricane::hurricane_client_barrier;
-  std::cout << "close clients"<< std::endl;
+  
   for(auto& client : clients)
     delete client;
-std::cout << "finish" << std::endl;
+
   return 0;
 }
