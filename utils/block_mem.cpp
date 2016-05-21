@@ -20,7 +20,7 @@
 #include "memory_utils.h"
 #include "unistd.h"
 
-#define TOLOCK ((128-16)*1024*1024UL)
+#define TOLOCK ((128-16)*1024*1024*1024UL)
 
 int main() {
   fprintf(stderr, "Locking %lu bytes", TOLOCK);
