@@ -37,4 +37,6 @@ bin/slipbench
 
 bin/slipbench_rpc
 
+bin/block_mem
+
 *.d
