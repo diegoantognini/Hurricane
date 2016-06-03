@@ -38,8 +38,7 @@ namespace hurricane {
             snapped(false) {
         strcpy(name, name_in);
 
-        if (name_in != NULL)
-          fdw = open(name, O_WRONLY | O_LARGEFILE | O_CREAT | O_TRUNC, S_IRWXU);
+        fdw = open(name, O_WRONLY | O_LARGEFILE | O_CREAT | O_TRUNC, S_IRWXU);
 
         if (fdw == -1) {
           perror("Error opening file for writing");

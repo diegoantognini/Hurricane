@@ -30,7 +30,7 @@ CXXFLAGS += -msse4.2
 #CXXFLAGS += -mavx2
 
 #System libraries
-SYSLIBS = -lboost_system -lboost_program_options -lboost_thread -lpthread -lz -lrt -lzmq -lthrift
+SYSLIBS = -lboost_system -lboost_program_options -lboost_thread -lpthread -lz -lrt -lzmq -lthrift -llz4
 # Uncomment for ALS
 SYSLIBS += -llapack
 

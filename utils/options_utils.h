@@ -116,6 +116,7 @@ static void setup_options(int argc, const char *argv[]) {
       "Number of zmq threads to use")
   ("use_direct_io", "Use Direct I/O")
   ("use_sync_mt_io", "Use Sync pagecache mt I/O")
+  ("use_sync_lz4_io", "Use compressed Sync pagecache I/O")
       ("dio_unit",
        boost::program_options::value < unsigned
   long > ()->default_value(4194304),

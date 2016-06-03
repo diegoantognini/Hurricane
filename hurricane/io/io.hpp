@@ -26,9 +26,11 @@
 #include "../../utils/clock_utils.h"
 #include "../../utils/options_utils.h"
 #include "sync_pagecache_io.hpp"
+#include "sync_pagecache_mt_io.hpp"
+#include "sync_pagecache_lz4_io.hpp"
 #include "async_direct_io.hpp"
 #include "dummy_io.hpp"
-
+#include "../../utils/lz4_mt.h"
 namespace hurricane {
   // Requests to hurricane service
   static const unsigned long CMD_FILL = 0;
@@ -71,6 +73,8 @@ namespace hurricane {
           buffer = new dummy_io(filename);
         else if (vm.count("use_sync_mt_io") > 0)
           buffer = new sync_pagecache_mt_io(filename);
+        else if (vm.count("use_sync_lz4_io") > 0)
+          buffer = new sync_pagecache_lz4_io(filename);
         else 
           buffer = new sync_pagecache_io(filename);
 
@@ -151,8 +155,8 @@ namespace hurricane {
           dummy->force_file_size(vm["slipbench_fsize"].as < unsigned long > ());
           buffer = dummy;
         }
-        else if (vm.count("use_sync_mt_io") > 0) {
-          BOOST_LOG_TRIVIAL(fatal) << "HURRICANE: Cannot use sync_pagecache_mt_io for the test file";
+        else if (vm.count("use_sync_mt_io") > 0 || vm.count("use_sync_lz4_io") > 0) {
+          BOOST_LOG_TRIVIAL(fatal) << "HURRICANE: Cannot use sync_pagecache_mt/lz4_io for the test file";
           exit(-1);
         }
         else
