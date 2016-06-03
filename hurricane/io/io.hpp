@@ -69,6 +69,8 @@ namespace hurricane {
           buffer = new async_direct_io(filename, vm["dio_unit"].as < unsigned long > ());
         else if (vm.count("use_dummy_io") > 0)
           buffer = new dummy_io(filename);
+        else if (vm.count("use_sync_mt_io") > 0)
+          buffer = new sync_pagecache_mt_io(filename);
         else 
           buffer = new sync_pagecache_io(filename);
 
@@ -148,6 +150,10 @@ namespace hurricane {
           dummy_io *dummy = new dummy_io(name, true);
           dummy->force_file_size(vm["slipbench_fsize"].as < unsigned long > ());
           buffer = dummy;
+        }
+        else if (vm.count("use_sync_mt_io") > 0) {
+          BOOST_LOG_TRIVIAL(fatal) << "HURRICANE: Cannot use sync_pagecache_mt_io for the test file";
+          exit(-1);
         }
         else
           buffer = new sync_pagecache_io(name, true);
