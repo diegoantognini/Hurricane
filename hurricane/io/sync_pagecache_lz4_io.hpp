@@ -119,9 +119,9 @@ namespace hurricane {
         if (fd_out != -1) {
           while (comp_tail != comp_head) {
             while (comp_array[comp_tail].busy);
-            write_to_file(comp_array[comp_tail].fd_out,
-                          comp_array[comp_tail].comp_data,
-                          comp_array[comp_tail].outbytes);
+            write_to_file(fd_out,
+                            comp_array[comp_tail].comp_data,
+                            comp_array[comp_tail].outbytes);
             comp_array[comp_tail].shutdown(false);
             comp_tail = (comp_tail + 1) % comp_array_size;
           }
