@@ -247,8 +247,8 @@ namespace hurricane {
 
       virtual void rewind() {
         //destroy_all();
-        setup_decompression();
-        seen_bytes = 0;
+        //setup_decompression();
+        //seen_bytes = 0;
       }
 
       virtual void trunc() {
