@@ -159,8 +159,16 @@ static void setup_options(int argc, const char *argv[]) {
       boost::program_options::value
       < unsigned
   long > ()->default_value(0UL),
-      "Number of background interference threads");
-
+      "Number of background interference threads")
+  ("lz4", "Turn on lz4 compression/decompression")
+      ("lz4_compress_threads",
+       boost::program_options::value < unsigned
+  long > ()->default_value(1),
+      "Threads to be used for lz4 compression")
+  ("lz4_decompress_threads",
+      boost::program_options::value < unsigned
+  long > ()->default_value(1),
+      "Threads to be used for lz4 decompression");
   try {
     boost::program_options::store(boost::program_options::parse_command_line(argc,
                                                                              argv,
