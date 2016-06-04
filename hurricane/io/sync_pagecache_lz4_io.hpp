@@ -160,9 +160,9 @@ namespace hurricane {
         }
 
         strcpy(name, name_in);
-        data_bytes = 0;
+        data_bytes = ucomp_size;
         seen_bytes = 0;
-        setup_compression();
+        setup_decompression();
 
         last_flush = 0;
       }
