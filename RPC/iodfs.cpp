@@ -263,7 +263,9 @@ class IODFSHandler : virtual public IODFSIf {
     init_req(&req);
 
     req.size = buffer.size();
-    it->second->drain((unsigned char*) buffer.c_str(), &req);
+    unsigned char* buffer2 = new unsigned char[buffer.size()];
+    memcpy(buffer2, buffer.c_str(), req.size);
+    it->second->drain(buffer2, &req);
     return true;
   }
 
