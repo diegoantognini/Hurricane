@@ -231,6 +231,7 @@ namespace hurricane {
           seen_bytes += tocopy;
           data_bytes += tocopy;
         }
+        fsync(fd_out);
       }
 
       virtual bool eof() {
