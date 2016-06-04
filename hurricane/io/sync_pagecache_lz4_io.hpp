@@ -216,7 +216,7 @@ namespace hurricane {
             comp_head = (comp_head + 1) % comp_array_size;
             if (comp_head == comp_tail) {
               while (comp_array[comp_tail].busy);
-              write_to_file(comp_array[comp_tail].fd_out,
+            write_to_file(fd_out,
                             comp_array[comp_tail].comp_data,
                             comp_array[comp_tail].outbytes);
               comp_tail = (comp_tail + 1) % comp_array_size;
