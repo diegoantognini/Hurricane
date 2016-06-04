@@ -246,20 +246,20 @@ namespace hurricane {
       }
 
       virtual void rewind() {
-        destroy_all();
+        //destroy_all();
         setup_decompression();
         seen_bytes = 0;
       }
 
       virtual void trunc() {
-        destroy_all();
+        //destroy_all();
         setup_compression(true);
         seen_bytes = 0;
         data_bytes = 0;
       }
 
       virtual ~sync_pagecache_lz4_io() {
-        destroy_all();
+        //destroy_all();
         lz4_comp_service.stop();
         lz4_comp_pool.join_all();
         lz4_uncomp_service.stop();
