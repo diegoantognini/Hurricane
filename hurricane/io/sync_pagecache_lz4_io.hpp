@@ -184,6 +184,16 @@ namespace hurricane {
               break;
             }
           }
+          unsigned long tocopy;
+
+          tocopy = (uncomp_array[uncomp_ptr].uncomp_bytes > size) ? size : uncomp_array[uncomp_ptr].uncomp_bytes;
+          memcpy(buffer, uncomp_array[uncomp_ptr].uncomp_data + uncomp_array[uncomp_ptr].uncomp_offset, tocopy);
+          buffer += tocopy;
+          uncomp_array[uncomp_ptr].uncomp_offset += tocopy;
+          uncomp_array[uncomp_ptr].uncomp_bytes -= tocopy;
+          size -= tocopy;
+          seen_bytes += tocopy;
+          supplied_bytes += tocopy;
         }
 
         return supplied_bytes;
@@ -212,6 +222,14 @@ namespace hurricane {
               comp_tail = (comp_tail + 1) % comp_array_size;
             }
           }
+          unsigned long tocopy = (size > (4194304 - comp_array[comp_head].uncomp_bytes)) ? (4194304 - comp_array[comp_head].uncomp_bytes) : size;
+          memcpy(comp_array[comp_head].uncomp_data + comp_array[comp_head].uncomp_offset, buffer, tocopy);
+          buffer += tocopy;
+          size -= tocopy;
+          comp_array[comp_head].uncomp_offset += tocopy;
+          comp_array[comp_head].uncomp_bytes += tocopy;
+          seen_bytes += tocopy;
+          data_bytes += tocopy;
         }
       }
 
