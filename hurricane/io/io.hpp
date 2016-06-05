@@ -98,6 +98,15 @@ namespace hurricane {
           hurricane_io_time.start();
           size = buffer->fill(buffer_in, req->size);
           hurricane_io_time.stop();
+
+          // We know req->cmd is fill here, so no need to worry about adding or not (we always add)
+          bytes_until_collapse += size;
+
+          if(collapse_input && bytes_until_collapse > collapse_size) {
+              buffer->collapse_range(0, collapse_size);
+              bytes_until_collapse -= collapse_size;
+            }
+
           return size;
       }
 

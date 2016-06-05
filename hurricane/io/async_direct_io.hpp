@@ -158,6 +158,11 @@ namespace hurricane {
         data_bytes = 0;
       }
 
+      virtual void collapse_range(off_t offset, off_t len) {
+        BOOST_LOG_TRIVIAL(fatal) << "collapse range not possible with async";
+        exit(-1);
+      }
+      
       virtual ~async_direct_io() {
         delete iobuf;
         close(fd);

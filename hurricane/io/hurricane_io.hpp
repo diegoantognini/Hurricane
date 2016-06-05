@@ -51,6 +51,8 @@ namespace hurricane {
 
       virtual void trunc() = 0;
 
+      virtual void collapse_range(off_t offset, off_t len) = 0;
+      
       virtual ~hurricane_io() { }
   };
 }
