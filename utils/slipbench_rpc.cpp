@@ -118,7 +118,8 @@ public:
         big_buffer = "";
         client->global_fill(big_buffer, *filename, BIG_BUFSIZE, *token);
         filled_bytes = big_buffer.size();
-        *fill_bytes += filled_bytes;      
+        *fill_bytes += filled_bytes; 
+        BOOST_LOG_TRIVIAL(info) << (*fill_bytes);     
       }
     }
 };
