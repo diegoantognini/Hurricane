@@ -252,7 +252,7 @@ int main(int argc, const char **argv) {
     v_fill_bytes.push_back(0);
 
   if (run_fill_test) {
-    usleep(30*1000*1000);
+    usleep(60*1000*1000);
 
     BOOST_LOG_TRIVIAL(info) << "Starting fill test";
     fill_clock.start();
