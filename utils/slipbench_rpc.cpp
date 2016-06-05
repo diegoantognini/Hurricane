@@ -113,8 +113,8 @@ public:
       unsigned long filled_bytes = 0;
       *fill_bytes = 0;
       string big_buffer;
-      unsigned long iter = size_per_thread/BIG_BUFSIZE;
-      for(unsigned long i = 0; i < iter; ++i) {
+      //unsigned long iter = size_per_thread/BIG_BUFSIZE;
+      while(*fill_bytes < size_per_thread) {
         big_buffer = "";
         client->global_fill(big_buffer, *filename, BIG_BUFSIZE, *token);
         filled_bytes = big_buffer.size();
