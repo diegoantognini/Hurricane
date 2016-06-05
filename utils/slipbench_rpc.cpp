@@ -27,13 +27,13 @@ class null_barrier_work : public hurricane::barrier_work {
   };
 
 void control_barrier() {
-  null_barrier_work null_obj;
+  /*null_barrier_work null_obj;
   hurricane::hurricane_client_barrier->in_progress = true;
   hurricane::ioService.post
       (boost::bind(&hurricane::client_barrier::work_barrier,
                    hurricane::hurricane_client_barrier,
                    &null_obj));
-  while (hurricane::hurricane_client_barrier->in_progress);
+  while (hurricane::hurricane_client_barrier->in_progress);*/
 }
 
 volatile unsigned long bthread_running = 0;
@@ -245,13 +245,6 @@ int main(int argc, const char **argv) {
     drain_clock.stop();
     BOOST_LOG_TRIVIAL(info) << "Completed drain test";
     threads.clear();
-
-    control_barrier();
-
-    if(!clients.front()->global_rewind(filename, token)) {
-      BOOST_LOG_TRIVIAL(fatal) << "Unable to rewind the file";
-      exit(-1);
-    }
 
     control_barrier();
   }

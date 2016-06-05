@@ -59,14 +59,20 @@ namespace hurricane {
       unsigned char *membuffer;
       rtc_clock hurricane_io_time;
       rtc_clock hurricane_snap_time;
+      bool collapse_input;
+      unsigned long collapse_size;
+      unsigned long bytes_until_collapse;
 
   public:
       io(const char* filename, unsigned char *membuffer_in)
           : fsnaps(NULL),
-            membuffer(membuffer_in) {
+            membuffer(membuffer_in),
+            bytes_until_collapse(0) {
         strcpy(name, filename);
         //unsigned long me = pt_hurricane.get < unsigned long > ("machines.me");
-
+        collapse_input = (vm.count("collapse_input") > 0);
+        collapse_size = vm["collapse_size"].as < unsigned long > ();
+        
         if (vm.count("use_direct_io") > 0)
           buffer = new async_direct_io(filename, vm["dio_unit"].as < unsigned long > ());
         else if (vm.count("use_dummy_io") > 0)
@@ -128,6 +134,7 @@ namespace hurricane {
         hurricane_io_time.start();
         buffer->rewind();
         hurricane_io_time.stop();
+        bytes_until_collapse = 0;
       }
 
       unsigned long get_size() {
@@ -142,6 +149,7 @@ namespace hurricane {
         hurricane_io_time.start();
         buffer->trunc();
         hurricane_io_time.stop();
+        bytes_until_collapse = 0;
       }
 
       // For running fill speed test
