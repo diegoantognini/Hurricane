@@ -146,8 +146,9 @@ int main(int argc, const char **argv) {
 
   /* Read in hurricane information */
   init_hurricane_desc();
-  bool run_drain_test = (vm.count("drain_test") > 0);
-  bool run_fill_test = (vm.count("fill_test") > 0);
+  unsigned long me = pt_hurricane.get < unsigned long > ("machines.me");
+  bool run_drain_test = me % 2 == 0;//(vm.count("drain_test") > 0);
+  bool run_fill_test = me % 2 == 1;//(vm.count("fill_test") > 0);
 
   unsigned long big_bufsize = BIG_BUFSIZE;
 
@@ -184,7 +185,6 @@ int main(int argc, const char **argv) {
   hurricane::hurricane_client_barrier = new hurricane::client_barrier();
 
   std::stringstream name;
-  unsigned long me = pt_hurricane.get < unsigned long > ("machines.me");
   name << "machines.name" << me;
   string server = pt_hurricane.get<string>(name.str().c_str()); // We connect to "our" server
   int port = 9090;
@@ -253,7 +253,7 @@ int main(int argc, const char **argv) {
 
   if (run_fill_test) {
     usleep(15*1000*1000);
-    
+
     BOOST_LOG_TRIVIAL(info) << "Starting fill test";
     fill_clock.start();
     if (batching) {
