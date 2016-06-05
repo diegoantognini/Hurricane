@@ -81,7 +81,7 @@ namespace hurricane {
 
       virtual void drain(unsigned char *buffer,
                          unsigned long size) {
-        seen_bytes += size;
+        //seen_bytes += size;
         write_to_file(fdw, buffer, size);
 #ifdef FLUSH_PERIODIC
         if(((data_bytes + size)/(4*1024*1024)) != (data_bytes/(4*1024*1024))) {
