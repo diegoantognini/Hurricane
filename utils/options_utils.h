@@ -168,7 +168,12 @@ static void setup_options(int argc, const char *argv[]) {
   ("lz4_decompress_threads",
       boost::program_options::value < unsigned
   long > ()->default_value(1),
-      "Threads to be used for lz4 decompression");
+      "Threads to be used for lz4 decompression")
+        ("collapse_input", "Collapse input file as it's being read in")
+      ("collapse_size",
+       boost::program_options::value < unsigned
+  long > ()->default_value(4194304 * 10),
+      "Size of input to collapse at once (bytes, 4K aligned)");
   try {
     boost::program_options::store(boost::program_options::parse_command_line(argc,
                                                                              argv,
