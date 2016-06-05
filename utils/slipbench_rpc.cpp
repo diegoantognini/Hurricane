@@ -118,8 +118,7 @@ public:
         big_buffer = "";
         client->global_fill(big_buffer, *filename, BIG_BUFSIZE, *token);
         filled_bytes = big_buffer.size();
-        *fill_bytes += filled_bytes; 
-        BOOST_LOG_TRIVIAL(info) << (*fill_bytes);     
+        *fill_bytes += filled_bytes;  
       }
     }
 };
@@ -253,7 +252,7 @@ int main(int argc, const char **argv) {
     v_fill_bytes.push_back(0);
 
   if (run_fill_test) {
-    usleep(15*1000*1000);
+    usleep(30*1000*1000);
 
     BOOST_LOG_TRIVIAL(info) << "Starting fill test";
     fill_clock.start();
