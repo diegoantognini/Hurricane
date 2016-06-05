@@ -27,13 +27,13 @@ class null_barrier_work : public hurricane::barrier_work {
   };
 
 void control_barrier() {
-  /*null_barrier_work null_obj;
+  null_barrier_work null_obj;
   hurricane::hurricane_client_barrier->in_progress = true;
   hurricane::ioService.post
       (boost::bind(&hurricane::client_barrier::work_barrier,
                    hurricane::hurricane_client_barrier,
                    &null_obj));
-  while (hurricane::hurricane_client_barrier->in_progress);*/
+  while (hurricane::hurricane_client_barrier->in_progress);
 }
 
 volatile unsigned long bthread_running = 0;
@@ -218,15 +218,15 @@ int main(int argc, const char **argv) {
 
   control_barrier(); // Start
 
-  if (run_drain_test) {
-    if(me == 0)
-      if(!clients.front()->global_create(filename, token)) {
-        BOOST_LOG_TRIVIAL(fatal) << "Unable to create a file on hurricane";
-        exit(-1);
-      }
+  if(run_drain_test && me == 0)
+    if(!clients.front()->global_create(filename, token)) {
+      BOOST_LOG_TRIVIAL(fatal) << "Unable to create a file on hurricane";
+      exit(-1);
+    }
     
-    control_barrier(); // Sync with other client
-    
+  control_barrier(); // Sync with other client
+
+  if (run_drain_test) {    
     //big_buffer.resize(big_bufsize); // Cannot send a lot of data at once
 
     BOOST_LOG_TRIVIAL(info) << "Starting drain test";
@@ -245,17 +245,15 @@ int main(int argc, const char **argv) {
     drain_clock.stop();
     BOOST_LOG_TRIVIAL(info) << "Completed drain test";
     threads.clear();
-
-    control_barrier();
   }
 
   vector<unsigned long> v_fill_bytes;
   for(int i = 0; i < NB_THREADS; ++i)
     v_fill_bytes.push_back(0);
 
-  control_barrier();
-
   if (run_fill_test) {
+    usleep(15*1000*1000);
+    
     BOOST_LOG_TRIVIAL(info) << "Starting fill test";
     fill_clock.start();
     if (batching) {
