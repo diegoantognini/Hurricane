@@ -147,8 +147,8 @@ int main(int argc, const char **argv) {
   /* Read in hurricane information */
   init_hurricane_desc();
   unsigned long me = pt_hurricane.get < unsigned long > ("machines.me");
-  bool run_drain_test = me % 2 == 0;//(vm.count("drain_test") > 0);
-  bool run_fill_test = me % 2 == 1;//(vm.count("fill_test") > 0);
+  bool run_drain_test = me < 6;//(vm.count("drain_test") > 0);
+  bool run_fill_test = me >= 6;//(vm.count("fill_test") > 0);
 
   unsigned long big_bufsize = BIG_BUFSIZE;
 
